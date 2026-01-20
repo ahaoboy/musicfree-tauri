@@ -1,0 +1,136 @@
+name: "publish"
+
+on:
+  push:
+    branches:
+      - release
+      - main
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+# This workflow will trigger on each push to `release` branch to create or update a GitHub release, build your app, and upload artifacts to release.
+env:
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+  TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+
+jobs:
+  # Desktop and Mobile builds
+  publish:
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: "macos-latest"
+            args: "--target aarch64-apple-darwin"
+          - platform: "macos-latest"
+            args: "--target x86_64-apple-darwin"
+          - platform: "ubuntu-22.04"
+            args: ""
+          - platform: "windows-latest"
+            args: ""
+          - platform: "ubuntu-latest"
+            args: ""
+            mobile: android
+            java: "21"
+            ndk: "29.0.14206865"
+            cmdline-tools-version: "12266719"
+
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.mobile == 'android' && 'aarch64-linux-android,armv7-linux-androideabi,i686-linux-android,x86_64-linux-android' || (matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '') }}
+
+      - name: install dependencies (ubuntu only)
+        if: matrix.platform == 'ubuntu-22.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+
+      - name: Setup Java
+        if: matrix.mobile == 'android'
+        uses: actions/setup-java@v4
+        with:
+          distribution: "zulu"
+          java-version: ${{ matrix.java }}
+
+      - name: Cache NDK
+        if: matrix.mobile == 'android'
+        id: cache-ndk
+        uses: actions/cache@v4
+        with:
+          path: /usr/local/lib/android/sdk/ndk/${{ matrix.ndk }}
+          key: ndk-${{ runner.os }}-${{ matrix.ndk }}
+
+      - name: Setup Android SDK and NDK
+        if: matrix.mobile == 'android'
+        uses: android-actions/setup-android@v3
+        with:
+          cmdline-tools-version: ${{ matrix.cmdline-tools-version }}
+
+      # - name: Setup JDK 17
+      #   uses: actions/setup-java@v5
+      #   with:
+      #     java-version: 17
+      #     distribution: jetbrains
+
+      # - name: Setup Android SDK
+      #   uses: amyu/setup-android@v5
+
+      - name: Install NDK
+        if: matrix.mobile == 'android'
+        run: sdkmanager "ndk;${{ matrix.ndk }}"
+
+      - name: install dependencies (android only)
+        if: matrix.mobile == 'android'
+        run: |
+          sudo apt update
+          sudo apt install build-essential libc6-dev libclang-dev gcc-multilib -y
+
+      - name: install frontend dependencies
+        run: |
+          pnpm install
+
+      - name: tauri android init
+        if: matrix.mobile == 'android'
+        run: |
+          pnpm tauri android init
+
+      - name: setup Android signing
+        if: matrix.mobile == 'android'
+        run: |
+          mkdir -p src-tauri/gen/android
+          cd src-tauri/gen/android
+          echo "keyAlias=${{ secrets.ANDROID_KEY_ALIAS }}" > keystore.properties
+          echo "password=${{ secrets.ANDROID_KEY_PASSWORD }}" >> keystore.properties
+          base64 -d <<< "${{ secrets.ANDROID_KEY_BASE64 }}" > $RUNNER_TEMP/keystore.jks
+          echo "storeFile=$RUNNER_TEMP/keystore.jks" >> keystore.properties
+
+      - name: Build
+        uses: tauri-apps/tauri-action@e839bb55b23d177d8cb537c2e10f41decb2d1089
+        with:
+          tagName: app-v__VERSION__
+          releaseName: "App v__VERSION__"
+          releaseBody: "See the assets to download this version and install."
+          args: ${{ matrix.args }}
+          mobile: ${{ matrix.mobile }}
+          uploadWorkflowArtifacts: true
+          uploadPlainBinary: true
+          releaseDraft: false
+          prerelease: false

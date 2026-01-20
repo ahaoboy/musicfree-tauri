@@ -2,5 +2,5 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 fn main() {
-    musicfree_lib::run()
+    tauri_ci_demo_lib::run()
 }
