@@ -1,4 +1,4 @@
-package com.tauri_ci_demo.app
+package com.ahaoboy.musicfree
 
 import android.os.Bundle
 import androidx.activity.enableEdgeToEdge
