@@ -33,7 +33,7 @@ jobs:
           - platform: "windows-latest"
             args: ""
           - platform: "ubuntu-latest"
-            args: ""
+            args: "--runner cross"
             mobile: android
             java: "21"
             ndk: "29.0.14206865"
