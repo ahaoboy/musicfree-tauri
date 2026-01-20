@@ -125,7 +125,6 @@ jobs:
         if: matrix.mobile == 'android'
         run: |
           cargo install -q cross --git https://github.com/cross-rs/cross
-          cargo clean
       - name: Build
         uses: tauri-apps/tauri-action@e839bb55b23d177d8cb537c2e10f41decb2d1089
         with:
