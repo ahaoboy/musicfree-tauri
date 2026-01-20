@@ -33,7 +33,7 @@ jobs:
           - platform: "windows-latest"
             args: ""
           - platform: "ubuntu-latest"
-            args: "-- --runner cross"
+            # args: "-- --runner cross"
             mobile: android
             java: "21"
             ndk: "29.0.14206865"
@@ -121,10 +121,10 @@ jobs:
           echo "password=${{ secrets.ANDROID_KEY_PASSWORD }}" >> keystore.properties
           base64 -d <<< "${{ secrets.ANDROID_KEY_BASE64 }}" > $RUNNER_TEMP/keystore.jks
           echo "storeFile=$RUNNER_TEMP/keystore.jks" >> keystore.properties
-      - name: install cross
-        if: matrix.mobile == 'android'
-        run: |
-          cargo install -q cross --git https://github.com/cross-rs/cross
+      # - name: install cross
+      #   if: matrix.mobile == 'android'
+      #   run: |
+      #     cargo install -q cross --git https://github.com/cross-rs/cross
       - name: Build
         uses: tauri-apps/tauri-action@e839bb55b23d177d8cb537c2e10f41decb2d1089
         with:
