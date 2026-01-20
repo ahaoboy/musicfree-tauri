@@ -32,7 +32,9 @@
           ]
         }
       },
-      "capabilities": ["desktop"]
+      "capabilities": [
+        "desktop"
+      ]
     }
   },
   "bundle": {
@@ -40,6 +42,9 @@
     "targets": "all",
     "createUpdaterArtifacts": true,
     "icon": [
+      "icons/128x128@2x.png",
+      "icons/128x128.png",
+      "icons/icon.icns",
       "icons/icon.ico"
     ]
   },
