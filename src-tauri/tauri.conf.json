@@ -48,7 +48,7 @@
       "windows": {
         "installMode": "passive"
       },
-      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEEzRDYwMzQ1MTlBRTVGRDIKUldUU1g2NFpSUVBXbzFhajl3bEc2bmt4VzR0bzZ3b2dLS2JrZVhxQnVWNnF4OEJ6VGkvRHBsQWEK",
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDUyQTA1NzQ2MDU4MjFBMEMKUldRTUdvSUZSbGVnVWxmYTJ4RU1FRURDc2FYb1AwOStCTXdCQTBlWEFGWnVBR2ZyZWtnQVZkVEwK",
       "endpoints": [
         "https://github.com/ahaoboy/musicfree-tauri/releases/latest/download/latest.json"
       ]
