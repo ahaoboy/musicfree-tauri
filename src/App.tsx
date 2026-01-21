@@ -17,7 +17,13 @@ import {
   useLocation,
   Navigate,
 } from "react-router-dom"
-import { ConfigProvider, theme as antdTheme, App as AntApp, Spin } from "antd"
+import {
+  ConfigProvider,
+  theme as antdTheme,
+  App as AntApp,
+  Spin,
+  Flex,
+} from "antd"
 import { TopNav, PlayerCard, Tab } from "./components"
 import { useAppStore } from "./store"
 import { useSwipe, SwipeDirection } from "./hooks"
@@ -162,11 +168,16 @@ const AppLayout: FC = () => {
   // Loading state
   if (isConfigLoading) {
     return (
-      <div className="app">
-        <div className="loading-container" style={{ flex: 1 }}>
-          <span>Loading...</span>
-        </div>
-      </div>
+      <Flex
+        vertical
+        flex={1}
+        align="center"
+        justify="center"
+        className="app"
+        style={{ height: "100vh" }}
+      >
+        <Spin fullscreen size="large" tip="Loading..." />
+      </Flex>
     )
   }
 
@@ -184,36 +195,45 @@ const AppLayout: FC = () => {
     >
       <AntApp>
         <NavigationContext.Provider value={navigationContextValue}>
-          <div className="app" {...swipeHandlers}>
+          <Flex
+            vertical
+            className="app"
+            style={{ height: "100vh" }}
+            {...swipeHandlers}
+          >
             <TopNav activeTab={currentTab} onChange={handleTabChange} />
-            <main className="main-content">
-              <div className="page-transition">
-                <Suspense
-                  fallback={
-                    <div className="loading-container">
-                      <Spin size="large" />
-                    </div>
-                  }
-                >
-                  <Routes>
-                    <Route
-                      path="/"
-                      element={<Navigate to="/playlists" replace />}
-                    />
-                    <Route path="/playlists/*" element={<PlaylistsPage />} />
-                    <Route path="/music" element={<MusicPage />} />
-                    <Route path="/search" element={<SearchPage />} />
-                    <Route path="/settings" element={<SettingsPage />} />
-                    <Route path="/player" element={<PlayerPage />} />
-                  </Routes>
-                </Suspense>
-              </div>
-            </main>
+            <Flex
+              vertical
+              flex={1}
+              component="main"
+              className="main-content"
+              style={{ overflow: "hidden" }}
+            >
+              <Suspense
+                fallback={
+                  <Flex flex={1} align="center" justify="center">
+                    <Spin fullscreen size="large" />
+                  </Flex>
+                }
+              >
+                <Routes>
+                  <Route
+                    path="/"
+                    element={<Navigate to="/playlists" replace />}
+                  />
+                  <Route path="/playlists/*" element={<PlaylistsPage />} />
+                  <Route path="/music" element={<MusicPage />} />
+                  <Route path="/search" element={<SearchPage />} />
+                  <Route path="/settings" element={<SettingsPage />} />
+                  <Route path="/player" element={<PlayerPage />} />
+                </Routes>
+              </Suspense>
+            </Flex>
             {/* Hide player card on search page to avoid overlapping with bottom actions */}
             {currentTab !== "search" && <PlayerCard audio={currentAudio} />}
             {/* biome-ignore lint/a11y/useMediaCaption: Music player does not need captions */}
             <audio ref={audioRef} />
-          </div>
+          </Flex>
         </NavigationContext.Provider>
       </AntApp>
     </ConfigProvider>

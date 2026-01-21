@@ -183,9 +183,6 @@ body {
 
 // App container
 .app {
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
   background: var(--bg-primary);
   color: var(--text-primary);
   overflow: hidden;
@@ -195,9 +192,6 @@ body {
 
 // Top navigation
 .top-nav {
-  display: flex;
-  align-items: center;
-  justify-content: space-around;
   height: calc(@nav-height + env(safe-area-inset-top));
   padding-top: env(safe-area-inset-top);
   background: var(--bg-card);
@@ -207,16 +201,10 @@ body {
   box-shadow: @shadow-sm;
 
   .nav-item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    flex: 1;
     height: 100%;
     cursor: pointer;
     color: var(--text-secondary);
     font-size: 12px;
-    gap: @spacing-xs;
     transition: color @transition-fast @ease-out, transform @transition-fast @ease-out;
 
     .nav-icon {
@@ -241,16 +229,8 @@ body {
 
 // Main content area
 .main-content {
-  flex: 1;
-  overflow-y: auto;
-  overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
   padding-bottom: calc(@player-bar-height + @safe-area-bottom);
-}
-
-// Page transition wrapper
-.page-transition {
-  animation: fadeInUp @transition-slow @ease-out;
 }
 
 // Page container
@@ -293,7 +273,6 @@ body {
   border-radius: @radius-md;
   border: 1px solid var(--border-color);
   cursor: pointer;
-  margin-bottom: @spacing-sm;
   transition: transform @transition-fast @ease-out,
     box-shadow @transition-fast @ease-out,
     border-color @transition-fast @ease-out;
@@ -368,7 +347,6 @@ body {
   border-radius: @radius-md;
   border: 1px solid var(--border-color);
   cursor: pointer;
-  margin-bottom: @spacing-sm;
   transition: transform @transition-fast @ease-out,
     box-shadow @transition-fast @ease-out,
     border-color @transition-fast @ease-out;
@@ -661,10 +639,6 @@ body {
 
 // Empty state
 .empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
   padding: @spacing-xl * 2;
   text-align: center;
 
@@ -679,7 +653,6 @@ body {
     font-size: 18px;
     font-weight: 600;
     color: var(--text-primary);
-    margin-bottom: @spacing-sm;
 
     &.ant-typography {
       margin-bottom: @spacing-sm;
@@ -698,35 +671,27 @@ body {
 
 // Settings page
 .settings-page {
-  .settings-section {
-    margin-bottom: @spacing-xl;
+  .section-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding-left: @spacing-sm;
 
-    .section-title {
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--text-secondary);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-bottom: @spacing-md;
-      padding-left: @spacing-sm;
-
-      &.ant-typography {
-        margin-bottom: @spacing-md;
-      }
-    }
-
-    .section-content {
-      background: var(--bg-card);
-      border-radius: @radius-md;
-      border: 1px solid var(--border-color);
-      overflow: hidden;
+    &.ant-typography {
+      margin-bottom: 0;
     }
   }
 
+  .section-content {
+    background: var(--bg-card);
+    border-radius: @radius-md;
+    border: 1px solid var(--border-color);
+    overflow: hidden;
+  }
+
   .settings-item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
     padding: @spacing-lg;
     border-bottom: 1px solid var(--border-color);
 
@@ -756,14 +721,9 @@ body {
 
 // Theme options
 .theme-options {
-  display: flex;
-  flex-direction: column;
-  gap: @spacing-sm;
+  // gap handled by Flex
 
   .theme-option {
-    display: flex;
-    align-items: center;
-    gap: @spacing-md;
     padding: @spacing-md @spacing-lg;
     background: var(--bg-card);
     border: 2px solid var(--border-color);
@@ -801,14 +761,6 @@ body {
       }
     }
   }
-}
-
-// Loading state
-.loading-container {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: @spacing-xl * 2;
 }
 
 // Button styles (using Ant Design, but custom overrides)

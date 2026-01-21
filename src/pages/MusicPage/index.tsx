@@ -1,5 +1,5 @@
 import { FC } from "react"
-import { Spin } from "antd"
+import { Spin, Flex } from "antd"
 import { useAppStore } from "../../store"
 import { AudioCard } from "../../components"
 
@@ -15,22 +15,26 @@ export const MusicPage: FC = () => {
 
   if (isConfigLoading) {
     return (
-      <div className="page">
-        <div className="loading-container">
-          <Spin size="large" />
-        </div>
-      </div>
+      <Flex flex={1} align="center" justify="center" className="page">
+        <Spin fullscreen size="large" />
+      </Flex>
     )
   }
 
   return (
-    <div className="page">
+    <Flex vertical className="page" gap="small">
       {audios.length === 0 ? (
-        <div className="empty-state">
+        <Flex
+          vertical
+          flex={1}
+          align="center"
+          justify="center"
+          className="empty-state"
+        >
           <div className="empty-icon">🎵</div>
-        </div>
+        </Flex>
       ) : (
-        <div className="audio-list">
+        <Flex vertical gap="small" className="audio-list">
           {audios.map((audio) => (
             <AudioCard
               key={audio.audio.id}
@@ -38,9 +42,9 @@ export const MusicPage: FC = () => {
               onClick={() => handleAudioClick(audio)}
             />
           ))}
-        </div>
+        </Flex>
       )}
-    </div>
+    </Flex>
   )
 }
 

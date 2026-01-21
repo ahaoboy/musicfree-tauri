@@ -1,5 +1,5 @@
 import { FC, useEffect, useState } from "react"
-import { Button, App, Tooltip, Typography } from "antd"
+import { Button, App, Tooltip, Typography, Flex } from "antd"
 import {
   BulbOutlined,
   MoonOutlined,
@@ -28,7 +28,9 @@ const ThemeOption: FC<ThemeOptionProps> = ({
   onClick,
 }) => {
   return (
-    <div
+    <Flex
+      align="center"
+      gap="middle"
       className={`theme-option ${active ? "active" : ""}`}
       onClick={onClick}
       role="button"
@@ -41,7 +43,7 @@ const ThemeOption: FC<ThemeOptionProps> = ({
     >
       <span className="option-icon">{icon}</span>
       <Text className="option-label">{label}</Text>
-    </div>
+    </Flex>
   )
 }
 
@@ -61,12 +63,12 @@ export const SettingsPage: FC = () => {
   }, [])
 
   return (
-    <div className="page settings-page">
-      <div className="settings-section">
+    <Flex vertical gap="large" className="page settings-page">
+      <Flex vertical gap="middle" className="settings-section">
         <Title level={5} className="section-title">
           Theme
         </Title>
-        <div className="theme-options">
+        <Flex vertical gap="small" className="theme-options">
           <ThemeOption
             mode="light"
             icon={<BulbOutlined />}
@@ -88,71 +90,89 @@ export const SettingsPage: FC = () => {
             active={theme === "auto"}
             onClick={() => setThemeMode("auto")}
           />
-        </div>
-      </div>
+        </Flex>
+      </Flex>
 
-      <div className="settings-section">
+      <Flex vertical gap="middle" className="settings-section">
         <Title level={5} className="section-title">
           Library
         </Title>
-        <div className="section-content">
-          <div className="settings-item">
+        <Flex vertical className="section-content">
+          <Flex
+            align="center"
+            justify="space-between"
+            className="settings-item"
+          >
             <Text className="item-label">Downloaded Tracks</Text>
             <Text type="secondary" className="item-value">
               {audios.length}
             </Text>
-          </div>
-          <div className="settings-item">
+          </Flex>
+          <Flex
+            align="center"
+            justify="space-between"
+            className="settings-item"
+          >
             <Text className="item-label">Playlists</Text>
             <Text type="secondary" className="item-value">
               {playlists.length}
             </Text>
-          </div>
-        </div>
-      </div>
+          </Flex>
+        </Flex>
+      </Flex>
 
-      <div className="settings-section">
+      <Flex vertical gap="middle" className="settings-section">
         <Title level={5} className="section-title">
           About
         </Title>
-        <div className="section-content">
-          <div className="settings-item">
+        <Flex vertical className="section-content">
+          <Flex
+            align="center"
+            justify="space-between"
+            className="settings-item"
+          >
             <Text className="item-label">Version</Text>
             <Text type="secondary" className="item-value">
               {version || "Loading..."}
             </Text>
-          </div>
-          <div className="settings-item">
+          </Flex>
+          <Flex
+            align="center"
+            justify="space-between"
+            className="settings-item"
+          >
             <Text className="item-label">App Directory</Text>
-            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              <Tooltip title="Copy Path">
-                <Button
-                  type="text"
-                  icon={<CopyOutlined />}
-                  onClick={async () => {
-                    if (appDirPath) {
-                      try {
-                        await writeText(appDirPath)
-                        message.success("Path copied to clipboard")
-                      } catch (e) {
-                        console.error(e)
-                        message.error("Failed to copy path")
-                      }
+            <Tooltip title="Copy Path">
+              <Button
+                type="text"
+                icon={<CopyOutlined />}
+                onClick={async () => {
+                  if (appDirPath) {
+                    try {
+                      await writeText(appDirPath)
+                      message.success("Path copied to clipboard")
+                    } catch (e) {
+                      console.error(e)
+                      message.error("Failed to copy path")
                     }
-                  }}
-                />
-              </Tooltip>
-            </div>
-          </div>
-        </div>
-      </div>
+                  }
+                }}
+              />
+            </Tooltip>
+          </Flex>
+        </Flex>
+      </Flex>
 
-      <div className="settings-section">
+      <Flex vertical gap="middle" className="settings-section">
         <Title level={5} className="section-title">
           Data Management
         </Title>
-        <div className="section-content">
-          <div className="settings-item">
+        <Flex vertical className="section-content">
+          <Flex
+            align="center"
+            justify="space-between"
+            className="settings-item"
+          >
             <Text className="item-label">Clear All Data</Text>
             <Button
               danger
@@ -179,10 +199,10 @@ export const SettingsPage: FC = () => {
             >
               Clear
             </Button>
-          </div>
-        </div>
-      </div>
-    </div>
+          </Flex>
+        </Flex>
+      </Flex>
+    </Flex>
   )
 }
 

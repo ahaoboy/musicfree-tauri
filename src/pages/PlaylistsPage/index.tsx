@@ -1,5 +1,5 @@
 import { FC, useState, useEffect, useCallback } from "react"
-import { Typography } from "antd"
+import { Typography, Flex } from "antd"
 import { useAppStore } from "../../store"
 import { LocalPlaylist, LocalAudio } from "../../api"
 import { PlaylistCard, AudioCard } from "../../components"
@@ -59,9 +59,16 @@ export const PlaylistsPage: FC = () => {
   // Render playlist detail view
   if (selectedPlaylist) {
     return (
-      <div className="page">
+      <Flex vertical className="page" gap="small">
         {selectedPlaylist.audios.length === 0 ? (
-          <div className="empty-state">
+          <Flex
+            vertical
+            flex={1}
+            align="center"
+            justify="center"
+            gap="middle"
+            className="empty-state"
+          >
             <div className="empty-icon">🎵</div>
             <Title level={4} className="empty-title">
               No Audio
@@ -69,46 +76,47 @@ export const PlaylistsPage: FC = () => {
             <Text type="secondary" className="empty-description">
               This playlist has no audio tracks yet.
             </Text>
-          </div>
+          </Flex>
         ) : (
-          <div className="audio-list">
+          <Flex vertical gap="small" className="audio-list">
             {selectedPlaylist.audios.map((audio, index) => (
-              <div
+              <AudioCard
                 key={`${audio.audio.id}-${index}`}
-                className="virtual-list-item"
-              >
-                <AudioCard
-                  audio={audio}
-                  onClick={() => handleAudioClick(audio)}
-                />
-              </div>
+                audio={audio}
+                onClick={() => handleAudioClick(audio)}
+              />
             ))}
-          </div>
+          </Flex>
         )}
-      </div>
+      </Flex>
     )
   }
 
   // Render playlists grid
   return (
-    <div className="page">
+    <Flex vertical className="page" gap="small">
       {playlists.length === 0 ? (
-        <div className="empty-state">
+        <Flex
+          vertical
+          flex={1}
+          align="center"
+          justify="center"
+          className="empty-state"
+        >
           <div className="empty-icon">📁</div>
-        </div>
+        </Flex>
       ) : (
-        <div className="playlist-grid">
+        <Flex vertical gap="small" className="playlist-grid">
           {playlists.map((playlist, index) => (
-            <div key={`${playlist.id}-${index}`} className="virtual-list-item">
-              <PlaylistCard
-                playlist={playlist}
-                onClick={() => handlePlaylistClick(playlist)}
-              />
-            </div>
+            <PlaylistCard
+              key={`${playlist.id}-${index}`}
+              playlist={playlist}
+              onClick={() => handlePlaylistClick(playlist)}
+            />
           ))}
-        </div>
+        </Flex>
       )}
-    </div>
+    </Flex>
   )
 }
 

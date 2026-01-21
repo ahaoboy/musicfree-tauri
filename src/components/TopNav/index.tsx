@@ -5,6 +5,7 @@ import {
   SearchOutlined,
   SettingOutlined,
 } from "@ant-design/icons"
+import { Flex } from "antd"
 
 type Tab = "playlists" | "music" | "search" | "settings"
 
@@ -29,10 +30,15 @@ const navItems: NavItem[] = [
 // Top navigation bar component
 export const TopNav: FC<TopNavProps> = ({ activeTab, onChange }) => {
   return (
-    <nav className="top-nav">
+    <Flex component="nav" className="top-nav" justify="space-around">
       {navItems.map((item) => (
-        <div
+        <Flex
           key={item.key}
+          vertical
+          align="center"
+          justify="center"
+          flex={1}
+          gap={4}
           className={`nav-item ${activeTab === item.key ? "active" : ""}`}
           onClick={() => onChange(item.key)}
           role="button"
@@ -45,9 +51,9 @@ export const TopNav: FC<TopNavProps> = ({ activeTab, onChange }) => {
         >
           <span className="nav-icon">{item.icon}</span>
           {/* <span className="nav-label">{item.label}</span> */}
-        </div>
+        </Flex>
       ))}
-    </nav>
+    </Flex>
   )
 }
 

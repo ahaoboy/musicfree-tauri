@@ -452,43 +452,38 @@ export const SearchPage: FC = () => {
   const someSelected = selectedIds.size > 0 && !allSelected
 
   return (
-    <div className="page search-page">
-      <div className="search-container">
-        <Space.Compact style={{ width: "100%" }}>
-          <Search
-            placeholder="Paste audio/playlist URL here"
-            allowClear
-            value={url}
-            onChange={(e) => {
-              const val = e.target.value
-              setUrl(val)
-              if (!val) {
-                setPlaylist(null)
-                setSelectedIds(new Set())
-                setCoverUrls({})
-                setPlaylistCoverUrl(null)
-              }
-            }}
-            onSearch={handleSearch}
-            loading={searching}
-          />
-        </Space.Compact>
-      </div>
+    <Flex vertical className="page search-page" gap="middle">
+      <Space.Compact style={{ width: "100%" }}>
+        <Search
+          placeholder="Paste audio/playlist URL here"
+          allowClear
+          value={url}
+          onChange={(e) => {
+            const val = e.target.value
+            setUrl(val)
+            if (!val) {
+              setPlaylist(null)
+              setSelectedIds(new Set())
+              setCoverUrls({})
+              setPlaylistCoverUrl(null)
+            }
+          }}
+          onSearch={handleSearch}
+          loading={searching}
+        />
+      </Space.Compact>
 
       {playlist && !searching && (
         <>
-          <div className="audio-list">
+          <Flex vertical className="audio-list" gap="small">
             {/* List Header Info */}
-            <div className="search-result-info">
-              <Text type="secondary">
-                Found {playlist.audios.length} tracks
-              </Text>
-            </div>
+            <Text type="secondary" className="search-result-info">
+              Found {playlist.audios.length} tracks
+            </Text>
 
-            {/* Playlist Info Card (Optional, keeping it simple for now or usage above) */}
-            {/* If it's a playlist search, maybe show some info? */}
+            {/* Playlist Info Card */}
             {playlist.title && playlist.audios.length > 1 && (
-              <div className="audio-card" style={{ marginBottom: 16 }}>
+              <Flex align="center" gap="middle" className="audio-card">
                 <Avatar
                   src={playlistCoverUrl || DEFAULT_COVER_URL}
                   icon={<AudioOutlined />}
@@ -497,7 +492,7 @@ export const SearchPage: FC = () => {
                   alt={playlist.title}
                   className="audio-cover"
                 />
-                <div className="audio-info">
+                <Flex vertical flex={1} style={{ minWidth: 0 }}>
                   <Text
                     strong
                     ellipsis={{ tooltip: playlist.title }}
@@ -505,13 +500,11 @@ export const SearchPage: FC = () => {
                   >
                     {playlist.title}
                   </Text>
-                  <div className="audio-meta">
-                    <Text type="secondary" className="audio-platform">
-                      {playlist.platform}
-                    </Text>
-                  </div>
-                </div>
-              </div>
+                  <Text type="secondary" className="audio-platform">
+                    {playlist.platform}
+                  </Text>
+                </Flex>
+              </Flex>
             )}
 
             {playlist.audios.map((audio) => (
@@ -526,10 +519,14 @@ export const SearchPage: FC = () => {
                 onDownload={() => handleDownloadSingle(audio)}
               />
             ))}
-          </div>
+          </Flex>
 
           {/* Bottom Action Bar */}
-          <div className="search-bottom-bar">
+          <Flex
+            align="center"
+            justify="space-between"
+            className="search-bottom-bar"
+          >
             <Checkbox
               checked={!!allSelected}
               indeterminate={someSelected}
@@ -546,20 +543,22 @@ export const SearchPage: FC = () => {
             >
               Download ({selectedIds.size})
             </Button>
-          </div>
+          </Flex>
         </>
       )}
 
       {!playlist && !searching && (
-        <div className="empty-state">
-          <img
+        <Flex flex={1} align="center" justify="center" className="empty-state">
+          <Avatar
             src={DEFAULT_COVER_URL}
+            size={256}
+            shape="square"
+            style={{ opacity: 0.5 }}
             alt="Search"
-            style={{ width: 256, height: 256, opacity: 0.5 }}
           />
-        </div>
+        </Flex>
       )}
-    </div>
+    </Flex>
   )
 }
 
