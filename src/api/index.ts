@@ -1,4 +1,5 @@
-import { invoke } from "@tauri-apps/api/core"
+import { invoke, convertFileSrc } from "@tauri-apps/api/core"
+import { join } from "@tauri-apps/api/path"
 
 export type Platform = string
 
@@ -76,20 +77,26 @@ export function download_cover(
   return invoke("download_cover", { url, platform })
 }
 
-// import { convertFileSrc } from "@tauri-apps/api/core"
-// import { join } from "@tauri-apps/api/path"
-// export async function get_web_url(path: string): Promise<string> {
-//   const appDataDirPath: string = await invoke("app_dir");
-//   const localPath = await join(appDataDirPath, path);
-//   const assetUrl = convertFileSrc(localPath);
-//   return assetUrl
-// }
+export async function get_convert_url(path: string): Promise<string> {
+  const appDataDirPath: string = await invoke("app_dir")
+  const localPath = await join(appDataDirPath, path)
+  const assetUrl = convertFileSrc(localPath)
+  return assetUrl
+}
 
-export async function get_web_url(path: string): Promise<string> {
+function is_android() {
+  return /Android/i.test(navigator.userAgent)
+}
+
+export async function get_web_blob(path: string): Promise<string> {
   const bin = await read_file(path)
   const blob = new Blob([new Uint8Array(bin)])
   const assetUrl = URL.createObjectURL(blob)
   return assetUrl
+}
+
+export async function get_web_url(path: string): Promise<string> {
+  return is_android() ? get_web_blob(path) : get_convert_url(path)
 }
 
 export const DEFAULT_COVER_URL = "/icon.png"
