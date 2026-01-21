@@ -197,10 +197,10 @@ body {
   box-shadow: @shadow-sm;
 
   .ant-tabs-nav {
-    margin-bottom: 0 !important;
+    margin-bottom: 0;
 
     &::before {
-      display: none !important;
+      display: none;
     }
   }
 
@@ -211,8 +211,8 @@ body {
   .ant-tabs-tab {
     flex: 1;
     justify-content: center;
-    margin: 0 !important;
-    padding: @spacing-md 0 !important;
+    margin: 0;
+    padding: @spacing-md 0;
     transition: all @transition-fast @ease-out;
 
     .ant-tabs-tab-btn {
@@ -524,21 +524,21 @@ body {
   .player-controls {
     flex-shrink: 0;
 
+
     .control-btn {
-      width: 44px !important;
-      height: 44px !important;
-      min-width: 44px !important;
-      border-radius: @radius-full !important;
-      border: none !important;
-      background: @primary-gradient !important;
-      color: #fff !important;
-      font-size: 18px !important;
+      width: 44px  ;
+      height: 44px  ;
+      min-width: 44px  ;
+      border-radius: @radius-full;
+      border: none;
+      color: #fff;
+      font-size: 18px;
       cursor: pointer;
-      display: flex !important;
-      align-items: center !important;
-      justify-content: center !important;
-      padding: 0 !important;
-      transition: transform @transition-fast @ease-out, opacity @transition-fast @ease-out !important;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      transition: transform @transition-fast @ease-out, opacity @transition-fast @ease-out;
 
       .anticon {
         font-size: 18px;
@@ -546,41 +546,43 @@ body {
 
       &:hover {
         transform: scale(1.05);
-        color: #fff !important;
+        color: #fff;
       }
 
       &:active {
         transform: scale(0.95);
         opacity: 0.9;
       }
+
+
     }
 
     .action-btn {
-      background: none !important;
-      border: none !important;
+      background: none;
+      border: none;
       cursor: pointer;
-      font-size: 20px !important;
-      color: var(--text-primary) !important;
-      width: 40px !important;
-      height: 40px !important;
-      min-width: 40px !important;
-      display: flex !important;
-      align-items: center !important;
-      justify-content: center !important;
-      border-radius: 50% !important;
-      padding: 0 !important;
-      transition: background @transition-fast @ease-out !important;
+      font-size: 20px;
+      color: var(--text-primary);
+      width: 40px;
+      height: 40px;
+      min-width: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      padding: 0;
+      transition: background @transition-fast @ease-out;
 
       .anticon {
         font-size: 20px;
       }
 
       &:hover {
-        color: var(--text-primary) !important;
+        color: var(--text-primary);
       }
 
       &:active {
-        background: rgba(0, 0, 0, 0.05) !important;
+        background: rgba(0, 0, 0, 0.05);
       }
     }
   }
@@ -761,11 +763,10 @@ body {
 
 // Button styles (using Ant Design, but custom overrides)
 .btn-primary {
-  background: @primary-gradient !important;
-  border: none !important;
-  border-radius: @radius-md !important;
-  height: 44px !important;
-  font-weight: 600 !important;
+  border: none;
+  border-radius: @radius-md;
+  height: 44px;
+  font-weight: 600;
 }
 
 // Detail page header
