@@ -32,6 +32,7 @@ interface AudioItemProps {
 const AudioItem: FC<AudioItemProps> = ({
   audio,
   selected,
+  coverUrl,
   downloading,
   downloaded,
   onSelect,
@@ -47,7 +48,7 @@ const AudioItem: FC<AudioItemProps> = ({
         />
       </div>
       <div className="audio-cover">
-        <img src={DEFAULT_COVER_URL} alt={audio.title} />
+        <img src={coverUrl || DEFAULT_COVER_URL} alt={audio.title} />
       </div>
       <div className="audio-info">
         <div className="audio-title">{audio.title}</div>
