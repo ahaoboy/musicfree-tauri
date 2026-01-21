@@ -1,5 +1,6 @@
 import { FC } from "react"
-import { Spin, Flex } from "antd"
+import { Spin, Flex, App } from "antd"
+import { DeleteOutlined, ExclamationCircleOutlined } from "@ant-design/icons"
 import { useAppStore } from "../../store"
 import { AudioCard } from "../../components"
 
@@ -7,8 +8,10 @@ export const MusicPage: FC = () => {
   const {
     config: { audios },
     playAudio,
+    deleteAudio,
     isConfigLoading,
   } = useAppStore()
+  const { modal } = App.useApp()
   const handleAudioClick = (audio: (typeof audios)[number]) => {
     playAudio(audio, audios)
   }
@@ -40,6 +43,17 @@ export const MusicPage: FC = () => {
               key={audio.audio.id}
               audio={audio}
               onClick={() => handleAudioClick(audio)}
+              showAction
+              actionIcon={<DeleteOutlined />}
+              onAction={() => {
+                modal.confirm({
+                  title: "Delete Audio",
+                  centered: true,
+                  icon: <ExclamationCircleOutlined />,
+                  content: "Are you sure you want to delete this track?",
+                  onOk: () => deleteAudio(audio.audio.id),
+                })
+              }}
             />
           ))}
         </Flex>

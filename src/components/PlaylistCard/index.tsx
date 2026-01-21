@@ -8,10 +8,19 @@ const { Text } = Typography
 interface PlaylistCardProps {
   playlist: LocalPlaylist
   onClick?: () => void
+  showAction?: boolean
+  actionIcon?: React.ReactNode
+  onAction?: () => void
 }
 
 // Playlist card component showing cover and info
-export const PlaylistCard: FC<PlaylistCardProps> = ({ playlist, onClick }) => {
+export const PlaylistCard: FC<PlaylistCardProps> = ({
+  playlist,
+  onClick,
+  showAction = false,
+  actionIcon,
+  onAction,
+}) => {
   const [coverUrl, setCoverUrl] = useState<string | null>(null)
 
   useEffect(() => {
@@ -66,6 +75,31 @@ export const PlaylistCard: FC<PlaylistCardProps> = ({ playlist, onClick }) => {
           {audioCount} tracks · {playlist.platform}
         </Text>
       </Flex>
+      {showAction && actionIcon && (
+        <div
+          className="playlist-action"
+          onClick={(e) => {
+            e.stopPropagation()
+            onAction?.()
+          }}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.stopPropagation()
+              onAction?.()
+            }
+          }}
+          style={{
+            fontSize: 18,
+            color: "var(--text-secondary)",
+            padding: 8,
+            cursor: "pointer",
+          }}
+        >
+          {actionIcon}
+        </div>
+      )}
     </Flex>
   )
 }

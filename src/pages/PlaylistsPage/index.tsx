@@ -1,7 +1,8 @@
 import { FC, useState, useEffect, useCallback } from "react"
-import { Typography, Flex } from "antd"
+import { Typography, Flex, App } from "antd"
+import { DeleteOutlined, ExclamationCircleOutlined } from "@ant-design/icons"
 import { useAppStore } from "../../store"
-import { LocalPlaylist, LocalAudio } from "../../api"
+import { LocalPlaylist, LocalAudio, FAVORITE_PLAYLIST_ID } from "../../api"
 import { PlaylistCard, AudioCard } from "../../components"
 import { useNavigation } from "../../App"
 
@@ -14,10 +15,13 @@ export const PlaylistsPage: FC = () => {
   const {
     config: { playlists },
     playAudio,
+    deleteAudio,
+    deletePlaylist,
   } = useAppStore()
   const [selectedPlaylist, setSelectedPlaylist] =
     useState<LocalPlaylist | null>(null)
   const { setIsInDetailView, setOnBackFromDetail } = useNavigation()
+  const { modal } = App.useApp()
 
   // Handle back navigation
   const handleBack = useCallback(() => {
@@ -84,6 +88,17 @@ export const PlaylistsPage: FC = () => {
                 key={`${audio.audio.id}-${index}`}
                 audio={audio}
                 onClick={() => handleAudioClick(audio)}
+                showAction
+                actionIcon={<DeleteOutlined />}
+                onAction={() => {
+                  modal.confirm({
+                    title: "Delete Audio",
+                    centered: true,
+                    icon: <ExclamationCircleOutlined />,
+                    content: "Are you sure you want to delete this track?",
+                    onOk: () => deleteAudio(audio.audio.id),
+                  })
+                }}
               />
             ))}
           </Flex>
@@ -112,6 +127,17 @@ export const PlaylistsPage: FC = () => {
               key={`${playlist.id}-${index}`}
               playlist={playlist}
               onClick={() => handlePlaylistClick(playlist)}
+              showAction={playlist.id !== FAVORITE_PLAYLIST_ID}
+              actionIcon={<DeleteOutlined />}
+              onAction={() => {
+                modal.confirm({
+                  title: "Delete Playlist",
+                  centered: true,
+                  icon: <ExclamationCircleOutlined />,
+                  content: "Are you sure you want to delete this playlist?",
+                  onOk: () => deletePlaylist(playlist.id),
+                })
+              }}
             />
           ))}
         </Flex>

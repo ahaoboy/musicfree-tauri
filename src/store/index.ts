@@ -50,6 +50,8 @@ interface AppState {
   setPlaybackRate: (rate: number) => void
   toggleFavorite: (audio: LocalAudio) => Promise<void>
   isFavorited: (id: string) => boolean
+  deleteAudio: (id: string) => Promise<void>
+  deletePlaylist: (id: string) => Promise<void>
 }
 
 // Helper to apply theme to document
@@ -437,6 +439,50 @@ export const useAppStore = create<AppState>((set, get) => ({
     const updatedConfig: Config = {
       ...config,
       playlists,
+    }
+
+    await get().saveConfig(updatedConfig)
+  },
+
+  // Delete audio
+  deleteAudio: async (id: string) => {
+    const { config, currentAudio, pauseAudio } = get()
+    if (!config) return
+
+    // Stop playback if it's the current audio
+    if (currentAudio?.audio.id === id) {
+      pauseAudio()
+      set({ currentAudio: null, audioUrl: null })
+    }
+
+    // Remove from main list
+    const updatedAudios = config.audios.filter((a) => a.audio.id !== id)
+
+    // Remove from all playlists
+    const updatedPlaylists = config.playlists.map((p) => ({
+      ...p,
+      audios: p.audios.filter((a) => a.audio.id !== id),
+    }))
+
+    const updatedConfig: Config = {
+      ...config,
+      audios: updatedAudios,
+      playlists: updatedPlaylists,
+    }
+
+    await get().saveConfig(updatedConfig)
+  },
+
+  // Delete playlist
+  deletePlaylist: async (id: string) => {
+    const { config } = get()
+    if (!config) return
+
+    const updatedPlaylists = config.playlists.filter((p) => p.id !== id)
+
+    const updatedConfig: Config = {
+      ...config,
+      playlists: updatedPlaylists,
     }
 
     await get().saveConfig(updatedConfig)
