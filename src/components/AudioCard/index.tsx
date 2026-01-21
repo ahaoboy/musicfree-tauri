@@ -1,5 +1,5 @@
 import { FC, useState, useEffect } from "react"
-import { get_loacl_url, LocalAudio } from "../../api"
+import { get_web_url, LocalAudio } from "../../api"
 
 interface AudioCardProps {
   audio: LocalAudio
@@ -24,7 +24,7 @@ export const AudioCard: FC<AudioCardProps> = ({
     const loadCover = async () => {
       if (audio.cover_path) {
         try {
-          const url = await get_loacl_url(audio.cover_path)
+          const url = await get_web_url(audio.cover_path)
           setCoverUrl(url)
         } catch (error) {
           console.error("Failed to load cover:", error)

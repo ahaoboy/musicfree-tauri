@@ -6,7 +6,7 @@ import {
   PauseCircleFilled,
   PlayCircleFilled,
 } from "@ant-design/icons"
-import { FAVORITE_PLAYLIST_ID, get_loacl_url, LocalAudio } from "../../api"
+import { FAVORITE_PLAYLIST_ID, get_web_url, LocalAudio } from "../../api"
 import { useAppStore } from "../../store"
 
 interface PlayerCardProps {
@@ -22,8 +22,8 @@ export const PlayerCard: FC<PlayerCardProps> = memo(({ audio }) => {
   // Check if favorited
   const isFavorited = audio
     ? playlists
-        .find((p) => p.id === FAVORITE_PLAYLIST_ID)
-        ?.audios.some((a) => a.audio.id === audio.audio.id)
+      .find((p) => p.id === FAVORITE_PLAYLIST_ID)
+      ?.audios.some((a) => a.audio.id === audio.audio.id)
     : false
 
   useEffect(() => {
@@ -35,7 +35,7 @@ export const PlayerCard: FC<PlayerCardProps> = memo(({ audio }) => {
 
       if (audio.cover_path) {
         try {
-          const url = await get_loacl_url(audio.cover_path)
+          const url = await get_web_url(audio.cover_path)
           setCoverUrl(url)
         } catch (error) {
           console.error("Failed to load cover:", error)

@@ -1,5 +1,5 @@
 import { FC, useState, useEffect } from "react"
-import { get_loacl_url, LocalPlaylist } from "../../api"
+import { get_web_url, LocalPlaylist } from "../../api"
 import { CustomerServiceOutlined } from "@ant-design/icons"
 
 interface PlaylistCardProps {
@@ -15,7 +15,7 @@ export const PlaylistCard: FC<PlaylistCardProps> = ({ playlist, onClick }) => {
     const loadCover = async () => {
       if (playlist.cover_path) {
         try {
-          const url = await get_loacl_url(playlist.cover_path)
+          const url = await get_web_url(playlist.cover_path)
           setCoverUrl(url)
         } catch (error) {
           console.error("Failed to load playlist cover:", error)

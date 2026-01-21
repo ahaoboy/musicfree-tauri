@@ -5,7 +5,7 @@ import {
   Config,
   get_config,
   save_config,
-  get_loacl_url,
+  get_web_url,
 } from "../api"
 
 // Playback Mode
@@ -196,7 +196,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   playAudio: async (audio: LocalAudio, queue?: LocalAudio[]) => {
     const { audioElement } = get()
     try {
-      const url = await get_loacl_url(audio.path)
+      const url = await get_web_url(audio.path)
 
       // Update queue if provided
       if (queue) {

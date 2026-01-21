@@ -15,7 +15,7 @@ import {
 } from "@ant-design/icons"
 import { Slider, message } from "antd"
 import { useAppStore } from "../../store"
-import { FAVORITE_PLAYLIST_ID, get_loacl_url } from "../../api"
+import { FAVORITE_PLAYLIST_ID, get_web_url } from "../../api"
 import "./index.less"
 
 const formatTime = (seconds: number) => {
@@ -48,8 +48,8 @@ const PlayerPage: FC = () => {
   // Check if favorited
   const isFavorited = currentAudio
     ? playlists
-        .find((p) => p.id === FAVORITE_PLAYLIST_ID)
-        ?.audios.some((a) => a.audio.id === currentAudio.audio.id)
+      .find((p) => p.id === FAVORITE_PLAYLIST_ID)
+      ?.audios.some((a) => a.audio.id === currentAudio.audio.id)
     : false
 
   // Load cover
@@ -62,7 +62,7 @@ const PlayerPage: FC = () => {
 
       if (currentAudio.cover_path) {
         try {
-          const url = await get_loacl_url(currentAudio.cover_path)
+          const url = await get_web_url(currentAudio.cover_path)
           setCoverUrl(url)
         } catch (error) {
           console.error("Failed to load cover:", error)

@@ -76,14 +76,14 @@ export function download_cover(
   return invoke("download_cover", { url, platform })
 }
 
-// export async function get_loacl_url(path: string): Promise<string> {
+// export async function get_web_url(path: string): Promise<string> {
 //   const appDataDirPath: string = await invoke("app_dir");
 //   const localPath = await join(appDataDirPath, path);
 //   const assetUrl = convertFileSrc(localPath);
 //   return assetUrl
 // }
 
-export async function get_loacl_url(path: string): Promise<string> {
+export async function get_web_url(path: string): Promise<string> {
   const bin = await read_file(path)
   const blob = new Blob([new Uint8Array(bin)])
   const assetUrl = URL.createObjectURL(blob)

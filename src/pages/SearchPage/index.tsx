@@ -8,7 +8,7 @@ import {
   exists_audio,
   exists_cover,
   extract_audios,
-  get_loacl_url,
+  get_web_url,
   LocalAudio,
   LocalPlaylist,
   Playlist,
@@ -137,7 +137,7 @@ export const SearchPage: FC = () => {
       if (!localPath) return null
 
       // Convert local path to web accessible URL
-      const webUrl = await get_loacl_url(localPath)
+      const webUrl = await get_web_url(localPath)
 
       // Cache the URL if audioId provided
       if (audioId) {
@@ -183,7 +183,7 @@ export const SearchPage: FC = () => {
           let coverPath: string | null = null
           if (audio.cover) {
             coverPath = await exists_cover(audio.cover, audio.platform)
-            if (coverPath) coverCache[audio.id] = await get_loacl_url(coverPath)
+            if (coverPath) coverCache[audio.id] = await get_web_url(coverPath)
           }
           const localAudio: LocalAudio = {
             audio,
