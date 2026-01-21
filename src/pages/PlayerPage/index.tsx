@@ -15,7 +15,7 @@ import {
 } from "@ant-design/icons"
 import { Slider, message } from "antd"
 import { useAppStore } from "../../store"
-import { FAVORITE_PLAYLIST_ID, get_web_url } from "../../api"
+import { FAVORITE_PLAYLIST_ID, get_web_url, DEFAULT_COVER_URL } from "../../api"
 import "./index.less"
 
 const formatTime = (seconds: number) => {
@@ -185,13 +185,10 @@ const PlayerPage: FC = () => {
       {/* Cover */}
       <div className="player-content">
         <div className="large-cover">
-          {coverUrl ? (
-            <img src={coverUrl} alt={currentAudio.audio.title} />
-          ) : (
-            <div className="cover-placeholder large">
-              {currentAudio.audio.title.charAt(0).toUpperCase()}
-            </div>
-          )}
+          <img
+            src={coverUrl || DEFAULT_COVER_URL}
+            alt={currentAudio.audio.title}
+          />
         </div>
 
         <div className="track-info">

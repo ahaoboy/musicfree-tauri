@@ -3,6 +3,7 @@ import { App, Button, Checkbox, Input, Space } from "antd"
 import { FC, useEffect, useState } from "react"
 import {
   Audio,
+  DEFAULT_COVER_URL,
   download_audio,
   download_cover,
   exists_audio,
@@ -28,10 +29,8 @@ interface AudioItemProps {
   onDownload: () => void
 }
 
-// Audio item component with checkbox and download button
 const AudioItem: FC<AudioItemProps> = ({
   audio,
-  coverUrl,
   selected,
   downloading,
   downloaded,
@@ -48,13 +47,7 @@ const AudioItem: FC<AudioItemProps> = ({
         />
       </div>
       <div className="audio-cover">
-        {coverUrl ? (
-          <img src={coverUrl} alt={audio.title} />
-        ) : (
-          <div className="cover-placeholder">
-            {audio.title.charAt(0).toUpperCase()}
-          </div>
-        )}
+        <img src={DEFAULT_COVER_URL} alt={audio.title} />
       </div>
       <div className="audio-info">
         <div className="audio-title">{audio.title}</div>
@@ -474,13 +467,10 @@ export const SearchPage: FC = () => {
             {playlist.title && playlist.audios.length > 1 && (
               <div className="audio-card" style={{ marginBottom: 16 }}>
                 <div className="audio-cover">
-                  {playlistCoverUrl ? (
-                    <img src={playlistCoverUrl} alt={playlist.title} />
-                  ) : (
-                    <div className="cover-placeholder">
-                      {playlist.title.charAt(0).toUpperCase()}
-                    </div>
-                  )}
+                  <img
+                    src={playlistCoverUrl || DEFAULT_COVER_URL}
+                    alt={playlist.title}
+                  />
                 </div>
                 <div className="audio-info">
                   <div className="audio-title">{playlist.title}</div>
@@ -529,7 +519,11 @@ export const SearchPage: FC = () => {
 
       {!playlist && !searching && (
         <div className="empty-state">
-          <div className="empty-icon">🔍</div>
+          <img
+            src={DEFAULT_COVER_URL}
+            alt="Search"
+            style={{ width: 256, height: 256, opacity: 0.5 }}
+          />
         </div>
       )}
     </div>

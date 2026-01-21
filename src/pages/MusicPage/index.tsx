@@ -32,10 +32,6 @@ export const MusicPage: FC = () => {
       {audios.length === 0 ? (
         <div className="empty-state">
           <div className="empty-icon">🎵</div>
-          <div className="empty-title">No Music</div>
-          <div className="empty-description">
-            Download music from the Search tab to see them here.
-          </div>
         </div>
       ) : (
         <div className="audio-list">

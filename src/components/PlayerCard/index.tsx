@@ -6,7 +6,12 @@ import {
   PauseCircleFilled,
   PlayCircleFilled,
 } from "@ant-design/icons"
-import { FAVORITE_PLAYLIST_ID, get_web_url, LocalAudio } from "../../api"
+import {
+  DEFAULT_COVER_URL,
+  FAVORITE_PLAYLIST_ID,
+  get_web_url,
+  LocalAudio,
+} from "../../api"
 import { useAppStore } from "../../store"
 
 interface PlayerCardProps {
@@ -17,6 +22,7 @@ interface PlayerCardProps {
 export const PlayerCard: FC<PlayerCardProps> = memo(({ audio }) => {
   const [coverUrl, setCoverUrl] = useState<string | null>(null)
   const { isPlaying, togglePlay, toggleFavorite, playlists } = useAppStore()
+
   const navigate = useNavigate()
 
   // Check if favorited
@@ -73,13 +79,7 @@ export const PlayerCard: FC<PlayerCardProps> = memo(({ audio }) => {
       }}
     >
       <div className="player-cover">
-        {coverUrl ? (
-          <img src={coverUrl} alt={audio.audio.title} />
-        ) : (
-          <div className="cover-placeholder">
-            {audio.audio.title.charAt(0).toUpperCase()}
-          </div>
-        )}
+        <img src={coverUrl || DEFAULT_COVER_URL} alt={audio.audio.title} />
       </div>
       <div className="player-info">
         <div className="player-title">{audio.audio.title}</div>

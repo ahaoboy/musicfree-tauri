@@ -1,5 +1,5 @@
 import { FC, useState, useEffect } from "react"
-import { get_web_url, LocalAudio } from "../../api"
+import { DEFAULT_COVER_URL, get_web_url, LocalAudio } from "../../api"
 
 interface AudioCardProps {
   audio: LocalAudio
@@ -54,13 +54,7 @@ export const AudioCard: FC<AudioCardProps> = ({
       }}
     >
       <div className="audio-cover">
-        {coverUrl ? (
-          <img src={coverUrl} alt={audio.audio.title} />
-        ) : (
-          <div className="cover-placeholder">
-            {audio.audio.title.charAt(0).toUpperCase()}
-          </div>
-        )}
+        <img src={coverUrl || DEFAULT_COVER_URL} alt={audio.audio.title} />
       </div>
       <div className="audio-info">
         <div className="audio-title">{audio.audio.title}</div>

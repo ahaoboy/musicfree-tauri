@@ -104,10 +104,6 @@ export const PlaylistsPage: FC = () => {
       {playlists.length === 0 ? (
         <div className="empty-state">
           <div className="empty-icon">📁</div>
-          <div className="empty-title">No Playlists</div>
-          <div className="empty-description">
-            Download playlists from the Search tab to see them here.
-          </div>
         </div>
       ) : (
         <div className="playlist-grid">

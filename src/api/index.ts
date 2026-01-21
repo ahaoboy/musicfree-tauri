@@ -92,6 +92,8 @@ export async function get_web_url(path: string): Promise<string> {
   return assetUrl
 }
 
+export const DEFAULT_COVER_URL = "/icon.png"
+
 export function get_config(): Promise<Config> {
   return invoke("get_config")
     .then((result: any) => {

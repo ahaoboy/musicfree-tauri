@@ -1,6 +1,5 @@
 import { FC, useState, useEffect } from "react"
-import { get_web_url, LocalPlaylist } from "../../api"
-import { CustomerServiceOutlined } from "@ant-design/icons"
+import { DEFAULT_COVER_URL, get_web_url, LocalPlaylist } from "../../api"
 
 interface PlaylistCardProps {
   playlist: LocalPlaylist
@@ -42,13 +41,7 @@ export const PlaylistCard: FC<PlaylistCardProps> = ({ playlist, onClick }) => {
       }}
     >
       <div className="playlist-cover">
-        {coverUrl ? (
-          <img src={coverUrl} alt={playlist.id} />
-        ) : (
-          <div className="cover-placeholder">
-            <CustomerServiceOutlined />
-          </div>
-        )}
+        <img src={coverUrl || DEFAULT_COVER_URL} alt={playlist.id} />
       </div>
       <div className="playlist-info">
         <div className="playlist-title">{playlist.id}</div>
