@@ -16,7 +16,7 @@ import {
 } from "@ant-design/icons"
 import { Slider, message, Button, Typography, Avatar, Flex } from "antd"
 import { useAppStore } from "../../store"
-import { FAVORITE_PLAYLIST_ID, get_web_url, DEFAULT_COVER_URL } from "../../api"
+import { get_web_url, DEFAULT_COVER_URL } from "../../api"
 import "./index.less"
 
 const { Title, Text } = Typography
@@ -38,22 +38,15 @@ const PlayerPage: FC = () => {
     playNext,
     playPrev,
     toggleFavorite,
-    config: { playlists },
     playMode,
     togglePlayMode,
+    isFavorited,
   } = useAppStore()
 
   const [coverUrl, setCoverUrl] = useState<string | null>(null)
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState(0)
   const [isDragging, setIsDragging] = useState(false)
-
-  // Check if favorited
-  const isFavorited = currentAudio
-    ? playlists
-        .find((p) => p.id === FAVORITE_PLAYLIST_ID)
-        ?.audios.some((a) => a.audio.id === currentAudio.audio.id)
-    : false
 
   // Load cover
   useEffect(() => {
@@ -282,6 +275,7 @@ const PlayerPage: FC = () => {
             icon={getModeIcon()}
             onClick={togglePlayMode}
             className="action-btn secondary"
+            style={{ cursor: "pointer" }}
           />
 
           <Button
@@ -289,6 +283,7 @@ const PlayerPage: FC = () => {
             icon={<StepBackwardOutlined />}
             onClick={() => playPrev()}
             className="action-btn secondary"
+            style={{ cursor: "pointer" }}
           />
 
           <Button
@@ -296,19 +291,19 @@ const PlayerPage: FC = () => {
             icon={isPlaying ? <PauseCircleFilled /> : <PlayCircleFilled />}
             onClick={togglePlay}
             className="play-btn large"
+            style={{ cursor: "pointer" }}
           />
 
           <Button
-            type="text"
             icon={<StepForwardOutlined />}
             onClick={() => playNext()}
             className="action-btn secondary"
+            style={{ cursor: "pointer" }}
           />
 
           <Button
-            type="text"
             icon={
-              isFavorited ? (
+              (currentAudio ? isFavorited(currentAudio.audio.id) : false) ? (
                 <HeartFilled style={{ color: "#ff4d4f" }} />
               ) : (
                 <HeartOutlined />
@@ -316,6 +311,7 @@ const PlayerPage: FC = () => {
             }
             onClick={() => toggleFavorite(currentAudio)}
             className="action-btn secondary"
+            style={{ cursor: "pointer" }}
           />
         </Flex>
       </Flex>

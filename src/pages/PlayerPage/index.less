@@ -181,19 +181,19 @@
 
 .player-controls-container {
   padding: 32px 24px;
-  background: rgba(255, 255, 255, 0.95);
-  border-radius: 28px 28px 0 0;
+  background: rgba(255, 255, 255, 0.05); // Fully transparent glass
+  border-radius: 32px 32px 0 0;
   z-index: 10;
-  box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.1);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border-top: 1px solid rgba(255, 255, 255, 0.2);
-  transition: all 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  transition: all 300ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
 
   [data-prefers-color-scheme='dark'] & {
-    background: rgba(30, 41, 59, 0.95);
-    box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.3);
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(0, 0, 0, 0.2);
+    box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.4);
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
   }
 }
 
@@ -227,7 +227,6 @@
 
   .ant-slider-handle {
     &::after {
-      background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%) !important;
       box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3) !important;
       width: 16px !important;
       height: 16px !important;
@@ -264,32 +263,32 @@
 }
 
 .action-btn {
-  background: rgba(100, 116, 139, 0.1) !important;
-  border: none !important;
+  background: rgba(255, 255, 255, 0.1) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
   cursor: pointer;
   font-size: 24px !important;
-  color: var(--text-primary) !important;
+  color: #ffffff !important; // Force white for better contrast on dark blur
   width: 52px !important;
   height: 52px !important;
   min-width: 52px !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  border-radius: 16px !important;
-  transition: all 150ms cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  border-radius: 18px !important;
+  transition: all 250ms cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   padding: 0 !important;
 
   &:hover {
-    background: rgba(100, 116, 139, 0.15) !important;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
-    color: var(--text-primary) !important;
+    background: rgba(255, 255, 255, 0.2) !important;
+    transform: translateY(-4px) scale(1.05);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2) !important;
+    color: #ffffff !important;
   }
 
   &:active {
-    background: rgba(100, 116, 139, 0.2) !important;
+    background: rgba(255, 255, 255, 0.15) !important;
     transform: translateY(0) scale(0.95);
   }
 
@@ -306,17 +305,12 @@
   }
 
   [data-prefers-color-scheme='dark'] & {
-    background: rgba(148, 163, 184, 0.1) !important;
-    color: var(--text-primary-dark) !important;
+    background: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(255, 255, 255, 0.05) !important;
 
     &:hover {
-      background: rgba(148, 163, 184, 0.15) !important;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
-      color: var(--text-primary-dark) !important;
-    }
-
-    &:active {
-      background: rgba(148, 163, 184, 0.2) !important;
+      background: rgba(255, 255, 255, 0.15) !important;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4) !important;
     }
   }
 }
@@ -328,8 +322,7 @@
 
 .play-btn.large {
   font-size: 72px !important;
-  color: #6366f1 !important;
-  background: rgba(255, 255, 255, 0.1) !important;
+  color: #ffffff !important; // White icon on vibrant background
   border: none !important;
   cursor: pointer;
   display: flex !important;
@@ -337,40 +330,6 @@
   justify-content: center !important;
   padding: 0 !important;
   margin: 0 24px;
-  width: 80px !important;
-  height: 80px !important;
-  min-width: 80px !important;
-  border-radius: 24px !important;
-  transition: all 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  box-shadow: 0 8px 24px rgba(99, 102, 241, 0.2) !important;
-
-  .anticon {
-    font-size: 72px;
-  }
-
-  &:hover {
-    transform: scale(1.05);
-    box-shadow: 0 12px 32px rgba(99, 102, 241, 0.3) !important;
-    background: rgba(255, 255, 255, 0.15) !important;
-    color: #6366f1 !important;
-  }
-
-  &:active {
-    transform: scale(0.95);
-    box-shadow: 0 4px 16px rgba(99, 102, 241, 0.4) !important;
-  }
-
-  [data-prefers-color-scheme='dark'] & {
-    background: rgba(0, 0, 0, 0.2) !important;
-    box-shadow: 0 8px 24px rgba(99, 102, 241, 0.3) !important;
-
-    &:hover {
-      background: rgba(0, 0, 0, 0.3) !important;
-      box-shadow: 0 12px 32px rgba(99, 102, 241, 0.4) !important;
-    }
-  }
 }
 
 // Responsive design for smaller screens
@@ -436,36 +395,6 @@
   }
 }
 
-// Animations
-@keyframes coverRotate {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@keyframes pulseGlow {
-  0%, 100% {
-    box-shadow: 0 8px 24px rgba(99, 102, 241, 0.2);
-  }
-  50% {
-    box-shadow: 0 8px 24px rgba(99, 102, 241, 0.4);
-  }
-}
-
-// Playing state animations
-.player-page.playing {
-  .large-cover {
-    animation: coverRotate 20s linear infinite;
-  }
-
-  .play-btn.large {
-    animation: pulseGlow 2s ease-in-out infinite;
-  }
-}
-
 // Loading state
 .player-page.loading {
   .large-cover {
@@ -475,45 +404,6 @@
 
   .track-info {
     opacity: 0.6;
-  }
-}
-
-// Favorite button special styling
-.action-btn .anticon-heart {
-  transition: all 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
-}
-
-.action-btn .anticon-heart[style*="color: rgb(255, 77, 79)"] {
-  animation: heartBeat 0.6s ease-in-out;
-}
-
-@keyframes heartBeat {
-  0% {
-    transform: scale(1);
-  }
-  14% {
-    transform: scale(1.3);
-  }
-  28% {
-    transform: scale(1);
-  }
-  42% {
-    transform: scale(1.2);
-  }
-  70% {
-    transform: scale(1);
-  }
-}
-
-// Enhanced backdrop blur for better performance
-@supports (backdrop-filter: blur(20px)) {
-  .player-header,
-  .player-controls-container,
-  .icon-btn,
-  .action-btn,
-  .play-btn.large {
-    backdrop-filter: blur(20px) saturate(180%);
-    -webkit-backdrop-filter: blur(20px) saturate(180%);
   }
 }
 
@@ -550,21 +440,5 @@
   .action-btn,
   .icon-btn {
     border: 1px solid var(--border-color);
-  }
-}
-
-// Reduced motion support
-@media (prefers-reduced-motion: reduce) {
-  .player-page.playing .large-cover {
-    animation: none;
-  }
-
-  .play-btn.large {
-    animation: none;
-  }
-
-  * {
-    transition-duration: 0.01ms !important;
-    animation-duration: 0.01ms !important;
   }
 }

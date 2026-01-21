@@ -229,8 +229,10 @@ const AppLayout: FC = () => {
                 </Routes>
               </Suspense>
             </Flex>
-            {/* Hide player card on search page to avoid overlapping with bottom actions */}
-            {currentTab !== "search" && <PlayerCard audio={currentAudio} />}
+            {/* Hide player card on search page and settings to avoid overlapping with bottom actions */}
+            {!["search", "settings"].includes(currentTab) && (
+              <PlayerCard audio={currentAudio} />
+            )}
             {/* biome-ignore lint/a11y/useMediaCaption: Music player does not need captions */}
             <audio ref={audioRef} />
           </Flex>

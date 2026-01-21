@@ -10,6 +10,7 @@ import {
   PlayMode,
   ThemeMode,
   get_system_theme,
+  FAVORITE_PLAYLIST_ID,
 } from "../api"
 
 // App state interface
@@ -48,6 +49,7 @@ interface AppState {
   setLastAudio: (audio: LocalAudio) => Promise<void>
   setPlaybackRate: (rate: number) => void
   toggleFavorite: (audio: LocalAudio) => Promise<void>
+  isFavorited: (id: string) => boolean
 }
 
 // Helper to apply theme to document
@@ -384,23 +386,33 @@ export const useAppStore = create<AppState>((set, get) => ({
     }
   },
 
+  isFavorited(id: string) {
+    const {
+      config: { playlists },
+    } = get()
+    const v = playlists.find((i) => i.id === FAVORITE_PLAYLIST_ID)
+    if (!v) {
+      return false
+    }
+    return !!v.audios.find((a) => a.audio.id === id)
+  },
+
   // Toggle favorite
   toggleFavorite: async (audio: LocalAudio) => {
     const { config } = get()
     if (!config) return
 
-    const favId = "Favorites"
-    let playlists = [...config.playlists]
-    let favPlaylist = playlists.find((p) => p.id === favId)
+    let playlists = config.playlists
+    let favPlaylist = playlists.find((p) => p.id === FAVORITE_PLAYLIST_ID)
 
     if (!favPlaylist) {
       favPlaylist = {
-        id: favId,
+        id: FAVORITE_PLAYLIST_ID,
         cover_path: null,
         audios: [],
         platform: "File",
       }
-      playlists.push(favPlaylist)
+      playlists.unshift(favPlaylist)
     }
 
     // Check if audio exists
@@ -418,14 +430,9 @@ export const useAppStore = create<AppState>((set, get) => ({
     }
 
     // Update playlists array
-    playlists = playlists.map((p) => (p.id === favId ? updatedFavPlaylist : p))
-
-    // Sort playlists: Favorites first, then others
-    playlists.sort((a, b) => {
-      if (a.id === "Favorites") return -1
-      if (b.id === "Favorites") return 1
-      return 0
-    })
+    playlists = playlists.map((p) =>
+      p.id === FAVORITE_PLAYLIST_ID ? updatedFavPlaylist : p,
+    )
 
     const updatedConfig: Config = {
       ...config,
