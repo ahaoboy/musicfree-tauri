@@ -1,6 +1,11 @@
 import { FC, useState, useEffect, memo } from "react"
 import { useNavigate } from "react-router-dom"
-import { PauseCircleFilled, PlayCircleFilled } from "@ant-design/icons"
+import {
+  HeartFilled,
+  HeartOutlined,
+  PauseCircleFilled,
+  PlayCircleFilled,
+} from "@ant-design/icons"
 import { get_loacl_url, LocalAudio } from "../../api"
 import { useAppStore } from "../../store"
 
@@ -11,8 +16,15 @@ interface PlayerCardProps {
 // Mini player card showing current audio with play/pause controls
 export const PlayerCard: FC<PlayerCardProps> = memo(({ audio }) => {
   const [coverUrl, setCoverUrl] = useState<string | null>(null)
-  const { isPlaying, togglePlay } = useAppStore()
+  const { isPlaying, togglePlay, toggleFavorite, playlists } = useAppStore()
   const navigate = useNavigate()
+
+  // Check if favorited
+  const isFavorited = audio
+    ? playlists
+        .find((p) => p.id === "Favorites")
+        ?.audios.some((a) => a.audio.id === audio.audio.id)
+    : false
 
   useEffect(() => {
     const loadCover = async () => {
@@ -74,6 +86,19 @@ export const PlayerCard: FC<PlayerCardProps> = memo(({ audio }) => {
         <div className="player-artist">{audio.audio.platform}</div>
       </div>
       <div className="player-controls">
+        <button
+          className="action-btn secondary"
+          onClick={(e) => {
+            e.stopPropagation()
+            toggleFavorite(audio)
+          }}
+        >
+          {isFavorited ? (
+            <HeartFilled style={{ color: "#ff4d4f" }} />
+          ) : (
+            <HeartOutlined />
+          )}
+        </button>
         <button className="control-btn" onClick={handlePlayClick}>
           {isPlaying ? <PauseCircleFilled /> : <PlayCircleFilled />}
         </button>

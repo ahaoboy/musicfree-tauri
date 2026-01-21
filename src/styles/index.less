@@ -561,6 +561,25 @@ body {
         opacity: 0.9;
       }
     }
+
+    .action-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 20px;
+      color: var(--text-primary);
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      transition: background @transition-fast @ease-out;
+
+      &:active {
+        background: rgba(0, 0, 0, 0.05);
+      }
+    }
   }
 
   // Slide in animation for mini player

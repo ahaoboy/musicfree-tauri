@@ -195,8 +195,8 @@ export const SearchPage: FC = () => {
         }
       }
       setCoverUrls((prev) => ({ ...prev, ...coverCache }))
-      // Add existing audios to config
-      if (existingLocalAudios.length > 0) {
+      // Add existing audios to config ONLY if it's a single track
+      if (existingLocalAudios.length > 0 && result.audios.length === 1) {
         await addAudiosToConfig(existingLocalAudios)
       }
 
@@ -337,10 +337,7 @@ export const SearchPage: FC = () => {
 
     // Determine if we should create a playlist
     const shouldCreatePlaylist =
-      downloadedLocalAudios.length > 0 &&
-      playlist &&
-      !!playlist.id &&
-      playlist.audios.length > 1
+      downloadedLocalAudios.length > 0 && playlist && playlist.audios.length > 1
 
     if (shouldCreatePlaylist) {
       // Download playlist cover if available
@@ -410,8 +407,12 @@ export const SearchPage: FC = () => {
         text: `${existingPlaylist ? "Updated" : "Created"} playlist: ${playlistId}`,
       })
     } else {
-      // Only add to Main Audios list if we didn't create a playlist
-      if (downloadedLocalAudios.length > 0) {
+      // Only add to Main Audios list if it's a single track download (not a playlist)
+      if (
+        downloadedLocalAudios.length > 0 &&
+        playlist &&
+        playlist.audios.length === 1
+      ) {
         await addAudiosToConfig(downloadedLocalAudios)
       }
     }

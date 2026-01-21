@@ -36,7 +36,7 @@ pub fn get_audio_filename(audio: &Audio) -> String {
 }
 
 pub fn get_cover_filename(cover_url: &str) -> String {
-    let id = format!("{:x}", md5::compute(&cover_url));
+    let id = format!("{:x}", md5::compute(cover_url));
     let filename = cover_url.split("/").last().unwrap_or("cover.jpg");
     format!("{id}_{filename}")
 }
@@ -89,7 +89,7 @@ pub async fn exists_audio(audio: &Audio, app_dir: PathBuf) -> AppResult<Option<S
     if !file_path.exists() {
         return Ok(None);
     }
-    return Ok(Some(audio_path));
+    Ok(Some(audio_path))
 }
 
 pub async fn exists_cover(
