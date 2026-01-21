@@ -207,7 +207,8 @@ const AppLayout: FC = () => {
                 </Suspense>
               </div>
             </main>
-            <PlayerCard audio={currentAudio} />
+            {/* Hide player card on search page to avoid overlapping with bottom actions */}
+            {currentTab !== "search" && <PlayerCard audio={currentAudio} />}
             {/* biome-ignore lint/a11y/useMediaCaption: Music player does not need captions */}
             <audio ref={audioRef} />
           </div>

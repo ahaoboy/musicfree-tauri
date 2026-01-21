@@ -3,9 +3,10 @@ use musicfree::{Audio, Platform};
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 
-const ASSETS_DIR: &str = "assets";
-const AUDIOS_DIR: &str = "audios";
-const COVERS_DIR: &str = "covers";
+pub const ASSETS_DIR: &str = "assets";
+pub const AUDIOS_DIR: &str = "audios";
+pub const COVERS_DIR: &str = "covers";
+pub const CONFIG_FILE: &str = "musicfree.json";
 
 fn write<P: AsRef<Path>, C: AsRef<[u8]>>(p: P, c: C) -> std::io::Result<()> {
     let p = p.as_ref();
@@ -81,8 +82,6 @@ pub async fn download_cover(
     }
     None
 }
-
-const CONFIG_FILE: &str = "musicfree.json";
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct Config {

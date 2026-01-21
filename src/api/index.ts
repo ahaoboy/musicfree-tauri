@@ -15,6 +15,7 @@ export type LocalAudio = {
 }
 
 export type Playlist = {
+  id?: string
   title?: string
   cover?: string
   audios: Audio[]
@@ -60,6 +61,10 @@ export function app_dir(): Promise<string> {
 
 export function read_file(path: string): Promise<Uint8Array> {
   return invoke("read_file", { path })
+}
+
+export function clear_all_data(): Promise<void> {
+  return invoke("clear_all_data")
 }
 
 export function download_cover(
@@ -198,4 +203,57 @@ export async function get_local_audios(): Promise<LocalAudio[]> {
     console.error("❌ Failed to load local audios:", error)
     return []
   }
+}
+
+export const FAVORITE_PLAYLIST_ID = "__favorite__"
+
+export function is_favorite(audio: LocalAudio, config: Config): boolean {
+  const fav = config.playlists.find((p) => p.id === FAVORITE_PLAYLIST_ID)
+  if (!fav) {
+    return false
+  }
+  return fav.audios.some((a) => a.audio.id === audio.audio.id)
+}
+
+export async function toggle_favorite_audio(
+  audio: LocalAudio,
+): Promise<Config> {
+  const config = await get_config()
+  const fav = config.playlists.find((p) => p.id === FAVORITE_PLAYLIST_ID)
+  if (!fav) {
+    // Create favorite playlist if it doesn't exist
+    config.playlists.unshift({
+      id: FAVORITE_PLAYLIST_ID,
+      cover_path: null,
+      audios: [audio],
+      platform: audio.audio.platform,
+    })
+    return save_config(config)
+  }
+  const index = fav.audios.findIndex((a) => a.audio.id === audio.audio.id)
+  if (index >= 0) {
+    // Remove from favorites
+    fav.audios.splice(index, 1)
+  } else {
+    // Add to favorites
+    fav.audios.push(audio)
+  }
+  if (fav.audios.length === 0) {
+    // Remove favorite playlist if empty
+    config.playlists.shift()
+  }
+  return save_config(config)
+}
+
+export function is_dark(config: Config): boolean {
+  if (config.theme === "dark") {
+    return true
+  } else if (config.theme === "light") {
+    return false
+  }
+  return globalThis.matchMedia("(prefers-color-scheme: dark)").matches
+}
+
+export function app_version(): Promise<string> {
+  return invoke("app_version")
 }

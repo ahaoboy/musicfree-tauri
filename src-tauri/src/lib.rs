@@ -24,6 +24,8 @@ pub fn run() {
             cmd::download_cover,
             cmd::get_config,
             cmd::save_config,
+            cmd::clear_all_data,
+            cmd::app_version,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -1,6 +1,6 @@
 import { FC, useState, useEffect } from "react"
-import { Button, Input, Checkbox, App } from "antd"
-import { SearchOutlined, DownloadOutlined } from "@ant-design/icons"
+import { Button, Input, Checkbox, App, Space } from "antd"
+import { DownloadOutlined } from "@ant-design/icons"
 import {
   extract_audios,
   download_audio,
@@ -12,6 +12,9 @@ import {
   LocalPlaylist,
 } from "../../api"
 import { useAppStore } from "../../store"
+import "./index.less"
+
+const { Search } = Input
 
 interface AudioItemProps {
   audio: Audio
@@ -266,8 +269,14 @@ export const SearchPage: FC = () => {
       }
     }
 
-    // Create/update playlist if downloading playlist
-    if (downloadedLocalAudios.length > 0 && playlist) {
+    // Determine if we should create a playlist
+    const shouldCreatePlaylist =
+      downloadedLocalAudios.length > 0 &&
+      playlist &&
+      !!playlist.id &&
+      playlist.audios.length > 1
+
+    if (shouldCreatePlaylist) {
       // Download playlist cover if available
       let coverPath: string | null = null
       if (playlist.cover) {
@@ -279,8 +288,12 @@ export const SearchPage: FC = () => {
       }
 
       // Create local playlist
+      // Use playlist.id as the identifier if available, otherwise title
+      const playlistId =
+        playlist.id || playlist.title || new Date().toISOString()
+
       const localPlaylist: LocalPlaylist = {
-        id: playlist.title || new Date().toISOString(),
+        id: playlistId,
         cover_path: coverPath,
         cover: playlist.cover,
         audios: downloadedLocalAudios,
@@ -288,7 +301,12 @@ export const SearchPage: FC = () => {
       }
 
       await addPlaylistToConfig(localPlaylist)
-      await addAudiosToConfig(downloadedLocalAudios)
+      message.success(`Created playlist: ${playlistId}`)
+    } else {
+      // Only add to Main Audios list if we didn't create a playlist
+      if (downloadedLocalAudios.length > 0) {
+        await addAudiosToConfig(downloadedLocalAudios)
+      }
     }
 
     // Reload config to refresh UI
@@ -311,102 +329,98 @@ export const SearchPage: FC = () => {
   const someSelected = selectedIds.size > 0 && !allSelected
 
   return (
-    <div className="page">
-      {/* <div className="page-header">
-        <h1 className="page-title">Search</h1>
-        <p className="page-subtitle">Download from URL</p>
-      </div> */}
-
-      <div className="search-group">
-        <Input
-          className="search-input"
-          placeholder="Enter audio/playlist URL"
-          value={url}
-          onChange={(e) => setUrl(e.target.value)}
-          onPressEnter={handleSearch}
-          disabled={searching}
-        />
-        <Button
-          type="primary"
-          icon={<SearchOutlined />}
-          onClick={handleSearch}
-          loading={searching}
-        >
-          Search
-        </Button>
+    <div className="page search-page">
+      <div className="search-container">
+        <Space.Compact style={{ width: "100%" }}>
+          <Search
+            placeholder="Paste audio/playlist URL here"
+            allowClear
+            value={url}
+            onChange={(e) => {
+              const val = e.target.value
+              setUrl(val)
+              if (!val) {
+                setPlaylist(null)
+                setSelectedIds(new Set())
+                setCoverUrls({})
+                setPlaylistCoverUrl(null)
+              }
+            }}
+            onSearch={handleSearch}
+            loading={searching}
+          />
+        </Space.Compact>
       </div>
 
       {playlist && !searching && (
-        <div className="audio-list">
-          {/* Playlist header with cover */}
-          {playlist.title && (
-            <div className="audio-card" style={{ marginBottom: 16 }}>
-              <div className="audio-cover">
-                {playlistCoverUrl ? (
-                  <img src={playlistCoverUrl} alt={playlist.title} />
-                ) : (
-                  <div className="cover-placeholder">
-                    {playlist.title.charAt(0).toUpperCase()}
+        <>
+          <div className="audio-list">
+            {/* List Header Info */}
+            <div className="search-result-info">
+              Found {playlist.audios.length} tracks
+            </div>
+
+            {/* Playlist Info Card (Optional, keeping it simple for now or usage above) */}
+            {/* If it's a playlist search, maybe show some info? */}
+            {playlist.title && playlist.audios.length > 1 && (
+              <div className="audio-card" style={{ marginBottom: 16 }}>
+                <div className="audio-cover">
+                  {playlistCoverUrl ? (
+                    <img src={playlistCoverUrl} alt={playlist.title} />
+                  ) : (
+                    <div className="cover-placeholder">
+                      {playlist.title.charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                </div>
+                <div className="audio-info">
+                  <div className="audio-title">{playlist.title}</div>
+                  <div className="audio-meta">
+                    <span className="audio-platform">{playlist.platform}</span>
                   </div>
-                )}
-              </div>
-              <div className="audio-info">
-                <div className="audio-title">{playlist.title}</div>
-                <div className="audio-meta">
-                  <span className="audio-platform">{playlist.platform}</span>
-                  <span> · {playlist.audios.length} tracks</span>
                 </div>
               </div>
-            </div>
-          )}
+            )}
 
-          <div className="list-header">
-            <span className="list-title">
-              {playlist.title || "Search Results"} ({playlist.audios.length})
-            </span>
-            <div className="list-actions">
-              <Checkbox
-                checked={!!allSelected}
-                indeterminate={someSelected}
-                onChange={(e) => handleSelectAll(e.target.checked)}
-              >
-                All
-              </Checkbox>
-              <Button
-                type="primary"
-                size="small"
-                icon={<DownloadOutlined />}
-                onClick={handleDownloadAll}
-                loading={downloadingAll}
-                disabled={selectedIds.size === 0}
-              >
-                Download ({selectedIds.size})
-              </Button>
-            </div>
+            {playlist.audios.map((audio) => (
+              <AudioItem
+                key={audio.id}
+                audio={audio}
+                coverUrl={coverUrls[audio.id] || null}
+                selected={selectedIds.has(audio.id)}
+                downloading={downloadingIds.has(audio.id)}
+                downloaded={downloadedIds.has(audio.id)}
+                onSelect={(checked) => handleSelect(audio.id, checked)}
+                onDownload={() => handleDownloadSingle(audio)}
+              />
+            ))}
           </div>
 
-          {playlist.audios.map((audio) => (
-            <AudioItem
-              key={audio.id}
-              audio={audio}
-              coverUrl={coverUrls[audio.id] || null}
-              selected={selectedIds.has(audio.id)}
-              downloading={downloadingIds.has(audio.id)}
-              downloaded={downloadedIds.has(audio.id)}
-              onSelect={(checked) => handleSelect(audio.id, checked)}
-              onDownload={() => handleDownloadSingle(audio)}
-            />
-          ))}
-        </div>
+          {/* Bottom Action Bar */}
+          <div className="search-bottom-bar">
+            <Checkbox
+              checked={!!allSelected}
+              indeterminate={someSelected}
+              onChange={(e) => handleSelectAll(e.target.checked)}
+            >
+              Select All
+            </Checkbox>
+            <Button
+              type="primary"
+              icon={<DownloadOutlined />}
+              onClick={handleDownloadAll}
+              loading={downloadingAll}
+              disabled={selectedIds.size === 0}
+            >
+              Download ({selectedIds.size})
+            </Button>
+          </div>
+        </>
       )}
 
       {!playlist && !searching && (
         <div className="empty-state">
           <div className="empty-icon">🔍</div>
-          <div className="empty-title">Search Audio</div>
-          <div className="empty-description">
-            Enter a URL to search for audio and playlists.
-          </div>
         </div>
       )}
     </div>
