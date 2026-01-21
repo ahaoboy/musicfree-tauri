@@ -48,8 +48,8 @@ const PlayerPage: FC = () => {
   // Check if favorited
   const isFavorited = currentAudio
     ? playlists
-      .find((p) => p.id === FAVORITE_PLAYLIST_ID)
-      ?.audios.some((a) => a.audio.id === currentAudio.audio.id)
+        .find((p) => p.id === FAVORITE_PLAYLIST_ID)
+        ?.audios.some((a) => a.audio.id === currentAudio.audio.id)
     : false
 
   // Load cover

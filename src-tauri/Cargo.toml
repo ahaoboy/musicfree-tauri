@@ -1,6 +1,6 @@
 [package]
 name = "musicfree-tauri"
-version = "0.1.2"
+version = "0.1.0"
 description = "A Tauri App"
 authors = ["you"]
 edition = "2024"

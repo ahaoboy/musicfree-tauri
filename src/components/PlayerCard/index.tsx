@@ -22,8 +22,8 @@ export const PlayerCard: FC<PlayerCardProps> = memo(({ audio }) => {
   // Check if favorited
   const isFavorited = audio
     ? playlists
-      .find((p) => p.id === FAVORITE_PLAYLIST_ID)
-      ?.audios.some((a) => a.audio.id === audio.audio.id)
+        .find((p) => p.id === FAVORITE_PLAYLIST_ID)
+        ?.audios.some((a) => a.audio.id === audio.audio.id)
     : false
 
   useEffect(() => {
