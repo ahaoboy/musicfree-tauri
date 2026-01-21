@@ -183,8 +183,7 @@ export const SearchPage: FC = () => {
           let coverPath: string | null = null
           if (audio.cover) {
             coverPath = await exists_cover(audio.cover, audio.platform)
-            if (coverPath)
-              coverCache[audio.id] = await get_loacl_url(coverPath)
+            if (coverPath) coverCache[audio.id] = await get_loacl_url(coverPath)
           }
           const localAudio: LocalAudio = {
             audio,

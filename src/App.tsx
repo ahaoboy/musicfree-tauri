@@ -196,7 +196,7 @@ const AppLayout: FC = () => {
                   <Routes>
                     <Route
                       path="/"
-                      element={<Navigate to="/music" replace />}
+                      element={<Navigate to="/playlists" replace />}
                     />
                     <Route path="/playlists/*" element={<PlaylistsPage />} />
                     <Route path="/music" element={<MusicPage />} />
