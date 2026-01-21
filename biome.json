@@ -54,7 +54,8 @@
       "a11y": {
         "useGenericFontNames": "off",
         "noStaticElementInteractions": "off",
-        "useButtonType": "off"
+        "useButtonType": "off",
+        "useSemanticElements": "off"
       }
     }
   },

@@ -1,16 +1,16 @@
-import { FC } from 'react';
-import { useAppStore } from '../../store';
-import { AudioCard } from '../../components';
+import { FC } from "react"
+import { useAppStore } from "../../store"
+import { AudioCard } from "../../components"
 
 // Music page - shows all playable music
 // Clicking an audio will start playback
 export const MusicPage: FC = () => {
-  const { audios, playAudio, isConfigLoading } = useAppStore();
+  const { audios, playAudio, isConfigLoading } = useAppStore()
 
   // Handle audio click - play the audio
-  const handleAudioClick = (audio: typeof audios[number]) => {
-    playAudio(audio, audios);
-  };
+  const handleAudioClick = (audio: (typeof audios)[number]) => {
+    playAudio(audio, audios)
+  }
 
   if (isConfigLoading) {
     return (
@@ -19,7 +19,7 @@ export const MusicPage: FC = () => {
           <span>Loading...</span>
         </div>
       </div>
-    );
+    )
   }
 
   return (
@@ -52,7 +52,7 @@ export const MusicPage: FC = () => {
         </div>
       )}
     </div>
-  );
-};
+  )
+}
 
-export default MusicPage;
+export default MusicPage

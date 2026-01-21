@@ -1,4 +1,14 @@
-import { FC, useEffect, useRef, useCallback, createContext, useContext, useState, Suspense, lazy } from 'react';
+import {
+  FC,
+  useEffect,
+  useRef,
+  useCallback,
+  createContext,
+  useContext,
+  useState,
+  Suspense,
+  lazy,
+} from "react"
 import {
   BrowserRouter,
   Routes,
@@ -6,64 +16,66 @@ import {
   useNavigate,
   useLocation,
   Navigate,
-} from 'react-router-dom';
-import { ConfigProvider, theme, App as AntApp, Spin } from 'antd';
-import { TopNav, PlayerCard, Tab } from './components';
-import { useAppStore } from './store';
-import { useSwipe, SwipeDirection } from './hooks';
-import './styles/index.less';
+} from "react-router-dom"
+import { ConfigProvider, theme, App as AntApp, Spin } from "antd"
+import { TopNav, PlayerCard, Tab } from "./components"
+import { useAppStore } from "./store"
+import { useSwipe, SwipeDirection } from "./hooks"
+import "./styles/index.less"
 
-const PlaylistsPage = lazy(() => import('./pages/PlaylistsPage'));
-const MusicPage = lazy(() => import('./pages/MusicPage'));
-const SearchPage = lazy(() => import('./pages/SearchPage'));
-const SettingsPage = lazy(() => import('./pages/SettingsPage'));
-const PlayerPage = lazy(() => import('./pages/PlayerPage'));
+const PlaylistsPage = lazy(() => import("./pages/PlaylistsPage"))
+const MusicPage = lazy(() => import("./pages/MusicPage"))
+const SearchPage = lazy(() => import("./pages/SearchPage"))
+const SettingsPage = lazy(() => import("./pages/SettingsPage"))
+const PlayerPage = lazy(() => import("./pages/PlayerPage"))
 
 // Route to Tab mapping
 const ROUTE_TO_TAB: Record<string, Tab> = {
-  '/playlists': 'playlists',
-  '/music': 'music',
-  '/search': 'search',
-  '/settings': 'settings',
-};
+  "/playlists": "playlists",
+  "/music": "music",
+  "/search": "search",
+  "/settings": "settings",
+}
 
 const TAB_TO_ROUTE: Record<Tab, string> = {
-  playlists: '/playlists',
-  music: '/music',
-  search: '/search',
-  settings: '/settings',
-};
+  playlists: "/playlists",
+  music: "/music",
+  search: "/search",
+  settings: "/settings",
+}
 
 // Tab order for swipe navigation
-const TAB_ORDER: Tab[] = ['playlists', 'music', 'search', 'settings'];
+const TAB_ORDER: Tab[] = ["playlists", "music", "search", "settings"]
 
 // Navigation context for child pages to report their state
 interface NavigationContextType {
-  isInDetailView: boolean;
-  setIsInDetailView: (value: boolean) => void;
-  onBackFromDetail: (() => void) | null;
-  setOnBackFromDetail: (callback: (() => void) | null) => void;
+  isInDetailView: boolean
+  setIsInDetailView: (value: boolean) => void
+  onBackFromDetail: (() => void) | null
+  setOnBackFromDetail: (callback: (() => void) | null) => void
 }
 
-const NavigationContext = createContext<NavigationContextType | null>(null);
+const NavigationContext = createContext<NavigationContextType | null>(null)
 
 export const useNavigation = () => {
-  const context = useContext(NavigationContext);
+  const context = useContext(NavigationContext)
   if (!context) {
-    throw new Error('useNavigation must be used within NavigationProvider');
+    throw new Error("useNavigation must be used within NavigationProvider")
   }
-  return context;
-};
+  return context
+}
 
 // Main layout component with navigation
 const AppLayout: FC = () => {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const audioRef = useRef<HTMLAudioElement>(null);
+  const navigate = useNavigate()
+  const location = useLocation()
+  const audioRef = useRef<HTMLAudioElement>(null)
 
   // Navigation state for detail views
-  const [isInDetailView, setIsInDetailView] = useState(false);
-  const [onBackFromDetail, setOnBackFromDetail] = useState<(() => void) | null>(null);
+  const [isInDetailView, setIsInDetailView] = useState(false)
+  const [onBackFromDetail, setOnBackFromDetail] = useState<(() => void) | null>(
+    null,
+  )
 
   const {
     loadConfig,
@@ -71,73 +83,73 @@ const AppLayout: FC = () => {
     currentAudio,
     themeMode,
     isConfigLoading,
-  } = useAppStore();
+  } = useAppStore()
 
   // Get current tab from route
-  const currentTab = ROUTE_TO_TAB[location.pathname] || 'playlists';
+  const currentTab = ROUTE_TO_TAB[location.pathname] || "playlists"
 
   // Initialize app - load config
   useEffect(() => {
-    loadConfig();
-  }, [loadConfig]);
+    loadConfig()
+  }, [loadConfig])
 
   // Set audio element reference
   useEffect(() => {
     if (audioRef.current) {
-      setAudioElement(audioRef.current);
+      setAudioElement(audioRef.current)
     }
     return () => {
-      setAudioElement(null);
-    };
-  }, [setAudioElement]);
+      setAudioElement(null)
+    }
+  }, [setAudioElement])
 
   // Handle tab change
   const handleTabChange = useCallback(
     (tab: Tab) => {
-      navigate(TAB_TO_ROUTE[tab]);
+      navigate(TAB_TO_ROUTE[tab])
     },
-    [navigate]
-  );
+    [navigate],
+  )
 
   // Handle swipe gesture for tab switching or back navigation
   const handleSwipe = useCallback(
     (direction: SwipeDirection) => {
-      if (direction !== 'left' && direction !== 'right') return;
+      if (direction !== "left" && direction !== "right") return
 
       // If in detail view, swipe right to go back
-      if (isInDetailView && direction === 'right') {
+      if (isInDetailView && direction === "right") {
         if (onBackFromDetail) {
-          onBackFromDetail();
+          onBackFromDetail()
         }
-        return;
+        return
       }
 
       // Normal tab switching
-      const currentIndex = TAB_ORDER.indexOf(currentTab);
+      const currentIndex = TAB_ORDER.indexOf(currentTab)
 
-      if (direction === 'left' && currentIndex < TAB_ORDER.length - 1) {
+      if (direction === "left" && currentIndex < TAB_ORDER.length - 1) {
         // Swipe left - go to next tab
-        navigate(TAB_TO_ROUTE[TAB_ORDER[currentIndex + 1]]);
-      } else if (direction === 'right' && currentIndex > 0) {
+        navigate(TAB_TO_ROUTE[TAB_ORDER[currentIndex + 1]])
+      } else if (direction === "right" && currentIndex > 0) {
         // Swipe right - go to previous tab
-        navigate(TAB_TO_ROUTE[TAB_ORDER[currentIndex - 1]]);
+        navigate(TAB_TO_ROUTE[TAB_ORDER[currentIndex - 1]])
       }
     },
-    [currentTab, isInDetailView, onBackFromDetail, navigate]
-  );
+    [currentTab, isInDetailView, onBackFromDetail, navigate],
+  )
 
   // Get swipe handlers
-  const swipeHandlers = useSwipe(handleSwipe, { threshold: 50 });
+  const swipeHandlers = useSwipe(handleSwipe, { threshold: 50 })
 
   // Determine if dark mode
   const isDark = (() => {
-    if (themeMode === 'dark') return true;
-    if (themeMode === 'light') return false;
-    if (typeof window !== 'undefined') {
-      return window.matchMedia('(prefers-color-scheme: dark)').matches;
+    if (themeMode === "dark") return true
+    if (themeMode === "light") return false
+    if (typeof window !== "undefined") {
+      return window.matchMedia("(prefers-color-scheme: dark)").matches
     }
-    return false;
-  })();
+    return false
+  })()
 
   // Navigation context value
   const navigationContextValue: NavigationContextType = {
@@ -145,7 +157,7 @@ const AppLayout: FC = () => {
     setIsInDetailView,
     onBackFromDetail,
     setOnBackFromDetail,
-  };
+  }
 
   // Loading state
   if (isConfigLoading) {
@@ -155,7 +167,7 @@ const AppLayout: FC = () => {
           <span>Loading...</span>
         </div>
       </div>
-    );
+    )
   }
 
   return (
@@ -163,7 +175,7 @@ const AppLayout: FC = () => {
       theme={{
         algorithm: isDark ? theme.darkAlgorithm : theme.defaultAlgorithm,
         token: {
-          colorPrimary: '#6366f1',
+          colorPrimary: "#6366f1",
           borderRadius: 12,
         },
       }}
@@ -174,9 +186,18 @@ const AppLayout: FC = () => {
             <TopNav activeTab={currentTab} onChange={handleTabChange} />
             <main className="main-content">
               <div className="page-transition">
-                <Suspense fallback={<div className="loading-container"><Spin size="large" /></div>}>
+                <Suspense
+                  fallback={
+                    <div className="loading-container">
+                      <Spin size="large" />
+                    </div>
+                  }
+                >
                   <Routes>
-                    <Route path="/" element={<Navigate to="/music" replace />} />
+                    <Route
+                      path="/"
+                      element={<Navigate to="/music" replace />}
+                    />
                     <Route path="/playlists/*" element={<PlaylistsPage />} />
                     <Route path="/music" element={<MusicPage />} />
                     <Route path="/search" element={<SearchPage />} />
@@ -187,13 +208,14 @@ const AppLayout: FC = () => {
               </div>
             </main>
             <PlayerCard audio={currentAudio} />
+            {/* biome-ignore lint/a11y/useMediaCaption: Music player does not need captions */}
             <audio ref={audioRef} />
           </div>
         </NavigationContext.Provider>
       </AntApp>
     </ConfigProvider>
-  );
-};
+  )
+}
 
 // App entry with Router
 const App: FC = () => {
@@ -201,7 +223,7 @@ const App: FC = () => {
     <BrowserRouter>
       <AppLayout />
     </BrowserRouter>
-  );
-};
+  )
+}
 
-export default App;
+export default App

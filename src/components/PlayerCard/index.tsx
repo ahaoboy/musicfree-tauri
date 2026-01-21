@@ -1,55 +1,65 @@
-import { FC, useState, useEffect, memo } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { PauseCircleFilled, PlayCircleFilled } from '@ant-design/icons';
-import { get_loacl_url, LocalAudio } from '../../api';
-import { useAppStore } from '../../store';
+import { FC, useState, useEffect, memo } from "react"
+import { useNavigate } from "react-router-dom"
+import { PauseCircleFilled, PlayCircleFilled } from "@ant-design/icons"
+import { get_loacl_url, LocalAudio } from "../../api"
+import { useAppStore } from "../../store"
 
 interface PlayerCardProps {
-  audio: LocalAudio | null;
+  audio: LocalAudio | null
 }
 
 // Mini player card showing current audio with play/pause controls
 export const PlayerCard: FC<PlayerCardProps> = memo(({ audio }) => {
-  const [coverUrl, setCoverUrl] = useState<string | null>(null);
-  const { isPlaying, togglePlay } = useAppStore();
-  const navigate = useNavigate();
+  const [coverUrl, setCoverUrl] = useState<string | null>(null)
+  const { isPlaying, togglePlay } = useAppStore()
+  const navigate = useNavigate()
 
   useEffect(() => {
     const loadCover = async () => {
       if (!audio) {
-        setCoverUrl(null);
-        return;
+        setCoverUrl(null)
+        return
       }
 
       if (audio.cover_path) {
         try {
-          const url = await get_loacl_url(audio.cover_path);
-          setCoverUrl(url);
+          const url = await get_loacl_url(audio.cover_path)
+          setCoverUrl(url)
         } catch (error) {
-          console.error('Failed to load cover:', error);
+          console.error("Failed to load cover:", error)
         }
       } else if (audio.audio.cover) {
-        setCoverUrl(audio.audio.cover);
+        setCoverUrl(audio.audio.cover)
       }
-    };
-    loadCover();
-  }, [audio?.cover_path, audio?.audio.cover]);
+    }
+    loadCover()
+  }, [audio?.cover_path, audio?.audio.cover])
 
   if (!audio) {
-    return null;
+    return null
   }
 
   const handleCardClick = () => {
-    navigate('/player');
-  };
+    navigate("/player")
+  }
 
   const handlePlayClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    togglePlay();
-  };
+    e.stopPropagation()
+    togglePlay()
+  }
 
   return (
-    <div className="mini-player clickable" onClick={handleCardClick}>
+    <div
+      className="mini-player clickable"
+      onClick={handleCardClick}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          handleCardClick()
+        }
+      }}
+    >
       <div className="player-cover">
         {coverUrl ? (
           <img src={coverUrl} alt={audio.audio.title} />
@@ -69,7 +79,7 @@ export const PlayerCard: FC<PlayerCardProps> = memo(({ audio }) => {
         </button>
       </div>
     </div>
-  );
-});
+  )
+})
 
-export default PlayerCard;
+export default PlayerCard

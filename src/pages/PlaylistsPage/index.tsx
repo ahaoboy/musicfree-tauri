@@ -1,54 +1,54 @@
-import { FC, useState, useEffect, useCallback } from 'react';
-import { LeftOutlined } from '@ant-design/icons';
-import { useAppStore } from '../../store';
-import { LocalPlaylist, LocalAudio } from '../../api';
-import { PlaylistCard, AudioCard } from '../../components';
-import { useNavigation } from '../../App';
+import { FC, useState, useEffect, useCallback } from "react"
+import { useAppStore } from "../../store"
+import { LocalPlaylist, LocalAudio } from "../../api"
+import { PlaylistCard, AudioCard } from "../../components"
+import { useNavigation } from "../../App"
 
 // Playlists page - shows all downloaded playlists
 // Clicking a playlist shows its detail with playable audios
 // Supports swipe right gesture to go back from detail view
 export const PlaylistsPage: FC = () => {
-  const { playlists, playAudio } = useAppStore();
-  const [selectedPlaylist, setSelectedPlaylist] = useState<LocalPlaylist | null>(null);
-  const { setIsInDetailView, setOnBackFromDetail } = useNavigation();
+  const { playlists, playAudio } = useAppStore()
+  const [selectedPlaylist, setSelectedPlaylist] =
+    useState<LocalPlaylist | null>(null)
+  const { setIsInDetailView, setOnBackFromDetail } = useNavigation()
 
   // Handle back navigation
   const handleBack = useCallback(() => {
-    setSelectedPlaylist(null);
-  }, []);
+    setSelectedPlaylist(null)
+  }, [])
 
   // Register detail view state with navigation context
   useEffect(() => {
-    const isDetail = selectedPlaylist !== null;
-    setIsInDetailView(isDetail);
+    const isDetail = selectedPlaylist !== null
+    setIsInDetailView(isDetail)
 
     if (isDetail) {
-      setOnBackFromDetail(() => handleBack);
+      setOnBackFromDetail(() => handleBack)
     } else {
-      setOnBackFromDetail(null);
+      setOnBackFromDetail(null)
     }
 
     // Cleanup on unmount
     return () => {
-      setIsInDetailView(false);
-      setOnBackFromDetail(null);
-    };
-  }, [selectedPlaylist, setIsInDetailView, setOnBackFromDetail, handleBack]);
+      setIsInDetailView(false)
+      setOnBackFromDetail(null)
+    }
+  }, [selectedPlaylist, setIsInDetailView, setOnBackFromDetail, handleBack])
 
   // Handle playlist click - show detail view
   const handlePlaylistClick = (playlist: LocalPlaylist) => {
-    setSelectedPlaylist(playlist);
-  };
+    setSelectedPlaylist(playlist)
+  }
 
   // Handle audio click - play the audio
   const handleAudioClick = (audio: LocalAudio) => {
     if (selectedPlaylist) {
-      playAudio(audio, selectedPlaylist.audios);
+      playAudio(audio, selectedPlaylist.audios)
     } else {
-      playAudio(audio);
+      playAudio(audio)
     }
-  };
+  }
 
   // Render playlist detail view
   if (selectedPlaylist) {
@@ -77,7 +77,10 @@ export const PlaylistsPage: FC = () => {
               </span>
             </div> */}
             {selectedPlaylist.audios.map((audio, index) => (
-              <div key={`${audio.audio.id}-${index}`} className="virtual-list-item">
+              <div
+                key={`${audio.audio.id}-${index}`}
+                className="virtual-list-item"
+              >
                 <AudioCard
                   audio={audio}
                   onClick={() => handleAudioClick(audio)}
@@ -87,7 +90,7 @@ export const PlaylistsPage: FC = () => {
           </div>
         )}
       </div>
-    );
+    )
   }
 
   // Render playlists grid
@@ -119,7 +122,7 @@ export const PlaylistsPage: FC = () => {
         </div>
       )}
     </div>
-  );
-};
+  )
+}
 
-export default PlaylistsPage;
+export default PlaylistsPage

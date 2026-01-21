@@ -1,6 +1,6 @@
-import { FC, useState, useEffect } from 'react';
-import { Button, Input, Checkbox, App } from 'antd';
-import { SearchOutlined, DownloadOutlined } from '@ant-design/icons';
+import { FC, useState, useEffect } from "react"
+import { Button, Input, Checkbox, App } from "antd"
+import { SearchOutlined, DownloadOutlined } from "@ant-design/icons"
 import {
   extract_audios,
   download_audio,
@@ -10,17 +10,17 @@ import {
   Playlist,
   LocalAudio,
   LocalPlaylist,
-} from '../../api';
-import { useAppStore } from '../../store';
+} from "../../api"
+import { useAppStore } from "../../store"
 
 interface AudioItemProps {
-  audio: Audio;
-  coverUrl: string | null;
-  selected: boolean;
-  downloading: boolean;
-  downloaded: boolean;
-  onSelect: (checked: boolean) => void;
-  onDownload: () => void;
+  audio: Audio
+  coverUrl: string | null
+  selected: boolean
+  downloading: boolean
+  downloaded: boolean
+  onSelect: (checked: boolean) => void
+  onDownload: () => void
 }
 
 // Audio item component with checkbox and download button
@@ -55,7 +55,9 @@ const AudioItem: FC<AudioItemProps> = ({
         <div className="audio-title">{audio.title}</div>
         <div className="audio-meta">
           <span className="audio-platform">{audio.platform}</span>
-          {downloaded && <span style={{ color: '#10b981' }}> · Downloaded</span>}
+          {downloaded && (
+            <span style={{ color: "#10b981" }}> · Downloaded</span>
+          )}
         </div>
       </div>
       <div className="audio-action">
@@ -65,213 +67,214 @@ const AudioItem: FC<AudioItemProps> = ({
           loading={downloading}
           disabled={downloaded}
           onClick={(e) => {
-            e.stopPropagation();
-            onDownload();
+            e.stopPropagation()
+            onDownload()
           }}
         />
       </div>
     </div>
-  );
-};
+  )
+}
 
 // Search page - search and download audio
 export const SearchPage: FC = () => {
-  const { message } = App.useApp();
-  const [url, setUrl] = useState('');
-  const [playlist, setPlaylist] = useState<Playlist | null>(null);
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [downloadingIds, setDownloadingIds] = useState<Set<string>>(new Set());
-  const [downloadedIds, setDownloadedIds] = useState<Set<string>>(new Set());
-  const [searching, setSearching] = useState(false);
-  const [downloadingAll, setDownloadingAll] = useState(false);
+  const { message } = App.useApp()
+  const [url, setUrl] = useState("")
+  const [playlist, setPlaylist] = useState<Playlist | null>(null)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [downloadingIds, setDownloadingIds] = useState<Set<string>>(new Set())
+  const [downloadedIds, setDownloadedIds] = useState<Set<string>>(new Set())
+  const [searching, setSearching] = useState(false)
+  const [downloadingAll, setDownloadingAll] = useState(false)
 
   // Cover URL cache: audio id -> web accessible URL
-  const [coverUrls, setCoverUrls] = useState<Record<string, string>>({});
-  const [playlistCoverUrl, setPlaylistCoverUrl] = useState<string | null>(null);
+  const [coverUrls, setCoverUrls] = useState<Record<string, string>>({})
+  const [playlistCoverUrl, setPlaylistCoverUrl] = useState<string | null>(null)
 
-  const { audios, addAudiosToConfig, addPlaylistToConfig, loadConfig } = useAppStore();
+  const { audios, addAudiosToConfig, addPlaylistToConfig, loadConfig } =
+    useAppStore()
 
   // Mark already downloaded audios
   useEffect(() => {
-    const downloaded = new Set(audios.map((a) => a.audio.id));
-    setDownloadedIds(downloaded);
-  }, [audios]);
+    const downloaded = new Set(audios.map((a) => a.audio.id))
+    setDownloadedIds(downloaded)
+  }, [audios])
 
   // Download and cache cover image
   const downloadAndCacheCover = async (
     coverUrl: string | undefined,
     platform: string,
-    audioId?: string
+    audioId?: string,
   ): Promise<string | null> => {
-    if (!coverUrl) return null;
+    if (!coverUrl) return null
 
     try {
       // Download cover to local storage
-      const localPath = await download_cover(coverUrl, platform);
-      if (!localPath) return null;
+      const localPath = await download_cover(coverUrl, platform)
+      if (!localPath) return null
 
       // Convert local path to web accessible URL
-      const webUrl = await get_loacl_url(localPath);
+      const webUrl = await get_loacl_url(localPath)
 
       // Cache the URL if audioId provided
       if (audioId) {
-        setCoverUrls((prev) => ({ ...prev, [audioId]: webUrl }));
+        setCoverUrls((prev) => ({ ...prev, [audioId]: webUrl }))
       }
 
-      return webUrl;
+      return webUrl
     } catch (error) {
-      console.error('Failed to download cover:', error);
-      return null;
+      console.error("Failed to download cover:", error)
+      return null
     }
-  };
+  }
 
   // Handle search
   const handleSearch = async () => {
     if (!url.trim()) {
-      message.warning('Please enter a URL');
-      return;
+      message.warning("Please enter a URL")
+      return
     }
 
-    setSearching(true);
-    setPlaylist(null);
-    setSelectedIds(new Set());
-    setCoverUrls({});
-    setPlaylistCoverUrl(null);
+    setSearching(true)
+    setPlaylist(null)
+    setSelectedIds(new Set())
+    setCoverUrls({})
+    setPlaylistCoverUrl(null)
 
     try {
-      const result = await extract_audios(url);
-      setPlaylist(result);
-      message.success(`Found ${result.audios.length} tracks`);
+      const result = await extract_audios(url)
+      setPlaylist(result)
+      message.success(`Found ${result.audios.length} tracks`)
 
       // Download playlist cover
       if (result.cover) {
         downloadAndCacheCover(result.cover, result.platform).then((webUrl) => {
           if (webUrl) {
-            setPlaylistCoverUrl(webUrl);
+            setPlaylistCoverUrl(webUrl)
           }
-        });
+        })
       }
 
       // Download audio covers in background
       result.audios.forEach((audio) => {
         if (audio.cover) {
-          downloadAndCacheCover(audio.cover, audio.platform, audio.id);
+          downloadAndCacheCover(audio.cover, audio.platform, audio.id)
         }
-      });
+      })
     } catch (error) {
-      console.error('Search failed:', error);
-      message.error('Search failed. Please check the URL.');
+      console.error("Search failed:", error)
+      message.error("Search failed. Please check the URL.")
     } finally {
-      setSearching(false);
+      setSearching(false)
     }
-  };
+  }
 
   // Handle select audio
   const handleSelect = (audioId: string, checked: boolean) => {
-    const newSelected = new Set(selectedIds);
+    const newSelected = new Set(selectedIds)
     if (checked) {
-      newSelected.add(audioId);
+      newSelected.add(audioId)
     } else {
-      newSelected.delete(audioId);
+      newSelected.delete(audioId)
     }
-    setSelectedIds(newSelected);
-  };
+    setSelectedIds(newSelected)
+  }
 
   // Handle select all
   const handleSelectAll = (checked: boolean) => {
-    if (!playlist) return;
+    if (!playlist) return
 
     if (checked) {
       const allIds = new Set(
         playlist.audios
           .filter((a) => !downloadedIds.has(a.id))
-          .map((a) => a.id)
-      );
-      setSelectedIds(allIds);
+          .map((a) => a.id),
+      )
+      setSelectedIds(allIds)
     } else {
-      setSelectedIds(new Set());
+      setSelectedIds(new Set())
     }
-  };
+  }
 
   // Handle download single audio
   const handleDownloadSingle = async (audio: Audio) => {
-    if (downloadingIds.has(audio.id) || downloadedIds.has(audio.id)) return;
+    if (downloadingIds.has(audio.id) || downloadedIds.has(audio.id)) return
 
-    setDownloadingIds((prev) => new Set(prev).add(audio.id));
+    setDownloadingIds((prev) => new Set(prev).add(audio.id))
 
     try {
-      const localAudios = await download_audio(audio);
+      const localAudios = await download_audio(audio)
 
       if (localAudios.length > 0) {
-        await addAudiosToConfig(localAudios);
+        await addAudiosToConfig(localAudios)
         setDownloadedIds((prev) => {
-          const newSet = new Set(prev);
-          localAudios.forEach((a) => newSet.add(a.audio.id));
-          return newSet;
-        });
-        message.success(`Downloaded: ${audio.title}`);
+          const newSet = new Set(prev)
+          localAudios.forEach((a) => newSet.add(a.audio.id))
+          return newSet
+        })
+        message.success(`Downloaded: ${audio.title}`)
       }
     } catch (error) {
-      console.error('Download failed:', error);
-      message.error(`Failed to download: ${audio.title}`);
+      console.error("Download failed:", error)
+      message.error(`Failed to download: ${audio.title}`)
     } finally {
       setDownloadingIds((prev) => {
-        const newSet = new Set(prev);
-        newSet.delete(audio.id);
-        return newSet;
-      });
+        const newSet = new Set(prev)
+        newSet.delete(audio.id)
+        return newSet
+      })
     }
-  };
+  }
 
   // Handle download all selected
   const handleDownloadAll = async () => {
     if (!playlist || selectedIds.size === 0) {
-      message.warning('Please select audio to download');
-      return;
+      message.warning("Please select audio to download")
+      return
     }
 
-    setDownloadingAll(true);
+    setDownloadingAll(true)
 
-    const selectedAudios = playlist.audios.filter((a) => selectedIds.has(a.id));
-    let successCount = 0;
-    const downloadedLocalAudios: LocalAudio[] = [];
+    const selectedAudios = playlist.audios.filter((a) => selectedIds.has(a.id))
+    let successCount = 0
+    const downloadedLocalAudios: LocalAudio[] = []
 
     for (const audio of selectedAudios) {
-      if (downloadedIds.has(audio.id)) continue;
+      if (downloadedIds.has(audio.id)) continue
 
-      setDownloadingIds((prev) => new Set(prev).add(audio.id));
+      setDownloadingIds((prev) => new Set(prev).add(audio.id))
 
       try {
-        const localAudios = await download_audio(audio);
+        const localAudios = await download_audio(audio)
         if (localAudios.length > 0) {
-          downloadedLocalAudios.push(...localAudios);
+          downloadedLocalAudios.push(...localAudios)
           setDownloadedIds((prev) => {
-            const newSet = new Set(prev);
-            localAudios.forEach((a) => newSet.add(a.audio.id));
-            return newSet;
-          });
-          successCount++;
+            const newSet = new Set(prev)
+            localAudios.forEach((a) => newSet.add(a.audio.id))
+            return newSet
+          })
+          successCount++
         }
       } catch (error) {
-        console.error(`Download failed for ${audio.title}:`, error);
+        console.error(`Download failed for ${audio.title}:`, error)
       } finally {
         setDownloadingIds((prev) => {
-          const newSet = new Set(prev);
-          newSet.delete(audio.id);
-          return newSet;
-        });
+          const newSet = new Set(prev)
+          newSet.delete(audio.id)
+          return newSet
+        })
       }
     }
 
     // Create/update playlist if downloading playlist
     if (downloadedLocalAudios.length > 0 && playlist) {
       // Download playlist cover if available
-      let coverPath: string | null = null;
+      let coverPath: string | null = null
       if (playlist.cover) {
         try {
-          coverPath = await download_cover(playlist.cover, playlist.platform);
+          coverPath = await download_cover(playlist.cover, playlist.platform)
         } catch (error) {
-          console.error('Failed to download playlist cover:', error);
+          console.error("Failed to download playlist cover:", error)
         }
       }
 
@@ -282,28 +285,30 @@ export const SearchPage: FC = () => {
         cover: playlist.cover,
         audios: downloadedLocalAudios,
         platform: playlist.platform,
-      };
+      }
 
-      await addPlaylistToConfig(localPlaylist);
-      await addAudiosToConfig(downloadedLocalAudios);
+      await addPlaylistToConfig(localPlaylist)
+      await addAudiosToConfig(downloadedLocalAudios)
     }
 
     // Reload config to refresh UI
-    await loadConfig();
+    await loadConfig()
 
-    setSelectedIds(new Set());
-    message.success(`Downloaded ${successCount}/${selectedAudios.length} tracks`);
-    setDownloadingAll(false);
-  };
+    setSelectedIds(new Set())
+    message.success(
+      `Downloaded ${successCount}/${selectedAudios.length} tracks`,
+    )
+    setDownloadingAll(false)
+  }
 
   const allSelected =
     playlist &&
     playlist.audios.filter((a) => !downloadedIds.has(a.id)).length > 0 &&
     playlist.audios
       .filter((a) => !downloadedIds.has(a.id))
-      .every((a) => selectedIds.has(a.id));
+      .every((a) => selectedIds.has(a.id))
 
-  const someSelected = selectedIds.size > 0 && !allSelected;
+  const someSelected = selectedIds.size > 0 && !allSelected
 
   return (
     <div className="page">
@@ -357,7 +362,7 @@ export const SearchPage: FC = () => {
 
           <div className="list-header">
             <span className="list-title">
-              {playlist.title || 'Search Results'} ({playlist.audios.length})
+              {playlist.title || "Search Results"} ({playlist.audios.length})
             </span>
             <div className="list-actions">
               <Checkbox
@@ -405,7 +410,7 @@ export const SearchPage: FC = () => {
         </div>
       )}
     </div>
-  );
-};
+  )
+}
 
-export default SearchPage;
+export default SearchPage

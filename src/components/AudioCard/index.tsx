@@ -1,12 +1,12 @@
-import { FC, useState, useEffect } from 'react';
-import { get_loacl_url, LocalAudio } from '../../api';
+import { FC, useState, useEffect } from "react"
+import { get_loacl_url, LocalAudio } from "../../api"
 
 interface AudioCardProps {
-  audio: LocalAudio;
-  onClick?: () => void;
-  showAction?: boolean;
-  actionIcon?: React.ReactNode;
-  onAction?: () => void;
+  audio: LocalAudio
+  onClick?: () => void
+  showAction?: boolean
+  actionIcon?: React.ReactNode
+  onAction?: () => void
 }
 
 // Audio info display card
@@ -18,31 +18,41 @@ export const AudioCard: FC<AudioCardProps> = ({
   actionIcon,
   onAction,
 }) => {
-  const [coverUrl, setCoverUrl] = useState<string | null>(null);
+  const [coverUrl, setCoverUrl] = useState<string | null>(null)
 
   useEffect(() => {
     const loadCover = async () => {
       if (audio.cover_path) {
         try {
-          const url = await get_loacl_url(audio.cover_path);
-          setCoverUrl(url);
+          const url = await get_loacl_url(audio.cover_path)
+          setCoverUrl(url)
         } catch (error) {
-          console.error('Failed to load cover:', error);
+          console.error("Failed to load cover:", error)
         }
       } else if (audio.audio.cover) {
-        setCoverUrl(audio.audio.cover);
+        setCoverUrl(audio.audio.cover)
       }
-    };
-    loadCover();
-  }, [audio.cover_path, audio.audio.cover]);
+    }
+    loadCover()
+  }, [audio.cover_path, audio.audio.cover])
 
   const handleActionClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    onAction?.();
-  };
+    e.stopPropagation()
+    onAction?.()
+  }
 
   return (
-    <div className="audio-card" onClick={onClick}>
+    <div
+      className="audio-card"
+      onClick={onClick}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          onClick?.()
+        }
+      }}
+    >
       <div className="audio-cover">
         {coverUrl ? (
           <img src={coverUrl} alt={audio.audio.title} />
@@ -59,12 +69,23 @@ export const AudioCard: FC<AudioCardProps> = ({
         </div>
       </div>
       {showAction && actionIcon && (
-        <div className="audio-action" onClick={handleActionClick}>
+        <div
+          className="audio-action"
+          onClick={handleActionClick}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.stopPropagation()
+              onAction?.()
+            }
+          }}
+        >
           {actionIcon}
         </div>
       )}
     </div>
-  );
-};
+  )
+}
 
-export default AudioCard;
+export default AudioCard

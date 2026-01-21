@@ -16,7 +16,7 @@ pub async fn app_dir(app_handle: tauri::AppHandle) -> AppResult<PathBuf> {
     if !tokio::fs::try_exists(&app_data_dir).await.unwrap_or(false) {
         tokio::fs::create_dir_all(&app_data_dir)
             .await
-            .map_err(|e| AppError::Io(e))?;
+            .map_err(AppError::Io)?;
     }
     Ok(app_data_dir)
 }
@@ -54,7 +54,7 @@ pub async fn save_config(config: Config, app_handle: tauri::AppHandle) -> AppRes
 
 #[tauri::command]
 pub async fn download_audio(
-    mut audio: Audio,
+    audio: Audio,
     app_handle: tauri::AppHandle,
 ) -> AppResult<LocalAudio> {
     let dir = app_dir(app_handle).await?;
@@ -64,7 +64,7 @@ pub async fn download_audio(
     // We need to check if api::download_audio returns Result<LocalAudio, String>
     // If so, we map it to AppError.
 
-    api::download_audio(&mut audio, dir)
+    api::download_audio(&audio, dir)
         .await
         .map_err(|e| AppError::Unknown(e.to_string()))
 }

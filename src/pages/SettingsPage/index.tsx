@@ -1,13 +1,13 @@
-import { FC } from 'react';
-import { BulbOutlined, MoonOutlined, DesktopOutlined } from '@ant-design/icons';
-import { useAppStore, ThemeMode } from '../../store';
+import { FC } from "react"
+import { BulbOutlined, MoonOutlined, DesktopOutlined } from "@ant-design/icons"
+import { useAppStore, ThemeMode } from "../../store"
 
 interface ThemeOptionProps {
-  mode: ThemeMode;
-  icon: React.ReactNode;
-  label: string;
-  active: boolean;
-  onClick: () => void;
+  mode: ThemeMode
+  icon: React.ReactNode
+  label: string
+  active: boolean
+  onClick: () => void
 }
 
 // Theme option button component
@@ -19,18 +19,25 @@ const ThemeOption: FC<ThemeOptionProps> = ({
 }) => {
   return (
     <div
-      className={`theme-option ${active ? 'active' : ''}`}
+      className={`theme-option ${active ? "active" : ""}`}
       onClick={onClick}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          onClick()
+        }
+      }}
     >
       <span className="option-icon">{icon}</span>
       <span className="option-label">{label}</span>
     </div>
-  );
-};
+  )
+}
 
 // Settings page - app configuration
 export const SettingsPage: FC = () => {
-  const { themeMode, setThemeMode, audios, playlists } = useAppStore();
+  const { themeMode, setThemeMode, audios, playlists } = useAppStore()
 
   return (
     <div className="page settings-page">
@@ -46,22 +53,22 @@ export const SettingsPage: FC = () => {
             mode="light"
             icon={<BulbOutlined />}
             label="Light"
-            active={themeMode === 'light'}
-            onClick={() => setThemeMode('light')}
+            active={themeMode === "light"}
+            onClick={() => setThemeMode("light")}
           />
           <ThemeOption
             mode="dark"
             icon={<MoonOutlined />}
             label="Dark"
-            active={themeMode === 'dark'}
-            onClick={() => setThemeMode('dark')}
+            active={themeMode === "dark"}
+            onClick={() => setThemeMode("dark")}
           />
           <ThemeOption
             mode="auto"
             icon={<DesktopOutlined />}
             label="System"
-            active={themeMode === 'auto'}
-            onClick={() => setThemeMode('auto')}
+            active={themeMode === "auto"}
+            onClick={() => setThemeMode("auto")}
           />
         </div>
       </div>
@@ -90,7 +97,7 @@ export const SettingsPage: FC = () => {
         </div>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default SettingsPage;
+export default SettingsPage

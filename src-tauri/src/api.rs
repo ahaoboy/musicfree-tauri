@@ -51,7 +51,7 @@ pub async fn download_audio(audio: &Audio, app_dir: PathBuf) -> anyhow::Result<L
     }
 
     let cover_path = if let Some(url) = &audio.cover {
-        download_cover(&url, audio.platform.clone(), app_dir).await
+        download_cover(url, audio.platform, app_dir).await
     } else {
         None
     };
@@ -68,9 +68,7 @@ pub async fn download_cover(
     platform: Platform,
     app_dir: PathBuf,
 ) -> Option<String> {
-    let Some(filename) = cover_url.split("/").last() else {
-        return None;
-    };
+    let filename = cover_url.split("/").last()?;
     let cover_path = format!("{}/{:?}/{}/{}", ASSETS_DIR, platform, COVERS_DIR, filename);
     let full_cover_path = app_dir.join(&cover_path);
     if full_cover_path.exists() {
