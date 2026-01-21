@@ -65,14 +65,25 @@ pub async fn save_config(config: Config, app_handle: tauri::AppHandle) -> AppRes
 pub async fn download_audio(audio: Audio, app_handle: tauri::AppHandle) -> AppResult<LocalAudio> {
     let dir = app_dir(app_handle).await?;
 
-    // api::download_audio seems to be async in api.rs?
-    // In lib.rs it was: api::download_audio(&mut audio, dir).await
-    // We need to check if api::download_audio returns Result<LocalAudio, String>
-    // If so, we map it to AppError.
-
     api::download_audio(&audio, dir)
         .await
         .map_err(|e| AppError::Unknown(e.to_string()))
+}
+
+#[tauri::command]
+pub async fn exits_audio(audio: Audio, app_handle: tauri::AppHandle) -> AppResult<Option<String>> {
+    let dir = app_dir(app_handle).await?;
+    api::exists_audio(&audio, dir).await
+}
+
+#[tauri::command]
+pub async fn exits_cover(
+    url: &str,
+    platform: Platform,
+    app_handle: tauri::AppHandle,
+) -> AppResult<Option<String>> {
+    let dir = app_dir(app_handle).await ?;
+    api::exists_cover(url, platform, dir).await
 }
 
 #[tauri::command]

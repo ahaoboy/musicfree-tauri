@@ -1,11 +1,13 @@
 import { invoke } from "@tauri-apps/api/core"
 
+export type Platform = string
+
 export type Audio = {
   id: string
   title: string
   download_url: string
   cover?: string
-  platform: string
+  platform: Platform
 }
 
 export type LocalAudio = {
@@ -19,7 +21,7 @@ export type Playlist = {
   title?: string
   cover?: string
   audios: Audio[]
-  platform: string
+  platform: Platform
 }
 
 export type LocalPlaylist = {
@@ -27,7 +29,7 @@ export type LocalPlaylist = {
   cover_path: string | null
   cover?: string
   audios: LocalAudio[]
-  platform: string
+  platform: Platform
 }
 
 export type Config = {
@@ -256,4 +258,14 @@ export function is_dark(config: Config): boolean {
 
 export function app_version(): Promise<string> {
   return invoke("app_version")
+}
+
+export function exits_audio(audio: Audio): Promise<string | null> {
+  return invoke("exits_audio", { audio })
+}
+export function exits_cover(
+  url: string,
+  platform: Platform,
+): Promise<string | null> {
+  return invoke("exits_cover", { url, platform })
 }
