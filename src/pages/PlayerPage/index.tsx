@@ -171,11 +171,6 @@ const PlayerPage: FC = () => {
             className="icon-btn"
           />
         </Flex>
-        <Flex flex={1} align="center" justify="center">
-          <Text type="secondary" className="empty-msg">
-            No Audio Playing
-          </Text>
-        </Flex>
       </Flex>
     )
   }

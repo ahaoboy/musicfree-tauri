@@ -1,12 +1,10 @@
 import { FC, useState, useEffect, useCallback } from "react"
-import { Typography, Flex, App } from "antd"
+import { Flex, App } from "antd"
 import { DeleteOutlined, ExclamationCircleOutlined } from "@ant-design/icons"
 import { useAppStore } from "../../store"
 import { LocalPlaylist, LocalAudio, FAVORITE_PLAYLIST_ID } from "../../api"
 import { PlaylistCard, AudioCard } from "../../components"
 import { useNavigation } from "../../App"
-
-const { Title, Text } = Typography
 
 // Playlists page - shows all downloaded playlists
 // Clicking a playlist shows its detail with playable audios
@@ -74,12 +72,6 @@ export const PlaylistsPage: FC = () => {
             className="empty-state"
           >
             <div className="empty-icon">🎵</div>
-            <Title level={4} className="empty-title">
-              No Audio
-            </Title>
-            <Text type="secondary" className="empty-description">
-              This playlist has no audio tracks yet.
-            </Text>
           </Flex>
         ) : (
           <Flex vertical gap="small" className="audio-list">

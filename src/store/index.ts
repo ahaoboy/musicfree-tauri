@@ -13,11 +13,13 @@ import {
   FAVORITE_PLAYLIST_ID,
 } from "../api"
 
-// App state interface
-interface AppState {
-  // Config data
+// Persistent data interface (saved to config)
+interface PersistentData {
   config: Config
+}
 
+// Runtime data interface (lost on app restart)
+interface RuntimeData {
   // Current playback state
   currentAudio: LocalAudio | null
   audioUrl: string | null
@@ -32,26 +34,46 @@ interface AppState {
   // Audio element reference (managed externally)
   audioElement: HTMLAudioElement | null
 
-  // Actions
+  // Search page runtime state
+  searchText: string
+  searchDownloadingIds: Set<string>
+  searchDownloadedIds: Set<string>
+  searchFailedIds: Set<string>
+}
+
+// App state interface
+interface AppState extends PersistentData, RuntimeData {
+  // Actions for persistent data
   loadConfig: () => Promise<void>
   saveConfig: (config: Config) => Promise<void>
   setThemeMode: (mode: ThemeMode) => void
-  playAudio: (audio: LocalAudio, queue?: LocalAudio[]) => Promise<void> // Updated signature
-  pauseAudio: () => void
-  resumeAudio: () => void
-  togglePlay: () => void
-  playNext: (auto?: boolean) => Promise<void> // Added
-  playPrev: () => Promise<void> // Added
-  togglePlayMode: () => void // Added
-  setAudioElement: (element: HTMLAudioElement | null) => void
   addAudiosToConfig: (audios: LocalAudio[]) => Promise<void>
   addPlaylistToConfig: (playlist: LocalPlaylist) => Promise<void>
   setLastAudio: (audio: LocalAudio) => Promise<void>
-  setPlaybackRate: (rate: number) => void
   toggleFavorite: (audio: LocalAudio) => Promise<void>
   isFavorited: (id: string) => boolean
   deleteAudio: (id: string) => Promise<void>
   deletePlaylist: (id: string) => Promise<void>
+
+  // Actions for runtime data
+  playAudio: (audio: LocalAudio, queue?: LocalAudio[]) => Promise<void>
+  pauseAudio: () => void
+  resumeAudio: () => void
+  togglePlay: () => void
+  playNext: (auto?: boolean) => Promise<void>
+  playPrev: () => Promise<void>
+  togglePlayMode: () => void
+  setAudioElement: (element: HTMLAudioElement | null) => void
+  setPlaybackRate: (rate: number) => void
+
+  // Search page runtime actions
+  setSearchText: (text: string) => void
+  addSearchDownloadingId: (id: string) => void
+  removeSearchDownloadingId: (id: string) => void
+  addSearchDownloadedId: (id: string) => void
+  addSearchFailedId: (id: string) => void
+  removeSearchFailedId: (id: string) => void
+  clearSearchRuntimeData: () => void
 }
 
 // Helper to apply theme to document
@@ -67,19 +89,24 @@ const applyTheme = (mode: ThemeMode) => {
 
 // Create the store
 export const useAppStore = create<AppState>((set, get) => ({
-  // Initial state
+  // Persistent data initial state
   config: get_default_config(),
-  playlists: [],
-  audios: [],
+
+  // Runtime data initial state
   currentAudio: null,
   audioUrl: null,
   isPlaying: false,
   playbackRate: 1,
   playMode: "sequence",
   playbackQueue: [],
-  themeMode: "auto",
   isConfigLoading: false,
   audioElement: null,
+
+  // Search page runtime state
+  searchText: "",
+  searchDownloadingIds: new Set(),
+  searchDownloadedIds: new Set(),
+  searchFailedIds: new Set(),
 
   // Load config from backend
   loadConfig: async () => {
@@ -487,6 +514,54 @@ export const useAppStore = create<AppState>((set, get) => ({
 
     await get().saveConfig(updatedConfig)
   },
+
+  // Search page runtime actions
+  setSearchText: (text: string) => {
+    set({ searchText: text })
+  },
+
+  addSearchDownloadingId: (id: string) => {
+    set((state) => ({
+      searchDownloadingIds: new Set(state.searchDownloadingIds).add(id),
+    }))
+  },
+
+  removeSearchDownloadingId: (id: string) => {
+    set((state) => {
+      const newSet = new Set(state.searchDownloadingIds)
+      newSet.delete(id)
+      return { searchDownloadingIds: newSet }
+    })
+  },
+
+  addSearchDownloadedId: (id: string) => {
+    set((state) => ({
+      searchDownloadedIds: new Set(state.searchDownloadedIds).add(id),
+    }))
+  },
+
+  addSearchFailedId: (id: string) => {
+    set((state) => ({
+      searchFailedIds: new Set(state.searchFailedIds).add(id),
+    }))
+  },
+
+  removeSearchFailedId: (id: string) => {
+    set((state) => {
+      const newSet = new Set(state.searchFailedIds)
+      newSet.delete(id)
+      return { searchFailedIds: newSet }
+    })
+  },
+
+  clearSearchRuntimeData: () => {
+    set({
+      searchText: "",
+      searchDownloadingIds: new Set(),
+      searchDownloadedIds: new Set(),
+      searchFailedIds: new Set(),
+    })
+  },
 }))
 
 // Export convenience hooks
@@ -499,3 +574,12 @@ export const usePlaybackRate = () => useAppStore((state) => state.playbackRate)
 export const usePlayMode = () => useAppStore((state) => state.playMode)
 export const useThemeMode = () =>
   useAppStore((state) => state.config?.theme || get_system_theme())
+
+// Search page runtime hooks
+export const useSearchText = () => useAppStore((state) => state.searchText)
+export const useSearchDownloadingIds = () =>
+  useAppStore((state) => state.searchDownloadingIds)
+export const useSearchDownloadedIds = () =>
+  useAppStore((state) => state.searchDownloadedIds)
+export const useSearchFailedIds = () =>
+  useAppStore((state) => state.searchFailedIds)

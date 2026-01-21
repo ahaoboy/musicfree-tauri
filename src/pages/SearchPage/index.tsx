@@ -23,7 +23,9 @@ import {
   LocalPlaylist,
   Playlist,
 } from "../../api"
-import { useAppStore } from "../../store"
+import {
+  useAppStore,
+} from "../../store"
 import "./index.less"
 
 const { Search } = Input
@@ -541,7 +543,12 @@ export const SearchPage: FC = () => {
               loading={downloadingAll}
               disabled={selectedIds.size === 0}
             >
-              Download ({selectedIds.size})
+              {(() => {
+                const downloadedCount = Array.from(selectedIds).filter((id) =>
+                  downloadedIds.has(id),
+                ).length
+                return `Download ${downloadedCount} / ${selectedIds.size}`
+              })()}
             </Button>
           </Flex>
         </>
