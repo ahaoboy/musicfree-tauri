@@ -21,7 +21,12 @@ interface PlayerCardProps {
 // Mini player card showing current audio with play/pause controls
 export const PlayerCard: FC<PlayerCardProps> = memo(({ audio }) => {
   const [coverUrl, setCoverUrl] = useState<string | null>(null)
-  const { isPlaying, togglePlay, toggleFavorite, playlists } = useAppStore()
+  const {
+    isPlaying,
+    togglePlay,
+    toggleFavorite,
+    config: { playlists },
+  } = useAppStore()
 
   const navigate = useNavigate()
 

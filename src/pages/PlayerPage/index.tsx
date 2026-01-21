@@ -35,7 +35,7 @@ const PlayerPage: FC = () => {
     playNext,
     playPrev,
     toggleFavorite,
-    playlists,
+    config: { playlists },
     playMode,
     togglePlayMode,
   } = useAppStore()

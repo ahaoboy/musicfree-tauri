@@ -95,8 +95,7 @@ export const SearchPage: FC = () => {
   const [playlistCoverUrl, setPlaylistCoverUrl] = useState<string | null>(null)
 
   const {
-    audios,
-    playlists,
+    config: { audios, playlists },
     addAudiosToConfig,
     addPlaylistToConfig,
     loadConfig,

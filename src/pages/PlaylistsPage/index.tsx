@@ -8,7 +8,10 @@ import { useNavigation } from "../../App"
 // Clicking a playlist shows its detail with playable audios
 // Supports swipe right gesture to go back from detail view
 export const PlaylistsPage: FC = () => {
-  const { playlists, playAudio } = useAppStore()
+  const {
+    config: { playlists },
+    playAudio,
+  } = useAppStore()
   const [selectedPlaylist, setSelectedPlaylist] =
     useState<LocalPlaylist | null>(null)
   const { setIsInDetailView, setOnBackFromDetail } = useNavigation()
@@ -54,13 +57,6 @@ export const PlaylistsPage: FC = () => {
   if (selectedPlaylist) {
     return (
       <div className="page">
-        {/* <div className="detail-header">
-          <button className="back-btn" onClick={handleBack}>
-            <LeftOutlined />
-          </button>
-          <span className="detail-title">{selectedPlaylist.id}</span>
-        </div> */}
-
         {selectedPlaylist.audios.length === 0 ? (
           <div className="empty-state">
             <div className="empty-icon">🎵</div>
@@ -71,11 +67,6 @@ export const PlaylistsPage: FC = () => {
           </div>
         ) : (
           <div className="audio-list">
-            {/* <div className="list-header">
-              <span className="list-title">
-                {selectedPlaylist.audios.length} Tracks
-              </span>
-            </div> */}
             {selectedPlaylist.audios.map((audio, index) => (
               <div
                 key={`${audio.audio.id}-${index}`}
@@ -96,11 +87,6 @@ export const PlaylistsPage: FC = () => {
   // Render playlists grid
   return (
     <div className="page">
-      {/* <div className="page-header">
-        <h1 className="page-title">Playlists</h1>
-        <p className="page-subtitle">Your downloaded playlists</p>
-      </div> */}
-
       {playlists.length === 0 ? (
         <div className="empty-state">
           <div className="empty-icon">📁</div>

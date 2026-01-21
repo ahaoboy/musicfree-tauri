@@ -17,7 +17,7 @@ import {
   useLocation,
   Navigate,
 } from "react-router-dom"
-import { ConfigProvider, theme, App as AntApp, Spin } from "antd"
+import { ConfigProvider, theme as antdTheme, App as AntApp, Spin } from "antd"
 import { TopNav, PlayerCard, Tab } from "./components"
 import { useAppStore } from "./store"
 import { useSwipe, SwipeDirection } from "./hooks"
@@ -81,7 +81,7 @@ const AppLayout: FC = () => {
     loadConfig,
     setAudioElement,
     currentAudio,
-    themeMode,
+    config: { theme },
     isConfigLoading,
   } = useAppStore()
 
@@ -143,8 +143,8 @@ const AppLayout: FC = () => {
 
   // Determine if dark mode
   const isDark = (() => {
-    if (themeMode === "dark") return true
-    if (themeMode === "light") return false
+    if (theme === "dark") return true
+    if (theme === "light") return false
     if (typeof window !== "undefined") {
       return window.matchMedia("(prefers-color-scheme: dark)").matches
     }
@@ -173,7 +173,9 @@ const AppLayout: FC = () => {
   return (
     <ConfigProvider
       theme={{
-        algorithm: isDark ? theme.darkAlgorithm : theme.defaultAlgorithm,
+        algorithm: isDark
+          ? antdTheme.darkAlgorithm
+          : antdTheme.defaultAlgorithm,
         token: {
           colorPrimary: "#6366f1",
           borderRadius: 12,
