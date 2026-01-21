@@ -1,5 +1,8 @@
-use crate::{core::{LocalAudio, LocalPlaylist}, error::AppResult};
-use musicfree::{Audio, Platform, file};
+use crate::{
+    core::{LocalAudio, LocalPlaylist},
+    error::AppResult,
+};
+use musicfree::{Audio, Platform};
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 
@@ -89,7 +92,11 @@ pub async fn exists_audio(audio: &Audio, app_dir: PathBuf) -> AppResult<Option<S
     return Ok(Some(audio_path));
 }
 
-pub async fn exists_cover(cover_url: &str, platform: Platform, app_dir: PathBuf) -> AppResult<Option<String>> {
+pub async fn exists_cover(
+    cover_url: &str,
+    platform: Platform,
+    app_dir: PathBuf,
+) -> AppResult<Option<String>> {
     let filename = get_cover_filename(cover_url);
     let cover_path = format!("{}/{:?}/{}/{}", ASSETS_DIR, platform, COVERS_DIR, filename);
     let full_cover_path = app_dir.join(&cover_path);

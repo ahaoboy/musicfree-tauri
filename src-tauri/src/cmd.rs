@@ -71,13 +71,13 @@ pub async fn download_audio(audio: Audio, app_handle: tauri::AppHandle) -> AppRe
 }
 
 #[tauri::command]
-pub async fn exits_audio(audio: Audio, app_handle: tauri::AppHandle) -> AppResult<Option<String>> {
+pub async fn exists_audio(audio: Audio, app_handle: tauri::AppHandle) -> AppResult<Option<String>> {
     let dir = app_dir(app_handle).await?;
     api::exists_audio(&audio, dir).await
 }
 
 #[tauri::command]
-pub async fn exits_cover(
+pub async fn exists_cover(
     url: &str,
     platform: Platform,
     app_handle: tauri::AppHandle,

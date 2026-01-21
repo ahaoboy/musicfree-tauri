@@ -260,12 +260,12 @@ export function app_version(): Promise<string> {
   return invoke("app_version")
 }
 
-export function exits_audio(audio: Audio): Promise<string | null> {
-  return invoke("exits_audio", { audio })
+export function exists_audio(audio: Audio): Promise<string | null> {
+  return invoke("exists_audio", { audio })
 }
-export function exits_cover(
+export function exists_cover(
   url: string,
   platform: Platform,
 ): Promise<string | null> {
-  return invoke("exits_cover", { url, platform })
+  return invoke("exists_cover", { url, platform })
 }

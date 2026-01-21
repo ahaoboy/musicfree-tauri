@@ -26,6 +26,8 @@ pub fn run() {
             cmd::save_config,
             cmd::clear_all_data,
             cmd::app_version,
+            cmd::exists_audio,
+            cmd::exists_cover,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

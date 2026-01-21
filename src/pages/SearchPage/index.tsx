@@ -1,15 +1,17 @@
-import { FC, useState, useEffect } from "react"
-import { Button, Input, Checkbox, App, Space } from "antd"
 import { DownloadOutlined } from "@ant-design/icons"
+import { App, Button, Checkbox, Input, Space } from "antd"
+import { FC, useEffect, useState } from "react"
 import {
-  extract_audios,
+  Audio,
   download_audio,
   download_cover,
+  exists_audio,
+  exists_cover,
+  extract_audios,
   get_loacl_url,
-  Audio,
-  Playlist,
   LocalAudio,
   LocalPlaylist,
+  Playlist,
 } from "../../api"
 import { useAppStore } from "../../store"
 import "./index.less"
@@ -89,19 +91,37 @@ export const SearchPage: FC = () => {
   const [downloadedIds, setDownloadedIds] = useState<Set<string>>(new Set())
   const [searching, setSearching] = useState(false)
   const [downloadingAll, setDownloadingAll] = useState(false)
+  const [messageToShow, setMessageToShow] = useState<{
+    type: "success" | "error" | "warning"
+    text: string
+  } | null>(null)
 
   // Cover URL cache: audio id -> web accessible URL
   const [coverUrls, setCoverUrls] = useState<Record<string, string>>({})
   const [playlistCoverUrl, setPlaylistCoverUrl] = useState<string | null>(null)
 
-  const { audios, addAudiosToConfig, addPlaylistToConfig, loadConfig } =
-    useAppStore()
+  const {
+    audios,
+    playlists,
+    addAudiosToConfig,
+    addPlaylistToConfig,
+    loadConfig,
+  } = useAppStore()
 
   // Mark already downloaded audios
   useEffect(() => {
     const downloaded = new Set(audios.map((a) => a.audio.id))
     setDownloadedIds(downloaded)
   }, [audios])
+
+  // Handle messages in effect to avoid React 18 concurrent mode issues
+  useEffect(() => {
+    if (messageToShow) {
+      const { type, text } = messageToShow
+      message[type](text)
+      setMessageToShow(null)
+    }
+  }, [messageToShow, message])
 
   // Download and cache cover image
   const downloadAndCacheCover = async (
@@ -134,7 +154,7 @@ export const SearchPage: FC = () => {
   // Handle search
   const handleSearch = async () => {
     if (!url.trim()) {
-      message.warning("Please enter a URL")
+      setMessageToShow({ type: "warning", text: "Please enter a URL" })
       return
     }
 
@@ -147,7 +167,42 @@ export const SearchPage: FC = () => {
     try {
       const result = await extract_audios(url)
       setPlaylist(result)
-      message.success(`Found ${result.audios.length} tracks`)
+      setMessageToShow({
+        type: "success",
+        text: `Found ${result.audios.length} tracks`,
+      })
+
+      // Check for existing audios and covers
+      const existingLocalAudios: LocalAudio[] = []
+      const updatedDownloadedIds = new Set(downloadedIds)
+
+      const coverCache: Record<string, string> = {}
+      for (const audio of result.audios) {
+        const audioPath = await exists_audio(audio)
+        if (audioPath) {
+          let coverPath: string | null = null
+          if (audio.cover) {
+            coverPath = await exists_cover(audio.cover, audio.platform)
+            if (coverPath)
+              coverCache[audio.id] = await get_loacl_url(coverPath)
+          }
+          const localAudio: LocalAudio = {
+            audio,
+            path: audioPath,
+            cover_path: coverPath,
+          }
+          existingLocalAudios.push(localAudio)
+          updatedDownloadedIds.add(audio.id)
+        }
+      }
+      setCoverUrls((prev) => ({ ...prev, ...coverCache }))
+      // Add existing audios to config
+      if (existingLocalAudios.length > 0) {
+        await addAudiosToConfig(existingLocalAudios)
+      }
+
+      // Update downloaded ids
+      setDownloadedIds(updatedDownloadedIds)
 
       // Download playlist cover
       if (result.cover) {
@@ -158,15 +213,18 @@ export const SearchPage: FC = () => {
         })
       }
 
-      // Download audio covers in background
+      // Download audio covers in background for non-existing audios
       result.audios.forEach((audio) => {
-        if (audio.cover) {
+        if (audio.cover && !updatedDownloadedIds.has(audio.id)) {
           downloadAndCacheCover(audio.cover, audio.platform, audio.id)
         }
       })
     } catch (error) {
       console.error("Search failed:", error)
-      message.error("Search failed. Please check the URL.")
+      setMessageToShow({
+        type: "error",
+        text: "Search failed. Please check the URL.",
+      })
     } finally {
       setSearching(false)
     }
@@ -215,11 +273,17 @@ export const SearchPage: FC = () => {
           localAudios.forEach((a) => newSet.add(a.audio.id))
           return newSet
         })
-        message.success(`Downloaded: ${audio.title}`)
+        setMessageToShow({
+          type: "success",
+          text: `Downloaded: ${audio.title}`,
+        })
       }
     } catch (error) {
       console.error("Download failed:", error)
-      message.error(`Failed to download: ${audio.title}`)
+      setMessageToShow({
+        type: "error",
+        text: `Failed to download: ${audio.title}`,
+      })
     } finally {
       setDownloadingIds((prev) => {
         const newSet = new Set(prev)
@@ -232,7 +296,10 @@ export const SearchPage: FC = () => {
   // Handle download all selected
   const handleDownloadAll = async () => {
     if (!playlist || selectedIds.size === 0) {
-      message.warning("Please select audio to download")
+      setMessageToShow({
+        type: "warning",
+        text: "Please select audio to download",
+      })
       return
     }
 
@@ -287,21 +354,62 @@ export const SearchPage: FC = () => {
         }
       }
 
-      // Create local playlist
       // Use playlist.id as the identifier if available, otherwise title
       const playlistId =
         playlist.id || playlist.title || new Date().toISOString()
+
+      // Check if playlist already exists
+      const existingPlaylist = playlists.find((p) => p.id === playlistId)
+
+      let finalLocalAudios: LocalAudio[] = []
+
+      if (existingPlaylist) {
+        // Merge playlists: use new order, but keep existing LocalAudios and add new ones
+        const existingAudioMap = new Map(
+          existingPlaylist.audios.map((a) => [a.audio.id, a]),
+        )
+
+        finalLocalAudios = playlist.audios
+          .map((audio) => {
+            // Try to find in existing
+            const existing = existingAudioMap.get(audio.id)
+            if (existing) {
+              return existing
+            }
+            // Try to find in newly downloaded
+            const newDownloaded = downloadedLocalAudios.find(
+              (a) => a.audio.id === audio.id,
+            )
+            if (newDownloaded) {
+              return newDownloaded
+            }
+            // This shouldn't happen, but fallback
+            return null
+          })
+          .filter(Boolean) as LocalAudio[]
+      } else {
+        // New playlist: use the order from playlist.audios, but only include downloaded ones
+        const downloadedAudioMap = new Map(
+          downloadedLocalAudios.map((a) => [a.audio.id, a]),
+        )
+        finalLocalAudios = playlist.audios
+          .map((audio) => downloadedAudioMap.get(audio.id))
+          .filter(Boolean) as LocalAudio[]
+      }
 
       const localPlaylist: LocalPlaylist = {
         id: playlistId,
         cover_path: coverPath,
         cover: playlist.cover,
-        audios: downloadedLocalAudios,
+        audios: finalLocalAudios,
         platform: playlist.platform,
       }
 
       await addPlaylistToConfig(localPlaylist)
-      message.success(`Created playlist: ${playlistId}`)
+      setMessageToShow({
+        type: "success",
+        text: `${existingPlaylist ? "Updated" : "Created"} playlist: ${playlistId}`,
+      })
     } else {
       // Only add to Main Audios list if we didn't create a playlist
       if (downloadedLocalAudios.length > 0) {
@@ -313,9 +421,10 @@ export const SearchPage: FC = () => {
     await loadConfig()
 
     setSelectedIds(new Set())
-    message.success(
-      `Downloaded ${successCount}/${selectedAudios.length} tracks`,
-    )
+    setMessageToShow({
+      type: "success",
+      text: `Downloaded ${successCount}/${selectedAudios.length} tracks`,
+    })
     setDownloadingAll(false)
   }
 
