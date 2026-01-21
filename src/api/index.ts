@@ -33,11 +33,24 @@ export type LocalPlaylist = {
   platform: Platform
 }
 
+// Playback Mode
+export type PlayMode = "sequence" | "list-loop" | "single-loop" | "shuffle"
+
+// Theme types
+export type ThemeMode = "light" | "dark" | "auto"
+
 export type Config = {
   audios: LocalAudio[]
   playlists: LocalPlaylist[]
-  theme: undefined | string
+  theme?: ThemeMode
   last_audio?: LocalAudio
+}
+
+export function get_default_config(): Config {
+  return {
+    audios: [],
+    playlists: [],
+  }
 }
 
 export function extract_audios(url: string): Promise<Playlist> {
@@ -150,24 +163,12 @@ export function get_config(): Promise<Config> {
           ...config,
           audios: [],
           playlists: config.playlists || [],
-          settings: config.settings || {
-            auto_download_cover: true,
-            default_audio_format: "mp3",
-          },
         }
       }
       if (!Array.isArray(config.playlists)) {
         console.warn("⚠️ Config missing playlists array, initializing")
         config.playlists = []
       }
-      if (!config.settings) {
-        console.warn("⚠️ Config missing settings, initializing")
-        config.settings = {
-          auto_download_cover: true,
-          default_audio_format: "mp3",
-        }
-      }
-
       return config as Config
     })
     .catch((error) => {
@@ -175,7 +176,6 @@ export function get_config(): Promise<Config> {
       return {
         audios: [],
         playlists: [],
-        settings: { auto_download_cover: true, default_audio_format: "mp3" },
       }
     })
 }
@@ -258,13 +258,14 @@ export async function toggle_favorite_audio(
   return save_config(config)
 }
 
-export function is_dark(config: Config): boolean {
-  if (config.theme === "dark") {
-    return true
-  } else if (config.theme === "light") {
-    return false
+// Helper to get system theme
+export const get_system_theme = (): "light" | "dark" => {
+  if (typeof window !== "undefined") {
+    return window.matchMedia("(prefers-color-scheme: dark)").matches
+      ? "dark"
+      : "light"
   }
-  return globalThis.matchMedia("(prefers-color-scheme: dark)").matches
+  return "light"
 }
 
 export function app_version(): Promise<string> {

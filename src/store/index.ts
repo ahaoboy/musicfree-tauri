@@ -6,31 +6,24 @@ import {
   get_config,
   save_config,
   get_web_url,
+  get_default_config,
+  PlayMode,
+  ThemeMode,
+  get_system_theme,
 } from "../api"
-
-// Playback Mode
-export type PlayMode = "sequence" | "list-loop" | "single-loop" | "shuffle"
-
-// Theme types
-export type ThemeMode = "light" | "dark" | "auto"
 
 // App state interface
 interface AppState {
   // Config data
-  config: Config | null
-  playlists: LocalPlaylist[]
-  audios: LocalAudio[]
+  config: Config
 
   // Current playback state
   currentAudio: LocalAudio | null
   audioUrl: string | null
   isPlaying: boolean
   playbackRate: number
-  playMode: PlayMode // Added
-  playbackQueue: LocalAudio[] // Added
-
-  // Theme
-  themeMode: ThemeMode
+  playMode: PlayMode
+  playbackQueue: LocalAudio[]
 
   // Loading states
   isConfigLoading: boolean
@@ -57,20 +50,10 @@ interface AppState {
   toggleFavorite: (audio: LocalAudio) => Promise<void>
 }
 
-// Helper to get system theme
-const getSystemTheme = (): "light" | "dark" => {
-  if (typeof window !== "undefined") {
-    return window.matchMedia("(prefers-color-scheme: dark)").matches
-      ? "dark"
-      : "light"
-  }
-  return "light"
-}
-
 // Helper to apply theme to document
 const applyTheme = (mode: ThemeMode) => {
   if (typeof document !== "undefined") {
-    const actualTheme = mode === "auto" ? getSystemTheme() : mode
+    const actualTheme = mode === "auto" ? get_system_theme() : mode
     document.documentElement.setAttribute(
       "data-prefers-color-scheme",
       actualTheme,
@@ -81,7 +64,7 @@ const applyTheme = (mode: ThemeMode) => {
 // Create the store
 export const useAppStore = create<AppState>((set, get) => ({
   // Initial state
-  config: null,
+  config: get_default_config(),
   playlists: [],
   audios: [],
   currentAudio: null,
@@ -99,23 +82,10 @@ export const useAppStore = create<AppState>((set, get) => ({
     set({ isConfigLoading: true })
     try {
       const config = await get_config()
-      const savedTheme = localStorage.getItem("themeMode") as ThemeMode | null
-      const themeMode = savedTheme || (config.theme as ThemeMode) || "auto"
-
-      applyTheme(themeMode)
-
-      // Sort playlists: Favorites first
-      const playlists = (config.playlists || []).sort((a, b) => {
-        if (a.id === "Favorites") return -1
-        if (b.id === "Favorites") return 1
-        return 0
-      })
-
+      applyTheme(config.theme || "auto")
+      const playlists = config.playlists
       set({
         config,
-        playlists: playlists,
-        audios: config.audios || [],
-        themeMode,
         currentAudio: config.last_audio || null,
         isConfigLoading: false,
       })
@@ -157,8 +127,6 @@ export const useAppStore = create<AppState>((set, get) => ({
       await save_config(config)
       set({
         config,
-        playlists: config.playlists || [],
-        audios: config.audios || [],
       })
     } catch (error) {
       console.error("Failed to save config:", error)
@@ -167,15 +135,14 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
 
   // Set theme mode
-  setThemeMode: (mode: ThemeMode) => {
-    localStorage.setItem("themeMode", mode)
-    applyTheme(mode)
-    set({ themeMode: mode })
-
-    // Also save to config
+  setThemeMode: (theme: ThemeMode) => {
+    localStorage.setItem("themeMode", theme)
     const { config } = get()
+    config.theme = theme
+    applyTheme(theme)
+    set({ config })
     if (config) {
-      const updatedConfig = { ...config, theme: mode }
+      const updatedConfig = { ...config, theme }
       save_config(updatedConfig).catch((error) => {
         console.error("Failed to save theme to config:", error)
       })
@@ -471,10 +438,11 @@ export const useAppStore = create<AppState>((set, get) => ({
 
 // Export convenience hooks
 export const useConfig = () => useAppStore((state) => state.config)
-export const usePlaylists = () => useAppStore((state) => state.playlists)
-export const useAudios = () => useAppStore((state) => state.audios)
+export const usePlaylists = () => useAppStore((state) => state.config.playlists)
+export const useAudios = () => useAppStore((state) => state.config.audios)
 export const useCurrentAudio = () => useAppStore((state) => state.currentAudio)
 export const useIsPlaying = () => useAppStore((state) => state.isPlaying)
 export const usePlaybackRate = () => useAppStore((state) => state.playbackRate)
 export const usePlayMode = () => useAppStore((state) => state.playMode)
-export const useThemeMode = () => useAppStore((state) => state.themeMode)
+export const useThemeMode = () =>
+  useAppStore((state) => state.config?.theme || get_system_theme())

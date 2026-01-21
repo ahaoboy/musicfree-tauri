@@ -7,8 +7,8 @@ import {
   CopyOutlined,
 } from "@ant-design/icons"
 import { writeText } from "@tauri-apps/plugin-clipboard-manager"
-import { useAppStore, ThemeMode } from "../../store"
-import { clear_all_data, app_dir, app_version } from "../../api"
+import { useAppStore } from "../../store"
+import { clear_all_data, app_dir, app_version, ThemeMode } from "../../api"
 
 interface ThemeOptionProps {
   mode: ThemeMode
@@ -45,7 +45,10 @@ const ThemeOption: FC<ThemeOptionProps> = ({
 
 // Settings page - app configuration
 export const SettingsPage: FC = () => {
-  const { themeMode, setThemeMode, audios, playlists } = useAppStore()
+  const {
+    setThemeMode,
+    config: { audios, playlists, theme },
+  } = useAppStore()
   const [appDirPath, setAppDirPath] = useState<string>("")
   const { modal, message } = App.useApp()
   const [version, setVersion] = useState<string>("")
@@ -57,16 +60,6 @@ export const SettingsPage: FC = () => {
 
   return (
     <div className="page settings-page">
-      {/* ... previous content ... */}
-
-      {/* This is just setting up the context variables, the rest of the render is below */}
-      {/* Actually I should replace the whole start of the component to insert the hook */}
-      {/* But since I can't do partial renders in replacement, let's just do a tailored replace */}
-      {/* <div className="page-header">
-        <h1 className="page-title">Settings</h1>
-        <p className="page-subtitle">Configure app preferences</p>
-      </div> */}
-
       <div className="settings-section">
         <div className="section-title">Theme</div>
         <div className="theme-options">
@@ -74,21 +67,21 @@ export const SettingsPage: FC = () => {
             mode="light"
             icon={<BulbOutlined />}
             label="Light"
-            active={themeMode === "light"}
+            active={theme === "light"}
             onClick={() => setThemeMode("light")}
           />
           <ThemeOption
             mode="dark"
             icon={<MoonOutlined />}
             label="Dark"
-            active={themeMode === "dark"}
+            active={theme === "dark"}
             onClick={() => setThemeMode("dark")}
           />
           <ThemeOption
             mode="auto"
             icon={<DesktopOutlined />}
             label="System"
-            active={themeMode === "auto"}
+            active={theme === "auto"}
             onClick={() => setThemeMode("auto")}
           />
         </div>
