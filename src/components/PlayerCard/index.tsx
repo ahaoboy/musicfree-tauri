@@ -6,7 +6,7 @@ import {
   PauseCircleFilled,
   PlayCircleFilled,
 } from "@ant-design/icons"
-import { get_loacl_url, LocalAudio } from "../../api"
+import { FAVORITE_PLAYLIST_ID, get_loacl_url, LocalAudio } from "../../api"
 import { useAppStore } from "../../store"
 
 interface PlayerCardProps {
@@ -22,7 +22,7 @@ export const PlayerCard: FC<PlayerCardProps> = memo(({ audio }) => {
   // Check if favorited
   const isFavorited = audio
     ? playlists
-        .find((p) => p.id === "Favorites")
+        .find((p) => p.id === FAVORITE_PLAYLIST_ID)
         ?.audios.some((a) => a.audio.id === audio.audio.id)
     : false
 

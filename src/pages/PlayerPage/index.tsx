@@ -15,7 +15,7 @@ import {
 } from "@ant-design/icons"
 import { Slider, message } from "antd"
 import { useAppStore } from "../../store"
-import { get_loacl_url } from "../../api"
+import { FAVORITE_PLAYLIST_ID, get_loacl_url } from "../../api"
 import "./index.less"
 
 const formatTime = (seconds: number) => {
@@ -48,7 +48,7 @@ const PlayerPage: FC = () => {
   // Check if favorited
   const isFavorited = currentAudio
     ? playlists
-        .find((p) => p.id === "Favorites")
+        .find((p) => p.id === FAVORITE_PLAYLIST_ID)
         ?.audios.some((a) => a.audio.id === currentAudio.audio.id)
     : false
 
