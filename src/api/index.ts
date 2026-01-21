@@ -218,7 +218,7 @@ export async function get_local_audios(): Promise<LocalAudio[]> {
   }
 }
 
-export const FAVORITE_PLAYLIST_ID = "__favorite__"
+export const FAVORITE_PLAYLIST_ID = "Favorites"
 
 export function is_favorite(audio: LocalAudio, config: Config): boolean {
   const fav = config.playlists.find((p) => p.id === FAVORITE_PLAYLIST_ID)

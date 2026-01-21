@@ -190,39 +190,35 @@ body {
   -webkit-user-select: none;
 }
 
-// Top navigation
-.top-nav {
-  height: calc(@nav-height + env(safe-area-inset-top));
-  padding-top: env(safe-area-inset-top);
+// Top tabs navigation
+.top-tabs {
   background: var(--bg-card);
   border-bottom: 1px solid var(--border-color);
-  flex-shrink: 0;
-  z-index: 100;
   box-shadow: @shadow-sm;
 
-  .nav-item {
-    height: 100%;
-    cursor: pointer;
-    color: var(--text-secondary);
-    font-size: 12px;
-    transition: color @transition-fast @ease-out, transform @transition-fast @ease-out;
+  .ant-tabs-nav {
+    margin-bottom: 0 !important;
 
-    .nav-icon {
-      font-size: 20px;
-      transition: transform @transition-fast @ease-out;
+    &::before {
+      display: none !important;
     }
+  }
 
-    &.active {
-      color: var(--primary-color);
+  .ant-tabs-nav-list {
+    width: 100%;
+  }
 
-      .nav-icon {
-        transform: scale(1.1);
-      }
-    }
+  .ant-tabs-tab {
+    flex: 1;
+    justify-content: center;
+    margin: 0 !important;
+    padding: @spacing-md 0 !important;
+    transition: all @transition-fast @ease-out;
 
-    &:active {
-      transform: scale(0.95);
-      opacity: 0.8;
+    .ant-tabs-tab-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
   }
 }
@@ -831,6 +827,7 @@ body {
 
 // Avatar component customization
 .ant-avatar {
+
   &.audio-cover,
   &.player-cover,
   &.playlist-cover {
@@ -853,6 +850,7 @@ body {
 
   // Dark mode adjustments
   [data-prefers-color-scheme='dark'] & {
+
     &.audio-cover,
     &.player-cover,
     &.playlist-cover {
@@ -863,6 +861,7 @@ body {
 
 // Large cover specific styles
 .large-cover.ant-avatar {
+
   // Disable hover effect for large cover
   &:hover {
     transform: none;

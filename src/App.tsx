@@ -17,14 +17,23 @@ import {
   useLocation,
   Navigate,
 } from "react-router-dom"
+import { PlayerCard } from "./components"
+
+type Tab = "playlists" | "music" | "search" | "settings"
+import {
+  UnorderedListOutlined,
+  CustomerServiceOutlined,
+  SearchOutlined,
+  SettingOutlined,
+} from "@ant-design/icons"
 import {
   ConfigProvider,
   theme as antdTheme,
   App as AntApp,
   Spin,
   Flex,
+  Tabs,
 } from "antd"
-import { TopNav, PlayerCard, Tab } from "./components"
 import { useAppStore } from "./store"
 import { useSwipe, SwipeDirection } from "./hooks"
 import "./styles/index.less"
@@ -201,7 +210,43 @@ const AppLayout: FC = () => {
             style={{ height: "100vh" }}
             {...swipeHandlers}
           >
-            <TopNav activeTab={currentTab} onChange={handleTabChange} />
+            <Tabs
+              activeKey={currentTab}
+              onChange={(key) => handleTabChange(key as Tab)}
+              centered
+              tabBarGutter={0}
+              className="top-tabs"
+              items={[
+                {
+                  key: "playlists",
+                  label: (
+                    <UnorderedListOutlined
+                      style={{ fontSize: 24, width: "100%" }}
+                    />
+                  ),
+                },
+                {
+                  key: "music",
+                  label: (
+                    <CustomerServiceOutlined
+                      style={{ fontSize: 24, width: "100%" }}
+                    />
+                  ),
+                },
+                {
+                  key: "search",
+                  label: (
+                    <SearchOutlined style={{ fontSize: 24, width: "100%" }} />
+                  ),
+                },
+                {
+                  key: "settings",
+                  label: (
+                    <SettingOutlined style={{ fontSize: 24, width: "100%" }} />
+                  ),
+                },
+              ]}
+            />
             <Flex
               vertical
               flex={1}
