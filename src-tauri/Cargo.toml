@@ -11,7 +11,7 @@ edition = "2024"
 # The `_lib` suffix may seem redundant but it is necessary
 # to make the lib name unique and wouldn't conflict with the bin name.
 # This seems to be only an issue on Windows, see https://github.com/rust-lang/cargo/issues/8519
-name = "tauri_ci_demo_lib"
+name = "musicfree_tauri_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]
@@ -22,12 +22,22 @@ tauri = { version = "2", features = ["protocol-asset"] }
 
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-reqwest = { version = "0.13", features = [
+
+# FIXME: ANDROID NOT WORKING WITH REQWEST 0.13
+# reqwest = { version = "0.13", features = [
+#   "json",
+#   "gzip",
+#   "rustls-native-certs",
+#   "cookies",
+# ] }
+
+reqwest = { version = "0.12", features = [
   "json",
+  "rustls-tls",
   "gzip",
-  "rustls-native-certs",
   "cookies",
-] }
+], default-features = false }
+
 tokio = { version = "1", features = ["full"] }
 regex = "1"
 anyhow = "*"
@@ -42,12 +52,10 @@ uuid = { version = "1.0", features = ["v4"] }
 md5 = "0.8"
 tauri-plugin-fs = "2"
 tauri-plugin-clipboard-manager = "2"
-# FIXME: https://github.com/aws/aws-lc-rs/issues/1006
-# aws-lc-sys = { version = "0.35" }
-# aws-lc-rs = { version = "1.15.2" }
 
-[patch.crates-io]
-aws-lc-sys = { git = "https://github.com/zsdsys/aws-lc-rs", branch = "android-getentropy-fix" }
+# FIXME: https://github.com/aws/aws-lc-rs/issues/1006
+# [patch.crates-io]
+# aws-lc-sys = { git = "https://github.com/zsdsys/aws-lc-rs", branch = "android-getentropy-fix" }
 
 [profile.release]
 debug = false

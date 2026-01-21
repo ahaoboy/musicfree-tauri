@@ -197,7 +197,8 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-around;
-  height: @nav-height;
+  height: calc(@nav-height + env(safe-area-inset-top));
+  padding-top: env(safe-area-inset-top);
   background: var(--bg-card);
   border-bottom: 1px solid var(--border-color);
   flex-shrink: 0;
