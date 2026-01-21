@@ -1,4 +1,5 @@
 import { FC } from "react"
+import { Spin } from "antd"
 import { useAppStore } from "../../store"
 import { AudioCard } from "../../components"
 
@@ -16,7 +17,7 @@ export const MusicPage: FC = () => {
     return (
       <div className="page">
         <div className="loading-container">
-          <span>Loading...</span>
+          <Spin size="large" />
         </div>
       </div>
     )

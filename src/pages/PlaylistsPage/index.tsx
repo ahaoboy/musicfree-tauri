@@ -1,8 +1,11 @@
 import { FC, useState, useEffect, useCallback } from "react"
+import { Typography } from "antd"
 import { useAppStore } from "../../store"
 import { LocalPlaylist, LocalAudio } from "../../api"
 import { PlaylistCard, AudioCard } from "../../components"
 import { useNavigation } from "../../App"
+
+const { Title, Text } = Typography
 
 // Playlists page - shows all downloaded playlists
 // Clicking a playlist shows its detail with playable audios
@@ -60,10 +63,12 @@ export const PlaylistsPage: FC = () => {
         {selectedPlaylist.audios.length === 0 ? (
           <div className="empty-state">
             <div className="empty-icon">🎵</div>
-            <div className="empty-title">No Audio</div>
-            <div className="empty-description">
+            <Title level={4} className="empty-title">
+              No Audio
+            </Title>
+            <Text type="secondary" className="empty-description">
               This playlist has no audio tracks yet.
-            </div>
+            </Text>
           </div>
         ) : (
           <div className="audio-list">

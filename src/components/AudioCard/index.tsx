@@ -1,5 +1,9 @@
 import { FC, useState, useEffect } from "react"
+import { Flex, Typography, Avatar } from "antd"
+import { AudioOutlined } from "@ant-design/icons"
 import { DEFAULT_COVER_URL, get_web_url, LocalAudio } from "../../api"
+
+const { Text } = Typography
 
 interface AudioCardProps {
   audio: LocalAudio
@@ -42,7 +46,7 @@ export const AudioCard: FC<AudioCardProps> = ({
   }
 
   return (
-    <div
+    <Flex
       className="audio-card"
       onClick={onClick}
       role="button"
@@ -52,16 +56,31 @@ export const AudioCard: FC<AudioCardProps> = ({
           onClick?.()
         }
       }}
+      align="center"
+      gap="middle"
     >
-      <div className="audio-cover">
-        <img src={coverUrl || DEFAULT_COVER_URL} alt={audio.audio.title} />
-      </div>
-      <div className="audio-info">
-        <div className="audio-title">{audio.audio.title}</div>
-        <div className="audio-meta">
-          <span className="audio-platform">{audio.audio.platform}</span>
-        </div>
-      </div>
+      <Avatar
+        src={coverUrl || DEFAULT_COVER_URL}
+        icon={<AudioOutlined />}
+        size={56}
+        shape="square"
+        alt={audio.audio.title}
+        className="audio-cover"
+      />
+      <Flex vertical flex={1} style={{ minWidth: 0 }}>
+        <Text
+          strong
+          ellipsis={{ tooltip: audio.audio.title }}
+          className="audio-title"
+        >
+          {audio.audio.title}
+        </Text>
+        <Flex className="audio-meta" align="center" gap="small">
+          <Text type="secondary" className="audio-platform">
+            {audio.audio.platform}
+          </Text>
+        </Flex>
+      </Flex>
       {showAction && actionIcon && (
         <div
           className="audio-action"
@@ -78,7 +97,7 @@ export const AudioCard: FC<AudioCardProps> = ({
           {actionIcon}
         </div>
       )}
-    </div>
+    </Flex>
   )
 }
 

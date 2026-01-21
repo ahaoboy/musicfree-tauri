@@ -1,5 +1,5 @@
 import { FC, useEffect, useState } from "react"
-import { Button, App, Tooltip } from "antd"
+import { Button, App, Tooltip, Typography } from "antd"
 import {
   BulbOutlined,
   MoonOutlined,
@@ -9,6 +9,8 @@ import {
 import { writeText } from "@tauri-apps/plugin-clipboard-manager"
 import { useAppStore } from "../../store"
 import { clear_all_data, app_dir, app_version, ThemeMode } from "../../api"
+
+const { Title, Text } = Typography
 
 interface ThemeOptionProps {
   mode: ThemeMode
@@ -38,7 +40,7 @@ const ThemeOption: FC<ThemeOptionProps> = ({
       }}
     >
       <span className="option-icon">{icon}</span>
-      <span className="option-label">{label}</span>
+      <Text className="option-label">{label}</Text>
     </div>
   )
 }
@@ -61,7 +63,9 @@ export const SettingsPage: FC = () => {
   return (
     <div className="page settings-page">
       <div className="settings-section">
-        <div className="section-title">Theme</div>
+        <Title level={5} className="section-title">
+          Theme
+        </Title>
         <div className="theme-options">
           <ThemeOption
             mode="light"
@@ -88,39 +92,39 @@ export const SettingsPage: FC = () => {
       </div>
 
       <div className="settings-section">
-        <div className="section-title">Library</div>
+        <Title level={5} className="section-title">
+          Library
+        </Title>
         <div className="section-content">
           <div className="settings-item">
-            <span className="item-label">Downloaded Tracks</span>
-            <span className="item-value">{audios.length}</span>
+            <Text className="item-label">Downloaded Tracks</Text>
+            <Text type="secondary" className="item-value">
+              {audios.length}
+            </Text>
           </div>
           <div className="settings-item">
-            <span className="item-label">Playlists</span>
-            <span className="item-value">{playlists.length}</span>
+            <Text className="item-label">Playlists</Text>
+            <Text type="secondary" className="item-value">
+              {playlists.length}
+            </Text>
           </div>
         </div>
       </div>
 
       <div className="settings-section">
-        <div className="section-title">About</div>
+        <Title level={5} className="section-title">
+          About
+        </Title>
         <div className="section-content">
           <div className="settings-item">
-            <span className="item-label">Version</span>
-            <span className="item-value">{version || "Loading..."}</span>
+            <Text className="item-label">Version</Text>
+            <Text type="secondary" className="item-value">
+              {version || "Loading..."}
+            </Text>
           </div>
           <div className="settings-item">
-            <span className="item-label">App Directory</span>
+            <Text className="item-label">App Directory</Text>
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              {/* <span className="item-value" style={{
-                maxWidth: '200px',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
-                direction: 'rtl',
-                textAlign: 'left'
-              }}>
-                {appDirPath || 'Loading...'}
-              </span> */}
               <Tooltip title="Copy Path">
                 <Button
                   type="text"
@@ -144,10 +148,12 @@ export const SettingsPage: FC = () => {
       </div>
 
       <div className="settings-section">
-        <div className="section-title">Data Management</div>
+        <Title level={5} className="section-title">
+          Data Management
+        </Title>
         <div className="section-content">
           <div className="settings-item">
-            <span className="item-label">Clear All Data</span>
+            <Text className="item-label">Clear All Data</Text>
             <Button
               danger
               type="primary"

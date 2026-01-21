@@ -1,5 +1,9 @@
 import { FC, useState, useEffect } from "react"
+import { Flex, Typography, Avatar } from "antd"
+import { FolderOutlined } from "@ant-design/icons"
 import { DEFAULT_COVER_URL, get_web_url, LocalPlaylist } from "../../api"
+
+const { Text } = Typography
 
 interface PlaylistCardProps {
   playlist: LocalPlaylist
@@ -29,7 +33,7 @@ export const PlaylistCard: FC<PlaylistCardProps> = ({ playlist, onClick }) => {
   const audioCount = playlist.audios?.length || 0
 
   return (
-    <div
+    <Flex
       className="playlist-card"
       onClick={onClick}
       role="button"
@@ -39,17 +43,30 @@ export const PlaylistCard: FC<PlaylistCardProps> = ({ playlist, onClick }) => {
           onClick?.()
         }
       }}
+      align="center"
+      gap="middle"
     >
-      <div className="playlist-cover">
-        <img src={coverUrl || DEFAULT_COVER_URL} alt={playlist.id} />
-      </div>
-      <div className="playlist-info">
-        <div className="playlist-title">{playlist.id}</div>
-        <div className="playlist-meta">
+      <Avatar
+        src={coverUrl || DEFAULT_COVER_URL}
+        icon={<FolderOutlined />}
+        size={72}
+        shape="square"
+        alt={playlist.id}
+        className="playlist-cover"
+      />
+      <Flex vertical flex={1} style={{ minWidth: 0 }}>
+        <Text
+          strong
+          ellipsis={{ tooltip: playlist.id }}
+          className="playlist-title"
+        >
+          {playlist.id}
+        </Text>
+        <Text type="secondary" className="playlist-meta">
           {audioCount} tracks · {playlist.platform}
-        </div>
-      </div>
-    </div>
+        </Text>
+      </Flex>
+    </Flex>
   )
 }
 

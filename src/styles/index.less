@@ -288,9 +288,6 @@ body {
 
 // Audio card component
 .audio-card {
-  display: flex;
-  align-items: center;
-  gap: @spacing-md;
   padding: @spacing-md;
   background: var(--bg-card);
   border-radius: @radius-md;
@@ -312,31 +309,94 @@ body {
   }
 
   .audio-cover {
-    width: 56px;
-    height: 56px;
-    border-radius: @radius-sm;
-    overflow: hidden;
     flex-shrink: 0;
-    background: @primary-gradient;
-    display: flex;
-    align-items: center;
-    justify-content: center;
 
-    img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
+    &.ant-avatar {
+
+      border-radius: @radius-sm;
+
+      .ant-avatar-string {
+        font-size: 20px;
+      }
     }
+  }
 
-    .cover-placeholder {
-      width: 100%;
-      height: 100%;
+  .audio-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 2px;
+
+    &.ant-typography {
+      margin-bottom: 2px;
+    }
+  }
+
+  .audio-meta {
+    font-size: 12px;
+    color: var(--text-secondary);
+
+    .audio-platform {
       display: flex;
       align-items: center;
-      justify-content: center;
-      color: #fff;
-      font-size: 20px;
-      font-weight: 600;
+      gap: 2px;
+
+      &.ant-typography {
+        margin-bottom: 0;
+      }
+    }
+
+    .audio-duration {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+    }
+  }
+
+  .audio-action {
+    flex-shrink: 0;
+  }
+}
+
+// Audio card with checkbox
+.audio-card-selectable {
+  padding: @spacing-md;
+  background: var(--bg-card);
+  border-radius: @radius-md;
+  border: 1px solid var(--border-color);
+  cursor: pointer;
+  margin-bottom: @spacing-sm;
+  transition: transform @transition-fast @ease-out,
+    box-shadow @transition-fast @ease-out,
+    border-color @transition-fast @ease-out;
+
+  &:hover {
+    border-color: var(--primary-color);
+    box-shadow: @shadow-md;
+  }
+
+  &:active {
+    transform: scale(0.98);
+    opacity: 0.9;
+  }
+
+  .checkbox-wrapper {
+    flex-shrink: 0;
+  }
+
+  .audio-cover {
+    flex-shrink: 0;
+
+    &.ant-avatar {
+
+      border-radius: @radius-sm;
+
+      .ant-avatar-string {
+        font-size: 20px;
+      }
     }
   }
 
@@ -355,23 +415,8 @@ body {
     }
 
     .audio-meta {
-      display: flex;
-      align-items: center;
-      gap: @spacing-sm;
       font-size: 12px;
       color: var(--text-secondary);
-
-      .audio-platform {
-        display: flex;
-        align-items: center;
-        gap: 2px;
-      }
-
-      .audio-duration {
-        display: flex;
-        align-items: center;
-        gap: 2px;
-      }
     }
   }
 
@@ -380,27 +425,15 @@ body {
   }
 }
 
-// Audio card with checkbox
-.audio-card-selectable {
-  .audio-card();
-
-  .checkbox-wrapper {
-    flex-shrink: 0;
-    margin-right: @spacing-xs;
-  }
-}
-
 // Playlist card
 .playlist-card {
-  display: flex;
-  flex-direction: row; // Changed from column to row for list view
-  align-items: center; // Align items vertically
   background: var(--bg-card);
   border-radius: @radius-md;
   overflow: hidden;
   border: 1px solid var(--border-color);
   cursor: pointer;
-  margin-bottom: @spacing-sm; // Changed to match audio-card spacing
+  margin-bottom: @spacing-sm;
+  padding: @spacing-md;
   transition: transform @transition-fast @ease-out,
     box-shadow @transition-fast @ease-out,
     border-color @transition-fast @ease-out;
@@ -408,7 +441,7 @@ body {
   &:hover {
     border-color: var(--primary-color);
     box-shadow: @shadow-md;
-    transform: translateX(4px); // Slide right slightly on hover
+    transform: translateX(4px);
   }
 
   &:active {
@@ -417,45 +450,38 @@ body {
   }
 
   .playlist-cover {
-    width: 72px; // Fixed width
-    height: 72px; // Fixed height
-    // aspect-ratio: 1; // Removed aspect ratio constraint
-    background: @primary-gradient;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0; // Prevent shrinking
+    flex-shrink: 0;
 
-    img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
+    &.ant-avatar {
 
-    .cover-placeholder {
-      font-size: 24px; // Smaller icon
-      color: #fff;
+      border-radius: @radius-sm;
+
+      .ant-avatar-string {
+        font-size: 24px;
+      }
     }
   }
 
-  .playlist-info {
-    padding: @spacing-md;
-    flex: 1; // Take remaining width
-    min-width: 0; // Enable text truncation
+  .playlist-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 4px;
 
-    .playlist-title {
-      font-size: 16px;
-      font-weight: 600;
-      color: var(--text-primary);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+    &.ant-typography {
       margin-bottom: 4px;
     }
+  }
 
-    .playlist-meta {
-      font-size: 13px;
-      color: var(--text-secondary);
+  .playlist-meta {
+    font-size: 13px;
+    color: var(--text-secondary);
+
+    &.ant-typography {
+      margin-bottom: 0;
     }
   }
 }
@@ -477,83 +503,76 @@ body {
   height: @player-bar-height;
   background: var(--bg-card);
   border-top: 1px solid var(--border-color);
-  display: flex;
-  align-items: center;
   padding: @spacing-md @spacing-lg;
-  gap: @spacing-md;
   z-index: 1000;
   padding-bottom: calc(@spacing-md + @safe-area-bottom);
   box-shadow: 0 -2px 12px var(--shadow-color);
+  animation: slideInUp @transition-slow @ease-out;
 
   .player-cover {
-    width: 48px;
-    height: 48px;
-    border-radius: @radius-sm;
-    overflow: hidden;
     flex-shrink: 0;
-    background: @primary-gradient;
 
-    img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
+    &.ant-avatar {
 
-    .cover-placeholder {
-      width: 100%;
-      height: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #fff;
-      font-size: 18px;
-      font-weight: 600;
+      border-radius: @radius-sm;
+
+      .ant-avatar-string {
+        font-size: 18px;
+      }
     }
   }
 
-  .player-info {
-    flex: 1;
-    min-width: 0;
+  .player-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 
-    .player-title {
-      font-size: 14px;
-      font-weight: 600;
-      color: var(--text-primary);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+    &.ant-typography {
+      margin-bottom: 0;
     }
+  }
 
-    .player-artist {
-      font-size: 12px;
-      color: var(--text-secondary);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+  .player-artist {
+    font-size: 12px;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+
+    &.ant-typography {
+      margin-bottom: 0;
     }
   }
 
   .player-controls {
-    display: flex;
-    align-items: center;
-    gap: @spacing-sm;
+    flex-shrink: 0;
 
     .control-btn {
-      width: 44px;
-      height: 44px;
-      border-radius: @radius-full;
-      border: none;
-      background: @primary-gradient;
-      color: #fff;
-      font-size: 18px;
+      width: 44px !important;
+      height: 44px !important;
+      min-width: 44px !important;
+      border-radius: @radius-full !important;
+      border: none !important;
+      background: @primary-gradient !important;
+      color: #fff !important;
+      font-size: 18px !important;
       cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: transform @transition-fast @ease-out, opacity @transition-fast @ease-out;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      padding: 0 !important;
+      transition: transform @transition-fast @ease-out, opacity @transition-fast @ease-out !important;
+
+      .anticon {
+        font-size: 18px;
+      }
 
       &:hover {
         transform: scale(1.05);
+        color: #fff !important;
       }
 
       &:active {
@@ -563,27 +582,34 @@ body {
     }
 
     .action-btn {
-      background: none;
-      border: none;
+      background: none !important;
+      border: none !important;
       cursor: pointer;
-      font-size: 20px;
-      color: var(--text-primary);
-      width: 40px;
-      height: 40px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 50%;
-      transition: background @transition-fast @ease-out;
+      font-size: 20px !important;
+      color: var(--text-primary) !important;
+      width: 40px !important;
+      height: 40px !important;
+      min-width: 40px !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      border-radius: 50% !important;
+      padding: 0 !important;
+      transition: background @transition-fast @ease-out !important;
+
+      .anticon {
+        font-size: 20px;
+      }
+
+      &:hover {
+        color: var(--text-primary) !important;
+      }
 
       &:active {
-        background: rgba(0, 0, 0, 0.05);
+        background: rgba(0, 0, 0, 0.05) !important;
       }
     }
   }
-
-  // Slide in animation for mini player
-  animation: slideInUp @transition-slow @ease-out;
 }
 
 @keyframes slideInUp {
@@ -654,11 +680,19 @@ body {
     font-weight: 600;
     color: var(--text-primary);
     margin-bottom: @spacing-sm;
+
+    &.ant-typography {
+      margin-bottom: @spacing-sm;
+    }
   }
 
   .empty-description {
     font-size: 14px;
     color: var(--text-secondary);
+
+    &.ant-typography {
+      margin-bottom: 0;
+    }
   }
 }
 
@@ -675,6 +709,10 @@ body {
       letter-spacing: 0.5px;
       margin-bottom: @spacing-md;
       padding-left: @spacing-sm;
+
+      &.ant-typography {
+        margin-bottom: @spacing-md;
+      }
     }
 
     .section-content {
@@ -699,11 +737,19 @@ body {
     .item-label {
       font-size: 15px;
       color: var(--text-primary);
+
+      &.ant-typography {
+        margin-bottom: 0;
+      }
     }
 
     .item-value {
       color: var(--text-secondary);
       font-size: 14px;
+
+      &.ant-typography {
+        margin-bottom: 0;
+      }
     }
   }
 }
@@ -749,6 +795,10 @@ body {
       font-size: 15px;
       font-weight: 500;
       color: var(--text-primary);
+
+      &.ant-typography {
+        margin-bottom: 0;
+      }
     }
   }
 }
@@ -825,4 +875,49 @@ body {
 .main-content::-webkit-scrollbar-thumb {
   background: var(--border-color);
   border-radius: @radius-full;
+}
+
+// Avatar component customization
+.ant-avatar {
+  &.audio-cover,
+  &.player-cover,
+  &.playlist-cover {
+    transition: all @transition-fast @ease-out;
+
+    &:hover {
+      transform: scale(1.05);
+    }
+
+    // Fallback icon styling
+    .anticon {
+      color: #fff;
+    }
+
+    // Image styling
+    img {
+      object-fit: cover;
+    }
+  }
+
+  // Dark mode adjustments
+  [data-prefers-color-scheme='dark'] & {
+    &.audio-cover,
+    &.player-cover,
+    &.playlist-cover {
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    }
+  }
+}
+
+// Large cover specific styles
+.large-cover.ant-avatar {
+  // Disable hover effect for large cover
+  &:hover {
+    transform: none;
+  }
+
+  // Playing animation
+  .player-page.playing & {
+    animation: coverRotate 20s linear infinite;
+  }
 }

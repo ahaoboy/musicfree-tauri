@@ -5,7 +5,9 @@ import {
   HeartOutlined,
   PauseCircleFilled,
   PlayCircleFilled,
+  AudioOutlined,
 } from "@ant-design/icons"
+import { Button, Flex, Typography, Avatar } from "antd"
 import {
   DEFAULT_COVER_URL,
   FAVORITE_PLAYLIST_ID,
@@ -13,6 +15,8 @@ import {
   LocalAudio,
 } from "../../api"
 import { useAppStore } from "../../store"
+
+const { Text } = Typography
 
 interface PlayerCardProps {
   audio: LocalAudio | null
@@ -72,7 +76,7 @@ export const PlayerCard: FC<PlayerCardProps> = memo(({ audio }) => {
   }
 
   return (
-    <div
+    <Flex
       className="mini-player clickable"
       onClick={handleCardClick}
       role="button"
@@ -82,33 +86,57 @@ export const PlayerCard: FC<PlayerCardProps> = memo(({ audio }) => {
           handleCardClick()
         }
       }}
+      align="center"
+      gap="middle"
     >
-      <div className="player-cover">
-        <img src={coverUrl || DEFAULT_COVER_URL} alt={audio.audio.title} />
-      </div>
-      <div className="player-info">
-        <div className="player-title">{audio.audio.title}</div>
-        <div className="player-artist">{audio.audio.platform}</div>
-      </div>
-      <div className="player-controls">
-        <button
-          className="action-btn secondary"
+      <Avatar
+        src={coverUrl || DEFAULT_COVER_URL}
+        icon={<AudioOutlined />}
+        size={48}
+        shape="square"
+        alt={audio.audio.title}
+        className="player-cover"
+      />
+      <Flex vertical flex={1} style={{ minWidth: 0 }}>
+        <Text
+          strong
+          ellipsis={{ tooltip: audio.audio.title }}
+          className="player-title"
+        >
+          {audio.audio.title}
+        </Text>
+        <Text
+          type="secondary"
+          ellipsis={{ tooltip: audio.audio.platform }}
+          className="player-artist"
+        >
+          {audio.audio.platform}
+        </Text>
+      </Flex>
+      <Flex className="player-controls" align="center" gap="small">
+        <Button
+          type="text"
+          icon={
+            isFavorited ? (
+              <HeartFilled style={{ color: "#ff4d4f" }} />
+            ) : (
+              <HeartOutlined />
+            )
+          }
           onClick={(e) => {
             e.stopPropagation()
             toggleFavorite(audio)
           }}
-        >
-          {isFavorited ? (
-            <HeartFilled style={{ color: "#ff4d4f" }} />
-          ) : (
-            <HeartOutlined />
-          )}
-        </button>
-        <button className="control-btn" onClick={handlePlayClick}>
-          {isPlaying ? <PauseCircleFilled /> : <PlayCircleFilled />}
-        </button>
-      </div>
-    </div>
+          className="action-btn secondary"
+        />
+        <Button
+          type="text"
+          icon={isPlaying ? <PauseCircleFilled /> : <PlayCircleFilled />}
+          onClick={handlePlayClick}
+          className="control-btn"
+        />
+      </Flex>
+    </Flex>
   )
 })
 

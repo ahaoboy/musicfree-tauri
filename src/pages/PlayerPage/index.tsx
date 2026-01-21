@@ -12,11 +12,14 @@ import {
   RetweetOutlined,
   SwapOutlined,
   BarsOutlined,
+  AudioOutlined,
 } from "@ant-design/icons"
-import { Slider, message } from "antd"
+import { Slider, message, Button, Typography, Avatar, Flex } from "antd"
 import { useAppStore } from "../../store"
 import { FAVORITE_PLAYLIST_ID, get_web_url, DEFAULT_COVER_URL } from "../../api"
 import "./index.less"
+
+const { Title, Text } = Typography
 
 const formatTime = (seconds: number) => {
   if (!seconds) return "0:00"
@@ -125,15 +128,15 @@ const PlayerPage: FC = () => {
         return <RetweetOutlined />
       case "single-loop":
         return (
-          <div
+          <Flex
             style={{
               position: "relative",
-              display: "inline-flex",
-              alignItems: "center",
             }}
+            align="center"
+            justify="center"
           >
             <RetweetOutlined />
-            <span
+            <Text
               style={{
                 position: "absolute",
                 fontSize: "10px",
@@ -144,8 +147,8 @@ const PlayerPage: FC = () => {
               }}
             >
               1
-            </span>
-          </div>
+            </Text>
+          </Flex>
         )
       case "shuffle":
         return <SwapOutlined />
@@ -156,53 +159,107 @@ const PlayerPage: FC = () => {
 
   if (!currentAudio) {
     return (
-      <div className="player-page empty">
-        <div className="player-header">
-          <button className="icon-btn" onClick={() => navigate(-1)}>
-            <LeftOutlined />
-          </button>
-        </div>
-        <div className="empty-msg">No Audio Playing</div>
-      </div>
+      <Flex
+        vertical
+        className="player-page empty"
+        style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+        }}
+      >
+        <Flex className="player-header" align="center" justify="space-between">
+          <Button
+            type="text"
+            icon={<LeftOutlined />}
+            onClick={() => navigate(-1)}
+            className="icon-btn"
+          />
+        </Flex>
+        <Flex flex={1} align="center" justify="center">
+          <Text type="secondary" className="empty-msg">
+            No Audio Playing
+          </Text>
+        </Flex>
+      </Flex>
     )
   }
 
   return (
-    <div className="player-page">
+    <Flex
+      vertical
+      className={`player-page ${isPlaying ? "playing" : ""}`}
+      style={{
+        position: "fixed",
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+      }}
+    >
       {/* Header */}
-      <div className="player-header">
-        <button className="icon-btn" onClick={() => navigate(-1)}>
-          <LeftOutlined />
-        </button>
-        <div className="header-title">
-          <span>{currentAudio.audio.title}</span>
-        </div>
-        <button className="icon-btn" onClick={handleShare}>
-          <ShareAltOutlined />
-        </button>
-      </div>
+      <Flex className="player-header" align="center" justify="space-between">
+        <Button
+          type="text"
+          icon={<LeftOutlined />}
+          onClick={() => navigate(-1)}
+          className="icon-btn"
+        />
+        <Flex flex={1} justify="center" style={{ minWidth: 0 }}>
+          <Text
+            ellipsis={{ tooltip: currentAudio.audio.title }}
+            className="header-title"
+          >
+            {currentAudio.audio.title}
+          </Text>
+        </Flex>
+        <Button
+          type="text"
+          icon={<ShareAltOutlined />}
+          onClick={handleShare}
+          className="icon-btn"
+        />
+      </Flex>
 
       {/* Cover */}
-      <div className="player-content">
-        <div className="large-cover">
-          <img
-            src={coverUrl || DEFAULT_COVER_URL}
-            alt={currentAudio.audio.title}
-          />
-        </div>
+      <Flex
+        vertical
+        flex={1}
+        align="center"
+        justify="center"
+        className="player-content"
+      >
+        <Avatar
+          src={coverUrl || DEFAULT_COVER_URL}
+          icon={<AudioOutlined />}
+          size={300}
+          shape="square"
+          alt={currentAudio.audio.title}
+          className="large-cover"
+        />
 
-        <div className="track-info">
-          <h2>{currentAudio.audio.title}</h2>
-          <p>{currentAudio.audio.platform}</p>
-        </div>
-      </div>
+        <Flex vertical align="center" className="track-info">
+          <Title
+            level={3}
+            ellipsis={{ rows: 2, tooltip: currentAudio.audio.title }}
+          >
+            {currentAudio.audio.title}
+          </Title>
+          <Text type="secondary">{currentAudio.audio.platform}</Text>
+        </Flex>
+      </Flex>
 
       {/* Controls */}
-      <div className="player-controls-container">
+      <Flex vertical className="player-controls-container">
         {/* Progress */}
-        <div className="progress-bar">
-          <span className="time-text">{formatTime(currentTime)}</span>
+        <Flex align="center" gap="middle" className="progress-bar">
+          <Text type="secondary" className="time-text">
+            {formatTime(currentTime)}
+          </Text>
           <Slider
+            style={{ flex: 1 }}
             min={0}
             max={duration}
             value={currentTime}
@@ -213,46 +270,62 @@ const PlayerPage: FC = () => {
             onChangeComplete={handleSeek}
             tooltip={{ formatter: null }}
           />
-          <span className="time-text">{formatTime(duration)}</span>
-        </div>
+          <Text type="secondary" className="time-text">
+            {formatTime(duration)}
+          </Text>
+        </Flex>
 
         {/* Main Controls */}
-        <div className="main-controls">
-          <button className="action-btn secondary" onClick={togglePlayMode}>
-            {getModeIcon()}
-          </button>
-
-          <button className="action-btn secondary" onClick={() => playPrev()}>
-            <StepBackwardOutlined />
-          </button>
-
-          <button className="play-btn large" onClick={togglePlay}>
-            {isPlaying ? <PauseCircleFilled /> : <PlayCircleFilled />}
-          </button>
-
-          <button className="action-btn secondary" onClick={() => playNext()}>
-            <StepForwardOutlined />
-          </button>
-
-          <button
+        <Flex align="center" justify="space-between" className="main-controls">
+          <Button
+            type="text"
+            icon={getModeIcon()}
+            onClick={togglePlayMode}
             className="action-btn secondary"
+          />
+
+          <Button
+            type="text"
+            icon={<StepBackwardOutlined />}
+            onClick={() => playPrev()}
+            className="action-btn secondary"
+          />
+
+          <Button
+            type="text"
+            icon={isPlaying ? <PauseCircleFilled /> : <PlayCircleFilled />}
+            onClick={togglePlay}
+            className="play-btn large"
+          />
+
+          <Button
+            type="text"
+            icon={<StepForwardOutlined />}
+            onClick={() => playNext()}
+            className="action-btn secondary"
+          />
+
+          <Button
+            type="text"
+            icon={
+              isFavorited ? (
+                <HeartFilled style={{ color: "#ff4d4f" }} />
+              ) : (
+                <HeartOutlined />
+              )
+            }
             onClick={() => toggleFavorite(currentAudio)}
-          >
-            {isFavorited ? (
-              <HeartFilled style={{ color: "#ff4d4f" }} />
-            ) : (
-              <HeartOutlined />
-            )}
-          </button>
-        </div>
-      </div>
+            className="action-btn secondary"
+          />
+        </Flex>
+      </Flex>
 
       {/* Background Blur */}
       <div
         className="player-bg"
         style={{ backgroundImage: coverUrl ? `url(${coverUrl})` : "none" }}
       />
-    </div>
+    </Flex>
   )
 }
 

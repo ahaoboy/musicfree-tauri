@@ -1,5 +1,14 @@
-import { DownloadOutlined } from "@ant-design/icons"
-import { App, Button, Checkbox, Input, Space } from "antd"
+import { DownloadOutlined, AudioOutlined } from "@ant-design/icons"
+import {
+  App,
+  Button,
+  Checkbox,
+  Input,
+  Space,
+  Flex,
+  Typography,
+  Avatar,
+} from "antd"
 import { FC, useEffect, useState } from "react"
 import {
   Audio,
@@ -18,6 +27,7 @@ import { useAppStore } from "../../store"
 import "./index.less"
 
 const { Search } = Input
+const { Text } = Typography
 
 interface AudioItemProps {
   audio: Audio
@@ -39,7 +49,7 @@ const AudioItem: FC<AudioItemProps> = ({
   onDownload,
 }) => {
   return (
-    <div className="audio-card-selectable">
+    <Flex className="audio-card-selectable" align="center" gap="middle">
       <div className="checkbox-wrapper">
         <Checkbox
           checked={selected}
@@ -47,18 +57,29 @@ const AudioItem: FC<AudioItemProps> = ({
           disabled={downloaded || downloading}
         />
       </div>
-      <div className="audio-cover">
-        <img src={coverUrl || DEFAULT_COVER_URL} alt={audio.title} />
-      </div>
-      <div className="audio-info">
-        <div className="audio-title">{audio.title}</div>
-        <div className="audio-meta">
-          <span className="audio-platform">{audio.platform}</span>
-          {downloaded && (
-            <span style={{ color: "#10b981" }}> · Downloaded</span>
-          )}
-        </div>
-      </div>
+      <Avatar
+        src={coverUrl || DEFAULT_COVER_URL}
+        icon={<AudioOutlined />}
+        size={56}
+        shape="square"
+        alt={audio.title}
+        className="audio-cover"
+      />
+      <Flex vertical flex={1} style={{ minWidth: 0 }}>
+        <Text
+          strong
+          ellipsis={{ tooltip: audio.title }}
+          className="audio-title"
+        >
+          {audio.title}
+        </Text>
+        <Flex className="audio-meta" align="center" gap="small">
+          <Text type="secondary" className="audio-platform">
+            {audio.platform}
+          </Text>
+          {downloaded && <Text type="success"> · Downloaded</Text>}
+        </Flex>
+      </Flex>
       <div className="audio-action">
         <Button
           type="text"
@@ -71,7 +92,7 @@ const AudioItem: FC<AudioItemProps> = ({
           }}
         />
       </div>
-    </div>
+    </Flex>
   )
 }
 
@@ -459,23 +480,35 @@ export const SearchPage: FC = () => {
           <div className="audio-list">
             {/* List Header Info */}
             <div className="search-result-info">
-              Found {playlist.audios.length} tracks
+              <Text type="secondary">
+                Found {playlist.audios.length} tracks
+              </Text>
             </div>
 
             {/* Playlist Info Card (Optional, keeping it simple for now or usage above) */}
             {/* If it's a playlist search, maybe show some info? */}
             {playlist.title && playlist.audios.length > 1 && (
               <div className="audio-card" style={{ marginBottom: 16 }}>
-                <div className="audio-cover">
-                  <img
-                    src={playlistCoverUrl || DEFAULT_COVER_URL}
-                    alt={playlist.title}
-                  />
-                </div>
+                <Avatar
+                  src={playlistCoverUrl || DEFAULT_COVER_URL}
+                  icon={<AudioOutlined />}
+                  size={56}
+                  shape="square"
+                  alt={playlist.title}
+                  className="audio-cover"
+                />
                 <div className="audio-info">
-                  <div className="audio-title">{playlist.title}</div>
+                  <Text
+                    strong
+                    ellipsis={{ tooltip: playlist.title }}
+                    className="audio-title"
+                  >
+                    {playlist.title}
+                  </Text>
                   <div className="audio-meta">
-                    <span className="audio-platform">{playlist.platform}</span>
+                    <Text type="secondary" className="audio-platform">
+                      {playlist.platform}
+                    </Text>
                   </div>
                 </div>
               </div>
