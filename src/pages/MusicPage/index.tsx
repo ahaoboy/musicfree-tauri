@@ -1,8 +1,10 @@
 import { FC } from "react"
-import { Spin, Flex, App } from "antd"
-import { DeleteOutlined, ExclamationCircleOutlined } from "@ant-design/icons"
+import { Spin, Flex, Avatar } from "antd"
+import { DeleteOutlined } from "@ant-design/icons"
 import { useAppStore } from "../../store"
 import { AudioCard } from "../../components"
+import { useConfirm } from "../../hooks"
+import { DEFAULT_COVER_URL } from "../../api"
 
 // Music page - displays all downloaded individual audio files
 export const MusicPage: FC = () => {
@@ -12,7 +14,7 @@ export const MusicPage: FC = () => {
     deleteAudio,
     isConfigLoading,
   } = useAppStore()
-  const { modal } = App.useApp()
+  const { showConfirm } = useConfirm()
   const handleAudioClick = (audio: (typeof audios)[number]) => {
     playAudio(audio, audios)
   }
@@ -29,13 +31,18 @@ export const MusicPage: FC = () => {
     <Flex vertical className="page" gap="small">
       {audios.length === 0 ? (
         <Flex
-          vertical
           flex={1}
           align="center"
           justify="center"
           className="empty-state"
         >
-          <div className="empty-icon">🎵</div>
+          <Avatar
+            src={DEFAULT_COVER_URL}
+            size={256}
+            shape="square"
+            style={{ opacity: 0.5 }}
+            alt="No Music"
+          />
         </Flex>
       ) : (
         <Flex vertical gap="small" className="audio-list">
@@ -47,10 +54,8 @@ export const MusicPage: FC = () => {
               showAction
               actionIcon={<DeleteOutlined />}
               onAction={() => {
-                modal.confirm({
+                showConfirm({
                   title: "Delete Audio",
-                  centered: true,
-                  icon: <ExclamationCircleOutlined />,
                   content: "Are you sure you want to delete this track?",
                   onOk: () => deleteAudio(audio.audio.id),
                 })

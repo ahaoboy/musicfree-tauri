@@ -1,10 +1,11 @@
 import { FC, useState, useEffect, useCallback } from "react"
-import { Flex, App } from "antd"
-import { DeleteOutlined, ExclamationCircleOutlined } from "@ant-design/icons"
+import { Flex, Avatar } from "antd"
+import { DeleteOutlined } from "@ant-design/icons"
 import { useAppStore } from "../../store"
-import { LocalPlaylist, LocalAudio, FAVORITE_PLAYLIST_ID } from "../../api"
+import { LocalPlaylist, LocalAudio, FAVORITE_PLAYLIST_ID, DEFAULT_COVER_URL } from "../../api"
 import { PlaylistCard, AudioCard } from "../../components"
 import { useNavigation } from "../../App"
+import { useConfirm } from "../../hooks"
 
 // Playlists page - displays all downloaded playlists
 // Clicking a playlist shows its detail with playable audios
@@ -19,7 +20,7 @@ export const PlaylistsPage: FC = () => {
   const [selectedPlaylist, setSelectedPlaylist] =
     useState<LocalPlaylist | null>(null)
   const { setIsInDetailView, setOnBackFromDetail } = useNavigation()
-  const { modal } = App.useApp()
+  const { showConfirm } = useConfirm()
 
   // Handle back navigation
   const handleBack = useCallback(() => {
@@ -64,14 +65,18 @@ export const PlaylistsPage: FC = () => {
       <Flex vertical className="page" gap="small">
         {selectedPlaylist.audios.length === 0 ? (
           <Flex
-            vertical
             flex={1}
             align="center"
             justify="center"
-            gap="middle"
             className="empty-state"
           >
-            <div className="empty-icon">🎵</div>
+            <Avatar
+              src={DEFAULT_COVER_URL}
+              size={256}
+              shape="square"
+              style={{ opacity: 0.5 }}
+              alt="No Audio"
+            />
           </Flex>
         ) : (
           <Flex vertical gap="small" className="audio-list">
@@ -83,10 +88,8 @@ export const PlaylistsPage: FC = () => {
                 showAction
                 actionIcon={<DeleteOutlined />}
                 onAction={() => {
-                  modal.confirm({
+                  showConfirm({
                     title: "Delete Audio",
-                    centered: true,
-                    icon: <ExclamationCircleOutlined />,
                     content: "Are you sure you want to delete this track?",
                     onOk: () => deleteAudio(audio.audio.id),
                   })
@@ -104,13 +107,18 @@ export const PlaylistsPage: FC = () => {
     <Flex vertical className="page" gap="small">
       {playlists.length === 0 ? (
         <Flex
-          vertical
           flex={1}
           align="center"
           justify="center"
           className="empty-state"
         >
-          <div className="empty-icon">📁</div>
+          <Avatar
+            src={DEFAULT_COVER_URL}
+            size={256}
+            shape="square"
+            style={{ opacity: 0.5 }}
+            alt="No Playlists"
+          />
         </Flex>
       ) : (
         <Flex vertical gap="small" className="playlist-grid">
@@ -122,10 +130,8 @@ export const PlaylistsPage: FC = () => {
               showAction={playlist.id !== FAVORITE_PLAYLIST_ID}
               actionIcon={<DeleteOutlined />}
               onAction={() => {
-                modal.confirm({
+                showConfirm({
                   title: "Delete Playlist",
-                  centered: true,
-                  icon: <ExclamationCircleOutlined />,
                   content: "Are you sure you want to delete this playlist?",
                   onOk: () => deletePlaylist(playlist.id),
                 })

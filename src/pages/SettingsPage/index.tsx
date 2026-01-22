@@ -10,6 +10,7 @@ import {
 import { writeText } from "@tauri-apps/plugin-clipboard-manager"
 import { useAppStore } from "../../store"
 import { clear_all_data, app_dir, app_version, ThemeMode } from "../../api"
+import { useConfirm } from "../../hooks"
 
 const { Title, Text } = Typography
 
@@ -55,7 +56,8 @@ export const SettingsPage: FC = () => {
     config: { audios, playlists, theme },
   } = useAppStore()
   const [appDirPath, setAppDirPath] = useState<string>("")
-  const { modal, message } = App.useApp()
+  const { message } = App.useApp()
+  const { showConfirm } = useConfirm()
   const [version, setVersion] = useState<string>("")
 
   useEffect(() => {
@@ -179,13 +181,12 @@ export const SettingsPage: FC = () => {
               danger
               type="primary"
               onClick={() => {
-                modal.confirm({
+                showConfirm({
                   title: "Clear All Data",
                   content:
                     "This will delete all downloaded music and reset your configuration. This action cannot be undone.",
                   okText: "Clear",
                   okType: "danger",
-                  cancelText: "Cancel",
                   onOk: async () => {
                     try {
                       await clear_all_data()
