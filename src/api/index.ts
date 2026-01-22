@@ -60,18 +60,8 @@ export function extract_audios(
   return invoke("extract_audios", { url })
 }
 
-export async function download_audio(audio: Audio): Promise<LocalAudio[]> {
-  const result = await invoke("download_audio", { audio })
-
-  // Handle both single object and array responses
-  if (Array.isArray(result)) {
-    return result
-  } else if (result && typeof result === "object") {
-    // Backend returned a single LocalAudio object
-    return [result as LocalAudio]
-  } else {
-    return []
-  }
+export function download_audio(audio: Audio): Promise<LocalAudio> {
+  return invoke("download_audio", { audio })
 }
 
 export function app_dir(): Promise<string> {

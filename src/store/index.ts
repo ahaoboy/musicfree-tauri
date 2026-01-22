@@ -248,7 +248,6 @@ export const useAppStore = create<AppState>((set, get) => ({
     const { audioElement } = get()
     try {
       const url = await get_web_url(audio.path)
-      console.log("audioElement,loadAudioMetadata", audioElement)
 
       set({
         currentAudio: audio,
@@ -459,7 +458,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     await get().saveConfig(updatedConfig)
   },
 
-  // Add playlist to config
+  // Add playlist to config (with smart merging)
   addPlaylistToConfig: async (playlist: LocalPlaylist) => {
     const { config } = get()
     if (!config) return
@@ -470,9 +469,35 @@ export const useAppStore = create<AppState>((set, get) => ({
     let updatedPlaylists: LocalPlaylist[]
 
     if (existingIndex >= 0) {
-      // Update existing playlist
+      // Merge with existing playlist
+      const existing = config.playlists[existingIndex]
+      const existingAudioMap = new Map(
+        existing.audios.map((a) => [a.audio.id, a]),
+      )
+      const newAudioMap = new Map(
+        playlist.audios.map((a) => [a.audio.id, a]),
+      )
+
+      // Merge audios: prefer new data, preserve order from new playlist
+      const mergedAudios = playlist.audios.map((audio) => {
+        // Use new audio if available, otherwise use existing
+        return newAudioMap.get(audio.audio.id) || existingAudioMap.get(audio.audio.id)
+      }).filter(Boolean) as LocalAudio[]
+
+      // Add any existing audios not in new playlist (append at end)
+      existing.audios.forEach((audio) => {
+        if (!newAudioMap.has(audio.audio.id)) {
+          mergedAudios.push(audio)
+        }
+      })
+
+      const mergedPlaylist: LocalPlaylist = {
+        ...playlist,
+        audios: mergedAudios,
+      }
+
       updatedPlaylists = [...config.playlists]
-      updatedPlaylists[existingIndex] = playlist
+      updatedPlaylists[existingIndex] = mergedPlaylist
     } else {
       // Add new playlist
       updatedPlaylists = [...config.playlists, playlist]
