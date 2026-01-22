@@ -42,6 +42,7 @@ export const PlayerPage: FC = () => {
   const togglePlay = useAppStore((state) => state.togglePlay)
   const playNext = useAppStore((state) => state.playNext)
   const playPrev = useAppStore((state) => state.playPrev)
+  const canPlayPrev = useAppStore((state) => state.canPlayPrev)
   const togglePlayMode = useAppStore((state) => state.togglePlayMode)
   const toggleFavorite = useAppStore((state) => state.toggleFavorite)
   const isFavorited = useAppStore((state) => state.isFavorited)
@@ -272,6 +273,7 @@ export const PlayerPage: FC = () => {
             type="text"
             icon={<StepBackwardOutlined />}
             onClick={() => playPrev()}
+            disabled={!canPlayPrev()}
             className="player-control-btn"
           />
 

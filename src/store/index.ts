@@ -28,6 +28,7 @@ interface RuntimeData {
   playbackRate: number
   playMode: PlayMode
   playbackQueue: LocalAudio[]
+  playbackHistory: LocalAudio[] // History stack for previous button
 
   // Loading states
   isConfigLoading: boolean
@@ -67,12 +68,17 @@ interface AppState extends PersistentData, RuntimeData {
   deletePlaylist: (id: string) => Promise<void>
 
   // Actions for runtime data
-  playAudio: (audio: LocalAudio, queue?: LocalAudio[]) => Promise<void>
+  playAudio: (
+    audio: LocalAudio,
+    queue?: LocalAudio[],
+    addToHistory?: boolean,
+  ) => Promise<void>
   pauseAudio: () => void
   resumeAudio: () => void
   togglePlay: () => void
   playNext: (auto?: boolean) => Promise<void>
   playPrev: () => Promise<void>
+  canPlayPrev: () => boolean
   togglePlayMode: () => void
   setAudioElement: (element: HTMLAudioElement | null) => void
   setPlaybackRate: (rate: number) => void
@@ -125,6 +131,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   playbackRate: 1,
   playMode: "sequence",
   playbackQueue: [],
+  playbackHistory: [], // Initialize empty history stack
   isConfigLoading: false,
   audioElement: null,
 
@@ -224,10 +231,24 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
 
   // Play audio
-  playAudio: async (audio: LocalAudio, queue?: LocalAudio[]) => {
-    const { audioElement } = get()
+  playAudio: async (
+    audio: LocalAudio,
+    queue?: LocalAudio[],
+    addToHistory: boolean = true,
+  ) => {
+    const { audioElement, currentAudio, playbackHistory } = get()
     try {
       const url = await get_web_url(audio.path)
+
+      // Add current audio to history before switching (if not from history navigation)
+      if (addToHistory && currentAudio) {
+        const newHistory = [...playbackHistory, currentAudio]
+        // Limit history to last 50 tracks to prevent memory issues
+        if (newHistory.length > 50) {
+          newHistory.shift()
+        }
+        set({ playbackHistory: newHistory })
+      }
 
       // Update queue if provided
       if (queue) {
@@ -254,54 +275,9 @@ export const useAppStore = create<AppState>((set, get) => ({
     }
   },
 
-  // Play Next
+  // Play Next - Choose next track based on play mode
   playNext: async (auto: boolean = false) => {
-    const { currentAudio, playbackQueue, playMode, playAudio } = get()
-    if (!currentAudio || playbackQueue.length === 0) return
-
-    const currentIndex = playbackQueue.findIndex(
-      (a) => a.audio.id === currentAudio.audio.id,
-    )
-    if (currentIndex === -1) return // Should not happen
-
-    let nextIndex = -1
-
-    if (playMode === "single-loop") {
-      if (auto) {
-        nextIndex = currentIndex // Repeat same
-      } else {
-        nextIndex = (currentIndex + 1) % playbackQueue.length // Manual next goes to next
-      }
-    } else if (playMode === "shuffle") {
-      // Simple random for now
-      nextIndex = Math.floor(Math.random() * playbackQueue.length)
-    } else if (playMode === "list-loop") {
-      nextIndex = (currentIndex + 1) % playbackQueue.length
-    } else {
-      // sequence
-      if (currentIndex < playbackQueue.length - 1) {
-        nextIndex = currentIndex + 1
-      } else {
-        // End of list, stop if auto, or wrap if manual (optional, usually sequence stops)
-        if (auto) {
-          get().pauseAudio()
-          return
-        } else {
-          // For manual next at end, maybe wrap or do nothing? Let's wrap for better UX or stop?
-          // Standard sequence usually stops. But user might want to go back to start manually.
-          nextIndex = 0
-        }
-      }
-    }
-
-    if (nextIndex >= 0) {
-      await playAudio(playbackQueue[nextIndex])
-    }
-  },
-
-  // Play Prev
-  playPrev: async () => {
-    const { currentAudio, playbackQueue, playMode, playAudio } = get()
+    const { currentAudio, playbackQueue, playMode } = get()
     if (!currentAudio || playbackQueue.length === 0) return
 
     const currentIndex = playbackQueue.findIndex(
@@ -309,19 +285,74 @@ export const useAppStore = create<AppState>((set, get) => ({
     )
     if (currentIndex === -1) return
 
-    let prevIndex = -1
+    let nextIndex = -1
 
-    if (playMode === "shuffle") {
-      prevIndex = Math.floor(Math.random() * playbackQueue.length)
-    } else {
-      // For prev, we usually just go back. Logic can be refined.
-      prevIndex =
-        (currentIndex - 1 + playbackQueue.length) % playbackQueue.length
+    switch (playMode) {
+      case "single-loop":
+        // Auto: repeat same track, Manual: go to next
+        nextIndex = auto
+          ? currentIndex
+          : (currentIndex + 1) % playbackQueue.length
+        break
+
+      case "shuffle":
+        // Random track (avoid current track if possible)
+        if (playbackQueue.length > 1) {
+          do {
+            nextIndex = Math.floor(Math.random() * playbackQueue.length)
+          } while (nextIndex === currentIndex && playbackQueue.length > 1)
+        } else {
+          nextIndex = 0
+        }
+        break
+
+      case "list-loop":
+        // Loop to beginning after last track
+        nextIndex = (currentIndex + 1) % playbackQueue.length
+        break
+      default:
+        // Stop at end if auto, wrap if manual
+        if (currentIndex < playbackQueue.length - 1) {
+          nextIndex = currentIndex + 1
+        } else if (!auto) {
+          // Manual: wrap to beginning
+          nextIndex = 0
+        } else {
+          // Auto: stop playing
+          get().pauseAudio()
+          return
+        }
+        break
     }
 
-    if (prevIndex >= 0) {
-      await playAudio(playbackQueue[prevIndex])
+    if (nextIndex >= 0 && nextIndex < playbackQueue.length) {
+      await get().playAudio(playbackQueue[nextIndex], undefined, true)
     }
+  },
+
+  // Play Previous - Pop from history stack
+  playPrev: async () => {
+    const { playbackHistory } = get()
+
+    // Check if history is empty
+    if (playbackHistory.length === 0) {
+      return
+    }
+
+    // Pop the last audio from history
+    const prevAudio = playbackHistory[playbackHistory.length - 1]
+    const newHistory = playbackHistory.slice(0, -1)
+
+    set({ playbackHistory: newHistory })
+
+    // Play without adding to history (addToHistory = false)
+    await get().playAudio(prevAudio, undefined, false)
+  },
+
+  // Check if previous button should be enabled
+  canPlayPrev: () => {
+    const { playbackHistory } = get()
+    return playbackHistory.length > 0
   },
 
   // Toggle Play Mode
