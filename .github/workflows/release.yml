@@ -137,3 +137,6 @@ jobs:
           uploadPlainBinary: true
           releaseDraft: false
           prerelease: false
+      - name: git status
+        run: |
+          git status
