@@ -57,7 +57,7 @@ export const PlaylistCard: FC<PlaylistCardProps> = memo(
         <Avatar
           src={coverUrl || DEFAULT_COVER_URL}
           icon={<FolderOutlined />}
-          size={72}
+          size={56}
           shape="square"
           alt={displayName}
           className="card-avatar"
@@ -66,7 +66,7 @@ export const PlaylistCard: FC<PlaylistCardProps> = memo(
           <Text strong ellipsis={{ tooltip: displayName }}>
             {displayName}
           </Text>
-          <Text type="secondary" style={{ fontSize: 13 }}>
+          <Text type="secondary" style={{ fontSize: 12 }}>
             {audioCount} tracks · {playlist.platform}
           </Text>
         </Flex>
@@ -75,7 +75,7 @@ export const PlaylistCard: FC<PlaylistCardProps> = memo(
             type="text"
             icon={actionIcon}
             onClick={handleActionClick}
-            style={{ flexShrink: 0, fontSize: 18 }}
+            style={{ flexShrink: 0 }}
           />
         )}
       </Flex>

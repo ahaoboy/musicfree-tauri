@@ -94,7 +94,7 @@ body {
 // Page container
 .page {
   min-height: 100%;
-  padding: 16px;
+  padding: 8px;
 }
 
 // Audio card
@@ -139,7 +139,7 @@ body {
   border: 1px solid var(--border-color);
   cursor: pointer;
   padding: 12px;
-  .card-hover-effect(-3px);
+  .card-hover-effect(-2px);
 
   .card-avatar {
     transition: transform @transition-normal @ease-out;
@@ -154,8 +154,8 @@ body {
   }
 }
 
-// Playlist grid
-.playlist-grid {
+// Audio list (used by both MusicPage and PlaylistsPage)
+.audio-list {
   overflow-y: auto;
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
@@ -203,14 +203,6 @@ body {
       }
     }
   }
-}
-
-// Audio list
-.audio-list {
-  overflow-y: auto;
-  overflow-x: hidden;
-  -webkit-overflow-scrolling: touch;
-  .custom-scrollbar(6px);
 }
 
 // Settings page

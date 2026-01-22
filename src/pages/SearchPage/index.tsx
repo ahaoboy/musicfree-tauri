@@ -49,6 +49,8 @@ const AudioItem: FC<AudioItemProps> = memo(
     onSelect,
     onDownload,
   }) => {
+    const downloadingAll = useAppStore((state) => state.searchDownloadingAll)
+
     const handleCheckboxChange = useCallback(
       (e: any) => {
         onSelect(e.target.checked)
@@ -69,7 +71,7 @@ const AudioItem: FC<AudioItemProps> = memo(
         <Checkbox
           checked={selected}
           onChange={handleCheckboxChange}
-          disabled={downloaded || downloading}
+          disabled={downloaded || downloading || downloadingAll}
         />
         <Avatar
           src={coverUrl || DEFAULT_COVER_URL}
@@ -97,7 +99,7 @@ const AudioItem: FC<AudioItemProps> = memo(
           type="text"
           icon={<DownloadOutlined />}
           loading={downloading}
-          disabled={downloaded}
+          disabled={downloaded || downloadingAll}
           onClick={handleDownloadClick}
         />
       </Flex>
@@ -312,17 +314,14 @@ export const SearchPage: FC = () => {
       if (!playlist) return
 
       if (checked) {
-        const allIds = new Set(
-          playlist.audios
-            .filter((a) => !downloadedIds.has(a.id))
-            .map((a) => a.id),
-        )
+        // Select all audios (including downloaded ones)
+        const allIds = new Set(playlist.audios.map((a) => a.id))
         setSearchSelectedIds(allIds)
       } else {
         setSearchSelectedIds(new Set())
       }
     },
-    [playlist, downloadedIds, setSearchSelectedIds],
+    [playlist, setSearchSelectedIds],
   )
 
   // Handle download single
@@ -380,10 +379,23 @@ export const SearchPage: FC = () => {
 
     const selectedAudios = playlist.audios.filter((a) => selectedIds.has(a.id))
     let successCount = 0
+    let skippedCount = 0
     const downloadedLocalAudios: LocalAudio[] = []
+    const alreadyDownloadedAudios: LocalAudio[] = []
+
+    // Collect already downloaded audios from config
+    const configAudios = useAppStore.getState().config.audios
 
     for (const audio of selectedAudios) {
-      if (downloadedIds.has(audio.id)) continue
+      if (downloadedIds.has(audio.id)) {
+        // Find the already downloaded audio in config
+        const existingAudio = configAudios.find((a) => a.audio.id === audio.id)
+        if (existingAudio) {
+          alreadyDownloadedAudios.push(existingAudio)
+          skippedCount++
+        }
+        continue
+      }
 
       addSearchDownloadingId(audio.id)
 
@@ -402,8 +414,14 @@ export const SearchPage: FC = () => {
       }
     }
 
+    // Combine newly downloaded and already downloaded audios
+    const allLocalAudios = [
+      ...downloadedLocalAudios,
+      ...alreadyDownloadedAudios,
+    ]
+
     const shouldCreatePlaylist =
-      downloadedLocalAudios.length > 0 && playlist && playlist.audios.length > 1
+      allLocalAudios.length > 0 && playlist && playlist.audios.length > 1
 
     if (shouldCreatePlaylist) {
       let coverPath: string | null = null
@@ -432,7 +450,7 @@ export const SearchPage: FC = () => {
             const existing = existingAudioMap.get(audio.id)
             if (existing) return existing
 
-            const newDownloaded = downloadedLocalAudios.find(
+            const newDownloaded = allLocalAudios.find(
               (a) => a.audio.id === audio.id,
             )
             if (newDownloaded) return newDownloaded
@@ -441,11 +459,9 @@ export const SearchPage: FC = () => {
           })
           .filter(Boolean) as LocalAudio[]
       } else {
-        const downloadedAudioMap = new Map(
-          downloadedLocalAudios.map((a) => [a.audio.id, a]),
-        )
+        const allAudioMap = new Map(allLocalAudios.map((a) => [a.audio.id, a]))
         finalLocalAudios = playlist.audios
-          .map((audio) => downloadedAudioMap.get(audio.id))
+          .map((audio) => allAudioMap.get(audio.id))
           .filter(Boolean) as LocalAudio[]
       }
 
@@ -459,10 +475,6 @@ export const SearchPage: FC = () => {
       }
 
       await addPlaylistToConfig(localPlaylist)
-      setSearchMessageToShow({
-        type: "success",
-        text: `${existingPlaylist ? "Updated" : "Created"} playlist: ${playlistId}`,
-      })
     } else if (
       downloadedLocalAudios.length > 0 &&
       playlist &&
@@ -474,10 +486,31 @@ export const SearchPage: FC = () => {
     await loadConfig()
 
     setSearchSelectedIds(new Set())
-    setSearchMessageToShow({
-      type: "success",
-      text: `Downloaded ${successCount}/${selectedAudios.length} tracks`,
-    })
+
+    // Show single consolidated success message
+    const playlistName = playlist.title || playlist.id || "playlist"
+    if (shouldCreatePlaylist) {
+      const action = playlists.find(
+        (p) =>
+          p.id === (playlist.id || playlist.title || new Date().toISOString()),
+      )
+        ? "Updated"
+        : "Created"
+      const parts = []
+      if (successCount > 0) parts.push(`${successCount} new`)
+      if (skippedCount > 0) parts.push(`${skippedCount} existing`)
+      const summary = parts.length > 0 ? ` (${parts.join(", ")})` : ""
+      setSearchMessageToShow({
+        type: "success",
+        text: `${action} playlist "${playlistName}"${summary}`,
+      })
+    } else {
+      setSearchMessageToShow({
+        type: "success",
+        text: `Downloaded ${successCount} track${successCount !== 1 ? "s" : ""}`,
+      })
+    }
+
     setSearchDownloadingAll(false)
   }, [
     playlist,
@@ -498,21 +531,27 @@ export const SearchPage: FC = () => {
 
   // Memoize selection state
   const { allSelected, someSelected, downloadButtonText } = useMemo(() => {
-    const downloadableAudios = playlist
-      ? playlist.audios.filter((a) => !downloadedIds.has(a.id))
-      : []
+    const allAudios = playlist ? playlist.audios : []
 
     const all =
-      downloadableAudios.length > 0 &&
-      downloadableAudios.every((a) => selectedIds.has(a.id))
+      allAudios.length > 0 && allAudios.every((a) => selectedIds.has(a.id))
 
     const some = selectedIds.size > 0 && !all
 
-    const downloadedCount = Array.from(selectedIds).filter((id) =>
+    const selectedCount = selectedIds.size
+    const alreadyDownloadedCount = Array.from(selectedIds).filter((id) =>
       downloadedIds.has(id),
     ).length
+    const toDownloadCount = selectedCount - alreadyDownloadedCount
 
-    const text = `Download ${downloadedCount} / ${selectedIds.size}`
+    let text = "Download"
+    if (toDownloadCount > 0 && alreadyDownloadedCount > 0) {
+      text = `Download ${toDownloadCount} (${alreadyDownloadedCount} existing)`
+    } else if (toDownloadCount > 0) {
+      text = `Download ${toDownloadCount}`
+    } else if (alreadyDownloadedCount > 0) {
+      text = `Add ${alreadyDownloadedCount} to playlist`
+    }
 
     return {
       allSelected: all,
@@ -589,6 +628,7 @@ export const SearchPage: FC = () => {
               checked={allSelected}
               indeterminate={someSelected}
               onChange={(e) => handleSelectAll(e.target.checked)}
+              disabled={downloadingAll}
             >
               Select All
             </Checkbox>

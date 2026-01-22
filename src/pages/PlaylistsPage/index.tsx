@@ -138,7 +138,7 @@ export const PlaylistsPage: FC = () => {
   }
 
   return (
-    <Flex vertical className="page playlist-grid" gap="small">
+    <Flex vertical className="page audio-list" gap="small">
       {playlists.map((playlist, index) => (
         <PlaylistCard
           key={`${playlist.id}-${index}`}
