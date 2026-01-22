@@ -486,10 +486,8 @@ export const useAppStore = create<AppState>((set, get) => ({
       updatedFavPlaylist.audios = favPlaylist.audios.filter(
         (a) => a.audio.id !== audio.audio.id,
       )
-      console.log("Removed from favorites")
     } else {
       updatedFavPlaylist.audios = [audio, ...favPlaylist.audios] // Add to top
-      console.log("Added to favorites")
     }
 
     // Update playlists array

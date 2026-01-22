@@ -38,6 +38,7 @@ export const PlayerPage: FC = () => {
   const isPlaying = useAppStore((state) => state.isPlaying)
   const playMode = useAppStore((state) => state.playMode)
   const audioElement = useAppStore((state) => state.audioElement)
+  const playlists = useAppStore((state) => state.config.playlists)
   const togglePlay = useAppStore((state) => state.togglePlay)
   const playNext = useAppStore((state) => state.playNext)
   const playPrev = useAppStore((state) => state.playPrev)
@@ -140,7 +141,11 @@ export const PlayerPage: FC = () => {
     }
   }, [playMode])
 
-  const isFav = currentAudio ? isFavorited(currentAudio.audio.id) : false
+  // Memoize favorite status - recalculates when playlists or currentAudio changes
+  const isFav = useMemo(
+    () => (currentAudio ? isFavorited(currentAudio.audio.id) : false),
+    [currentAudio, isFavorited, playlists],
+  )
 
   if (!currentAudio) {
     return (
