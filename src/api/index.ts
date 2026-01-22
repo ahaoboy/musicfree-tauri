@@ -42,7 +42,7 @@ export type ThemeMode = "light" | "dark" | "auto"
 export type Config = {
   audios: LocalAudio[]
   playlists: LocalPlaylist[]
-  theme?: ThemeMode
+  theme?: ThemeMode | null
   last_audio?: LocalAudio
 }
 
@@ -266,6 +266,15 @@ export const get_system_theme = (): "light" | "dark" => {
       : "light"
   }
   return "light"
+}
+
+// Helper to get effective theme (handles null/undefined)
+export const get_effective_theme = (theme?: ThemeMode | null): ThemeMode => {
+  // If theme is null, undefined, or empty, default to "auto"
+  if (!theme) {
+    return "auto"
+  }
+  return theme
 }
 
 export function app_version(): Promise<string> {

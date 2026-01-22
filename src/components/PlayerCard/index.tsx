@@ -1,4 +1,4 @@
-import { FC, useState, useEffect, memo } from "react"
+import { FC, memo, useCallback, useMemo } from "react"
 import { useNavigate } from "react-router-dom"
 import {
   HeartFilled,
@@ -8,13 +8,9 @@ import {
   AudioOutlined,
 } from "@ant-design/icons"
 import { Button, Flex, Typography, Avatar } from "antd"
-import {
-  DEFAULT_COVER_URL,
-  FAVORITE_PLAYLIST_ID,
-  get_web_url,
-  LocalAudio,
-} from "../../api"
+import { DEFAULT_COVER_URL, FAVORITE_PLAYLIST_ID, LocalAudio } from "../../api"
 import { useAppStore } from "../../store"
+import { useCoverUrl } from "../../hooks"
 
 const { Text } = Typography
 
@@ -22,62 +18,57 @@ interface PlayerCardProps {
   audio: LocalAudio | null
 }
 
-// Mini player card showing current audio with play/pause controls
+// Mini player card - Optimized with memo and selective subscriptions
 export const PlayerCard: FC<PlayerCardProps> = memo(({ audio }) => {
-  const [coverUrl, setCoverUrl] = useState<string | null>(null)
-  const {
-    isPlaying,
-    togglePlay,
-    toggleFavorite,
-    config: { playlists },
-  } = useAppStore()
-
   const navigate = useNavigate()
+  const coverUrl = useCoverUrl(audio?.cover_path, audio?.audio.cover)
 
-  // Check if favorited
-  const isFavorited = audio
-    ? playlists
-        .find((p) => p.id === FAVORITE_PLAYLIST_ID)
-        ?.audios.some((a) => a.audio.id === audio.audio.id)
-    : false
+  // Selective store subscriptions to avoid unnecessary re-renders
+  const isPlaying = useAppStore((state) => state.isPlaying)
+  const togglePlay = useAppStore((state) => state.togglePlay)
+  const toggleFavorite = useAppStore((state) => state.toggleFavorite)
+  const playlists = useAppStore((state) => state.config.playlists)
 
-  useEffect(() => {
-    const loadCover = async () => {
-      if (!audio) {
-        setCoverUrl(null)
-        return
+  // Memoize favorite check
+  const isFavorited = useMemo(
+    () =>
+      audio
+        ? playlists
+            .find((p) => p.id === FAVORITE_PLAYLIST_ID)
+            ?.audios.some((a) => a.audio.id === audio.audio.id) || false
+        : false,
+    [audio, playlists],
+  )
+
+  const handleCardClick = useCallback(() => {
+    navigate("/player")
+  }, [navigate])
+
+  const handlePlayClick = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation()
+      togglePlay()
+    },
+    [togglePlay],
+  )
+
+  const handleFavoriteClick = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation()
+      if (audio) {
+        toggleFavorite(audio)
       }
-
-      if (audio.cover_path) {
-        try {
-          const url = await get_web_url(audio.cover_path)
-          setCoverUrl(url)
-        } catch (error) {
-          console.error("Failed to load cover:", error)
-        }
-      } else if (audio.audio.cover) {
-        setCoverUrl(audio.audio.cover)
-      }
-    }
-    loadCover()
-  }, [audio?.cover_path, audio?.audio.cover])
+    },
+    [audio, toggleFavorite],
+  )
 
   if (!audio) {
     return null
   }
 
-  const handleCardClick = () => {
-    navigate("/player")
-  }
-
-  const handlePlayClick = (e: React.MouseEvent) => {
-    e.stopPropagation()
-    togglePlay()
-  }
-
   return (
     <Flex
-      className="mini-player clickable"
+      className="mini-player"
       onClick={handleCardClick}
       role="button"
       tabIndex={0}
@@ -88,6 +79,7 @@ export const PlayerCard: FC<PlayerCardProps> = memo(({ audio }) => {
       }}
       align="center"
       gap="middle"
+      style={{ cursor: "pointer" }}
     >
       <Avatar
         src={coverUrl || DEFAULT_COVER_URL}
@@ -95,25 +87,16 @@ export const PlayerCard: FC<PlayerCardProps> = memo(({ audio }) => {
         size={48}
         shape="square"
         alt={audio.audio.title}
-        className="player-cover"
       />
       <Flex vertical flex={1} style={{ minWidth: 0 }}>
-        <Text
-          strong
-          ellipsis={{ tooltip: audio.audio.title }}
-          className="player-title"
-        >
+        <Text strong ellipsis={{ tooltip: audio.audio.title }}>
           {audio.audio.title}
         </Text>
-        <Text
-          type="secondary"
-          ellipsis={{ tooltip: audio.audio.platform }}
-          className="player-artist"
-        >
+        <Text type="secondary" ellipsis={{ tooltip: audio.audio.platform }}>
           {audio.audio.platform}
         </Text>
       </Flex>
-      <Flex className="player-controls" align="center" gap="small">
+      <Flex align="center" gap="small">
         <Button
           type="text"
           icon={
@@ -123,21 +106,20 @@ export const PlayerCard: FC<PlayerCardProps> = memo(({ audio }) => {
               <HeartOutlined />
             )
           }
-          onClick={(e) => {
-            e.stopPropagation()
-            toggleFavorite(audio)
-          }}
-          className="action-btn secondary"
+          onClick={handleFavoriteClick}
         />
         <Button
-          type="text"
+          type="primary"
+          shape="circle"
           icon={isPlaying ? <PauseCircleFilled /> : <PlayCircleFilled />}
           onClick={handlePlayClick}
-          className="control-btn"
+          size="large"
         />
       </Flex>
     </Flex>
   )
 })
+
+PlayerCard.displayName = "PlayerCard"
 
 export default PlayerCard

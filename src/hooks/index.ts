@@ -1,3 +1,5 @@
 export { useSwipe } from "./useSwipe"
 export type { SwipeDirection } from "./useSwipe"
 export { useConfirm } from "./useConfirm"
+export { useCoverUrl } from "./useCoverUrl"
+export { useEffectiveTheme, useIsDarkMode } from "./useTheme"

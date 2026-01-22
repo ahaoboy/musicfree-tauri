@@ -1,5 +1,6 @@
 import { App } from "antd"
 import { ExclamationCircleOutlined } from "@ant-design/icons"
+import { useCallback } from "react"
 
 interface ConfirmOptions {
   title: string
@@ -17,25 +18,28 @@ interface ConfirmOptions {
 export const useConfirm = () => {
   const { modal } = App.useApp()
 
-  const showConfirm = ({
-    title,
-    content,
-    onOk,
-    okText = "OK",
-    okType = "primary",
-    cancelText = "Cancel",
-  }: ConfirmOptions) => {
-    modal.confirm({
+  const showConfirm = useCallback(
+    ({
       title,
       content,
-      centered: true,
-      icon: <ExclamationCircleOutlined />,
-      okText,
-      okType,
-      cancelText,
       onOk,
-    })
-  }
+      okText = "OK",
+      okType = "primary",
+      cancelText = "Cancel",
+    }: ConfirmOptions) => {
+      modal.confirm({
+        title,
+        content,
+        centered: true,
+        icon: <ExclamationCircleOutlined />,
+        okText,
+        okType,
+        cancelText,
+        onOk,
+      })
+    },
+    [modal],
+  )
 
   return { showConfirm }
 }

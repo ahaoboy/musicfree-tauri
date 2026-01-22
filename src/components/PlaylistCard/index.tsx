@@ -1,7 +1,8 @@
-import { FC, useState, useEffect } from "react"
-import { Flex, Typography, Avatar } from "antd"
+import { FC, memo, useMemo } from "react"
+import { Flex, Typography, Avatar, Button } from "antd"
 import { FolderOutlined } from "@ant-design/icons"
-import { DEFAULT_COVER_URL, get_web_url, LocalPlaylist } from "../../api"
+import { DEFAULT_COVER_URL, LocalPlaylist } from "../../api"
+import { useCoverUrl } from "../../hooks"
 
 const { Text } = Typography
 
@@ -13,95 +14,73 @@ interface PlaylistCardProps {
   onAction?: () => void
 }
 
-// Playlist card component showing cover and info
-export const PlaylistCard: FC<PlaylistCardProps> = ({
-  playlist,
-  onClick,
-  showAction = false,
-  actionIcon,
-  onAction,
-}) => {
-  const [coverUrl, setCoverUrl] = useState<string | null>(null)
+// Playlist card component - Optimized with memo
+export const PlaylistCard: FC<PlaylistCardProps> = memo(
+  ({ playlist, onClick, showAction = false, actionIcon, onAction }) => {
+    const coverUrl = useCoverUrl(playlist.cover_path, playlist.cover)
+    const audioCount = playlist.audios?.length || 0
 
-  useEffect(() => {
-    const loadCover = async () => {
-      if (playlist.cover_path) {
-        try {
-          const url = await get_web_url(playlist.cover_path)
-          setCoverUrl(url)
-        } catch (error) {
-          console.error("Failed to load playlist cover:", error)
-        }
-      } else if (playlist.cover) {
-        setCoverUrl(playlist.cover)
-      }
-    }
-    loadCover()
-  }, [playlist.cover_path, playlist.cover])
-
-  const audioCount = playlist.audios?.length || 0
-
-  return (
-    <Flex
-      className="playlist-card"
-      onClick={onClick}
-      role="button"
-      tabIndex={0}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          onClick?.()
-        }
-      }}
-      align="center"
-      gap="middle"
-    >
-      <Avatar
-        src={coverUrl || DEFAULT_COVER_URL}
-        icon={<FolderOutlined />}
-        size={72}
-        shape="square"
-        alt={playlist.id}
-        className="playlist-cover"
-      />
-      <Flex vertical flex={1} style={{ minWidth: 0 }}>
-        <Text
-          strong
-          ellipsis={{ tooltip: playlist.id }}
-          className="playlist-title"
-        >
-          {playlist.id}
-        </Text>
-        <Text type="secondary" className="playlist-meta">
-          {audioCount} tracks · {playlist.platform}
-        </Text>
-      </Flex>
-      {showAction && actionIcon && (
-        <div
-          className="playlist-action"
-          onClick={(e) => {
-            e.stopPropagation()
-            onAction?.()
-          }}
-          role="button"
-          tabIndex={0}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === " ") {
-              e.stopPropagation()
-              onAction?.()
+    const handleClick = useMemo(
+      () =>
+        onClick
+          ? (e: React.MouseEvent | React.KeyboardEvent) => {
+              if ("key" in e && e.key !== "Enter" && e.key !== " ") return
+              onClick()
             }
-          }}
-          style={{
-            fontSize: 18,
-            color: "var(--text-secondary)",
-            padding: 8,
-            cursor: "pointer",
-          }}
-        >
-          {actionIcon}
-        </div>
-      )}
-    </Flex>
-  )
-}
+          : undefined,
+      [onClick],
+    )
+
+    const handleActionClick = useMemo(
+      () =>
+        onAction
+          ? (e: React.MouseEvent) => {
+              e.stopPropagation()
+              onAction()
+            }
+          : undefined,
+      [onAction],
+    )
+
+    return (
+      <Flex
+        className="playlist-card"
+        onClick={handleClick}
+        role={onClick ? "button" : undefined}
+        tabIndex={onClick ? 0 : undefined}
+        onKeyDown={handleClick}
+        align="center"
+        gap="middle"
+        style={{ cursor: onClick ? "pointer" : "default" }}
+      >
+        <Avatar
+          src={coverUrl || DEFAULT_COVER_URL}
+          icon={<FolderOutlined />}
+          size={72}
+          shape="square"
+          alt={playlist.id}
+        />
+        <Flex vertical flex={1} style={{ minWidth: 0 }}>
+          <Text strong ellipsis={{ tooltip: playlist.id }}>
+            {playlist.id}
+          </Text>
+          <Text type="secondary" style={{ fontSize: 13 }}>
+            {audioCount} tracks · {playlist.platform}
+          </Text>
+        </Flex>
+        {showAction && actionIcon && (
+          <Button
+            type="text"
+            icon={actionIcon}
+            onClick={handleActionClick}
+            style={{ flexShrink: 0, fontSize: 18 }}
+          />
+        )}
+      </Flex>
+    )
+  },
+)
+
+PlaylistCard.displayName = "PlaylistCard"
 
 export default PlaylistCard

@@ -4,12 +4,12 @@ import {
   Button,
   Checkbox,
   Input,
-  Space,
   Flex,
   Typography,
   Avatar,
+  Spin,
 } from "antd"
-import { FC, useEffect } from "react"
+import { FC, useEffect, useCallback, useMemo, memo } from "react"
 import {
   Audio,
   DEFAULT_COVER_URL,
@@ -22,33 +22,7 @@ import {
   LocalAudio,
   LocalPlaylist,
 } from "../../api"
-import {
-  useAppStore,
-  useSearchText,
-  useSearchPlaylist,
-  useSearchSelectedIds,
-  useSearchDownloadingIds,
-  useSearchDownloadedIds,
-  useSearchSearching,
-  useSearchDownloadingAll,
-  useSearchMessageToShow,
-  useSearchCoverUrls,
-  useSearchPlaylistCoverUrl,
-  // Search page actions
-  setSearchText,
-  setSearchPlaylist,
-  setSearchSelectedIds,
-  addSearchDownloadingId,
-  removeSearchDownloadingId,
-  addSearchDownloadedId,
-  addSearchFailedId,
-  setSearchSearching,
-  setSearchDownloadingAll,
-  setSearchMessageToShow,
-  setSearchCoverUrls,
-  setSearchPlaylistCoverUrl,
-  clearSearchRuntimeData,
-} from "../../store"
+import { useAppStore } from "../../store"
 import "./index.less"
 
 const { Search } = Input
@@ -64,132 +38,171 @@ interface AudioItemProps {
   onDownload: () => void
 }
 
-const AudioItem: FC<AudioItemProps> = ({
-  audio,
-  selected,
-  coverUrl,
-  downloading,
-  downloaded,
-  onSelect,
-  onDownload,
-}) => {
-  return (
-    <Flex className="audio-card-selectable" align="center" gap="middle">
-      <div className="checkbox-wrapper">
+// Memoized AudioItem component to prevent unnecessary re-renders
+const AudioItem: FC<AudioItemProps> = memo(
+  ({
+    audio,
+    selected,
+    coverUrl,
+    downloading,
+    downloaded,
+    onSelect,
+    onDownload,
+  }) => {
+    const handleCheckboxChange = useCallback(
+      (e: any) => {
+        onSelect(e.target.checked)
+      },
+      [onSelect],
+    )
+
+    const handleDownloadClick = useCallback(
+      (e: React.MouseEvent) => {
+        e.stopPropagation()
+        onDownload()
+      },
+      [onDownload],
+    )
+
+    return (
+      <Flex className="audio-card-selectable" align="center" gap="middle">
         <Checkbox
           checked={selected}
-          onChange={(e) => onSelect(e.target.checked)}
+          onChange={handleCheckboxChange}
           disabled={downloaded || downloading}
         />
-      </div>
-      <Avatar
-        src={coverUrl || DEFAULT_COVER_URL}
-        icon={<AudioOutlined />}
-        size={56}
-        shape="square"
-        alt={audio.title}
-        className="audio-cover"
-      />
-      <Flex vertical flex={1} style={{ minWidth: 0 }}>
-        <Text
-          strong
-          ellipsis={{ tooltip: audio.title }}
-          className="audio-title"
-        >
-          {audio.title}
-        </Text>
-        <Flex className="audio-meta" align="center" gap="small">
-          <Text type="secondary" className="audio-platform">
-            {audio.platform}
+        <Avatar
+          src={coverUrl || DEFAULT_COVER_URL}
+          icon={<AudioOutlined />}
+          size={56}
+          shape="square"
+          alt={audio.title}
+        />
+        <Flex vertical flex={1} style={{ minWidth: 0 }}>
+          <Text strong ellipsis={{ tooltip: audio.title }}>
+            {audio.title}
           </Text>
-          {downloaded && <Text type="success"> · Downloaded</Text>}
+          <Flex align="center" gap="small">
+            <Text type="secondary" style={{ fontSize: 12 }}>
+              {audio.platform}
+            </Text>
+            {downloaded && (
+              <Text type="success" style={{ fontSize: 12 }}>
+                · Downloaded
+              </Text>
+            )}
+          </Flex>
         </Flex>
-      </Flex>
-      <div className="audio-action">
         <Button
           type="text"
           icon={<DownloadOutlined />}
           loading={downloading}
           disabled={downloaded}
-          onClick={(e) => {
-            e.stopPropagation()
-            onDownload()
-          }}
+          onClick={handleDownloadClick}
         />
-      </div>
-    </Flex>
-  )
-}
+      </Flex>
+    )
+  },
+)
 
-// Search page - search for audio content and download tracks/playlists
+AudioItem.displayName = "AudioItem"
+
+// Search page - search and download audio content
 export const SearchPage: FC = () => {
   const { message } = App.useApp()
 
-  // Use global store for search page state persistence
-  const url = useSearchText()
-  const playlist = useSearchPlaylist()
-  const selectedIds = useSearchSelectedIds()
-  const downloadingIds = useSearchDownloadingIds()
-  const downloadedIds = useSearchDownloadedIds()
-  const searching = useSearchSearching()
-  const downloadingAll = useSearchDownloadingAll()
-  const messageToShow = useSearchMessageToShow()
-  const coverUrls = useSearchCoverUrls()
-  const playlistCoverUrl = useSearchPlaylistCoverUrl()
+  // Selective store subscriptions
+  const url = useAppStore((state) => state.searchText)
+  const playlist = useAppStore((state) => state.searchPlaylist)
+  const selectedIds = useAppStore((state) => state.searchSelectedIds)
+  const downloadingIds = useAppStore((state) => state.searchDownloadingIds)
+  const downloadedIds = useAppStore((state) => state.searchDownloadedIds)
+  const searching = useAppStore((state) => state.searchSearching)
+  const downloadingAll = useAppStore((state) => state.searchDownloadingAll)
+  const messageToShow = useAppStore((state) => state.searchMessageToShow)
+  const coverUrls = useAppStore((state) => state.searchCoverUrls)
+  const playlistCoverUrl = useAppStore((state) => state.searchPlaylistCoverUrl)
+  const playlists = useAppStore((state) => state.config.playlists)
 
-  const {
-    config: { playlists },
-    addAudiosToConfig,
-    addPlaylistToConfig,
-    loadConfig,
-  } = useAppStore()
+  const setSearchText = useAppStore((state) => state.setSearchText)
+  const setSearchPlaylist = useAppStore((state) => state.setSearchPlaylist)
+  const setSearchSelectedIds = useAppStore(
+    (state) => state.setSearchSelectedIds,
+  )
+  const addSearchDownloadingId = useAppStore(
+    (state) => state.addSearchDownloadingId,
+  )
+  const removeSearchDownloadingId = useAppStore(
+    (state) => state.removeSearchDownloadingId,
+  )
+  const addSearchDownloadedId = useAppStore(
+    (state) => state.addSearchDownloadedId,
+  )
+  const addSearchFailedId = useAppStore((state) => state.addSearchFailedId)
+  const setSearchSearching = useAppStore((state) => state.setSearchSearching)
+  const setSearchDownloadingAll = useAppStore(
+    (state) => state.setSearchDownloadingAll,
+  )
+  const setSearchMessageToShow = useAppStore(
+    (state) => state.setSearchMessageToShow,
+  )
+  const setSearchCoverUrls = useAppStore((state) => state.setSearchCoverUrls)
+  const setSearchPlaylistCoverUrl = useAppStore(
+    (state) => state.setSearchPlaylistCoverUrl,
+  )
+  const clearSearchRuntimeData = useAppStore(
+    (state) => state.clearSearchRuntimeData,
+  )
+  const addAudiosToConfig = useAppStore((state) => state.addAudiosToConfig)
+  const addPlaylistToConfig = useAppStore((state) => state.addPlaylistToConfig)
+  const loadConfig = useAppStore((state) => state.loadConfig)
 
-  // Handle messages in effect to avoid React 18 concurrent mode issues
+  // Handle messages
   useEffect(() => {
     if (messageToShow) {
       const { type, text } = messageToShow
       message[type](text)
       setSearchMessageToShow(null)
     }
-  }, [messageToShow, message])
+  }, [messageToShow, message, setSearchMessageToShow])
 
-  // Clear search results when search text is empty
+  // Clear search results when URL is empty
   useEffect(() => {
     if (!url.trim()) {
       clearSearchRuntimeData()
     }
-  }, [url])
+  }, [url, clearSearchRuntimeData])
 
-  // Download and cache cover image
-  const downloadAndCacheCover = async (
-    coverUrl: string | undefined,
-    platform: string,
-    audioId?: string,
-  ): Promise<string | null> => {
-    if (!coverUrl) return null
+  // Download and cache cover
+  const downloadAndCacheCover = useCallback(
+    async (
+      coverUrl: string | undefined,
+      platform: string,
+      audioId?: string,
+    ): Promise<string | null> => {
+      if (!coverUrl) return null
 
-    try {
-      // Download cover to local storage
-      const localPath = await download_cover(coverUrl, platform)
-      if (!localPath) return null
+      try {
+        const localPath = await download_cover(coverUrl, platform)
+        if (!localPath) return null
 
-      // Convert local path to web accessible URL
-      const webUrl = await get_web_url(localPath)
+        const webUrl = await get_web_url(localPath)
 
-      // Cache the URL if audioId provided
-      if (audioId) {
-        setSearchCoverUrls({ ...coverUrls, [audioId]: webUrl })
+        if (audioId) {
+          setSearchCoverUrls({ ...coverUrls, [audioId]: webUrl })
+        }
+
+        return webUrl
+      } catch (error) {
+        console.error("Failed to download cover:", error)
+        return null
       }
-
-      return webUrl
-    } catch (error) {
-      console.error("Failed to download cover:", error)
-      return null
-    }
-  }
+    },
+    [coverUrls, setSearchCoverUrls],
+  )
 
   // Handle search
-  const handleSearch = async () => {
+  const handleSearch = useCallback(async () => {
     if (!url.trim()) {
       setSearchMessageToShow({ type: "warning", text: "Please enter a URL" })
       return
@@ -204,7 +217,6 @@ export const SearchPage: FC = () => {
     try {
       const result = await extract_audios(url)
 
-      // Ensure search wasn't cleared while waiting
       if (!useAppStore.getState().searchText.trim()) {
         return
       }
@@ -215,11 +227,10 @@ export const SearchPage: FC = () => {
         text: `Found ${result.audios.length} tracks`,
       })
 
-      // Check for existing audios and covers
+      // Check existing audios
       const existingLocalAudios: LocalAudio[] = []
-      const updatedDownloadedIds = new Set(downloadedIds)
-
       const coverCache: Record<string, string> = {}
+
       for (const audio of result.audios) {
         const audioPath = await exists_audio(audio)
         if (audioPath) {
@@ -228,36 +239,30 @@ export const SearchPage: FC = () => {
             coverPath = await exists_cover(audio.cover, audio.platform)
             if (coverPath) coverCache[audio.id] = await get_web_url(coverPath)
           }
-          const localAudio: LocalAudio = {
+          existingLocalAudios.push({
             audio,
             path: audioPath,
             cover_path: coverPath,
-          }
-          existingLocalAudios.push(localAudio)
-          updatedDownloadedIds.add(audio.id)
+          })
+          addSearchDownloadedId(audio.id)
         }
       }
+
       setSearchCoverUrls({ ...coverUrls, ...coverCache })
-      // Add existing audios to config ONLY if it's a single track
+
       if (existingLocalAudios.length > 0 && result.audios.length === 1) {
         await addAudiosToConfig(existingLocalAudios)
       }
 
-      // Update downloaded ids - this is now handled by the store automatically
-      // The downloadedIds state is derived from the searchDownloadedIds Set
-
-      // Download playlist cover
+      // Download covers in background
       if (result.cover) {
         downloadAndCacheCover(result.cover, result.platform).then((webUrl) => {
-          if (webUrl) {
-            setSearchPlaylistCoverUrl(webUrl)
-          }
+          if (webUrl) setSearchPlaylistCoverUrl(webUrl)
         })
       }
 
-      // Download audio covers in background for non-existing audios
       result.audios.forEach((audio) => {
-        if (audio.cover && !updatedDownloadedIds.has(audio.id)) {
+        if (audio.cover && !downloadedIds.has(audio.id)) {
           downloadAndCacheCover(audio.cover, audio.platform, audio.id)
         }
       })
@@ -270,66 +275,97 @@ export const SearchPage: FC = () => {
     } finally {
       setSearchSearching(false)
     }
-  }
+  }, [
+    url,
+    setSearchSearching,
+    setSearchPlaylist,
+    setSearchSelectedIds,
+    setSearchCoverUrls,
+    setSearchPlaylistCoverUrl,
+    setSearchMessageToShow,
+    addSearchDownloadedId,
+    downloadAndCacheCover,
+    addAudiosToConfig,
+    coverUrls,
+    downloadedIds,
+  ])
 
   // Handle select audio
-  const handleSelect = (audioId: string, checked: boolean) => {
-    const newSelected = new Set(selectedIds)
-    if (checked) {
-      newSelected.add(audioId)
-    } else {
-      newSelected.delete(audioId)
-    }
-    setSearchSelectedIds(newSelected)
-  }
+  const handleSelect = useCallback(
+    (audioId: string, checked: boolean) => {
+      const newSelected = new Set(selectedIds)
+      if (checked) {
+        newSelected.add(audioId)
+      } else {
+        newSelected.delete(audioId)
+      }
+      setSearchSelectedIds(newSelected)
+    },
+    [selectedIds, setSearchSelectedIds],
+  )
 
   // Handle select all
-  const handleSelectAll = (checked: boolean) => {
-    if (!playlist) return
+  const handleSelectAll = useCallback(
+    (checked: boolean) => {
+      if (!playlist) return
 
-    if (checked) {
-      const allIds = new Set(
-        playlist.audios
-          .filter((a) => !downloadedIds.has(a.id))
-          .map((a) => a.id),
-      )
-      setSearchSelectedIds(allIds)
-    } else {
-      setSearchSelectedIds(new Set())
-    }
-  }
-
-  // Handle download single audio
-  const handleDownloadSingle = async (audio: Audio) => {
-    if (downloadingIds.has(audio.id) || downloadedIds.has(audio.id)) return
-
-    addSearchDownloadingId(audio.id)
-
-    try {
-      const localAudios = await download_audio(audio)
-
-      if (localAudios.length > 0) {
-        await addAudiosToConfig(localAudios)
-        localAudios.forEach((a) => addSearchDownloadedId(a.audio.id))
-        setSearchMessageToShow({
-          type: "success",
-          text: `Downloaded: ${audio.title}`,
-        })
+      if (checked) {
+        const allIds = new Set(
+          playlist.audios
+            .filter((a) => !downloadedIds.has(a.id))
+            .map((a) => a.id),
+        )
+        setSearchSelectedIds(allIds)
+      } else {
+        setSearchSelectedIds(new Set())
       }
-    } catch (error) {
-      console.error("Download failed:", error)
-      addSearchFailedId(audio.id)
-      setSearchMessageToShow({
-        type: "error",
-        text: `Failed to download: ${audio.title}`,
-      })
-    } finally {
-      removeSearchDownloadingId(audio.id)
-    }
-  }
+    },
+    [playlist, downloadedIds, setSearchSelectedIds],
+  )
 
-  // Handle download all selected
-  const handleDownloadAll = async () => {
+  // Handle download single
+  const handleDownloadSingle = useCallback(
+    async (audio: Audio) => {
+      if (downloadingIds.has(audio.id) || downloadedIds.has(audio.id)) return
+
+      addSearchDownloadingId(audio.id)
+
+      try {
+        const localAudios = await download_audio(audio)
+
+        if (localAudios.length > 0) {
+          await addAudiosToConfig(localAudios)
+          localAudios.forEach((a) => addSearchDownloadedId(a.audio.id))
+          setSearchMessageToShow({
+            type: "success",
+            text: `Downloaded: ${audio.title}`,
+          })
+        }
+      } catch (error) {
+        console.error("Download failed:", error)
+        addSearchFailedId(audio.id)
+        setSearchMessageToShow({
+          type: "error",
+          text: `Failed to download: ${audio.title}`,
+        })
+      } finally {
+        removeSearchDownloadingId(audio.id)
+      }
+    },
+    [
+      downloadingIds,
+      downloadedIds,
+      addSearchDownloadingId,
+      removeSearchDownloadingId,
+      addSearchDownloadedId,
+      addSearchFailedId,
+      setSearchMessageToShow,
+      addAudiosToConfig,
+    ],
+  )
+
+  // Handle download all
+  const handleDownloadAll = useCallback(async () => {
     if (!playlist || selectedIds.size === 0) {
       setSearchMessageToShow({
         type: "warning",
@@ -364,12 +400,10 @@ export const SearchPage: FC = () => {
       }
     }
 
-    // Determine if we should create a playlist
     const shouldCreatePlaylist =
       downloadedLocalAudios.length > 0 && playlist && playlist.audios.length > 1
 
     if (shouldCreatePlaylist) {
-      // Download playlist cover if available
       let coverPath: string | null = null
       if (playlist.cover) {
         try {
@@ -379,41 +413,32 @@ export const SearchPage: FC = () => {
         }
       }
 
-      // Use playlist.id as the identifier if available, otherwise title
       const playlistId =
         playlist.id || playlist.title || new Date().toISOString()
 
-      // Check if playlist already exists
       const existingPlaylist = playlists.find((p) => p.id === playlistId)
 
       let finalLocalAudios: LocalAudio[] = []
 
       if (existingPlaylist) {
-        // Merge playlists: use new order, but keep existing LocalAudios and add new ones
         const existingAudioMap = new Map(
           existingPlaylist.audios.map((a) => [a.audio.id, a]),
         )
 
         finalLocalAudios = playlist.audios
           .map((audio) => {
-            // Try to find in existing
             const existing = existingAudioMap.get(audio.id)
-            if (existing) {
-              return existing
-            }
-            // Try to find in newly downloaded
+            if (existing) return existing
+
             const newDownloaded = downloadedLocalAudios.find(
               (a) => a.audio.id === audio.id,
             )
-            if (newDownloaded) {
-              return newDownloaded
-            }
-            // This shouldn't happen, but fallback
+            if (newDownloaded) return newDownloaded
+
             return null
           })
           .filter(Boolean) as LocalAudio[]
       } else {
-        // New playlist: use the order from playlist.audios, but only include downloaded ones
         const downloadedAudioMap = new Map(
           downloadedLocalAudios.map((a) => [a.audio.id, a]),
         )
@@ -435,18 +460,14 @@ export const SearchPage: FC = () => {
         type: "success",
         text: `${existingPlaylist ? "Updated" : "Created"} playlist: ${playlistId}`,
       })
-    } else {
-      // Only add to Main Audios list if it's a single track download (not a playlist)
-      if (
-        downloadedLocalAudios.length > 0 &&
-        playlist &&
-        playlist.audios.length === 1
-      ) {
-        await addAudiosToConfig(downloadedLocalAudios)
-      }
+    } else if (
+      downloadedLocalAudios.length > 0 &&
+      playlist &&
+      playlist.audios.length === 1
+    ) {
+      await addAudiosToConfig(downloadedLocalAudios)
     }
 
-    // Reload config to refresh UI
     await loadConfig()
 
     setSearchSelectedIds(new Set())
@@ -455,41 +476,73 @@ export const SearchPage: FC = () => {
       text: `Downloaded ${successCount}/${selectedAudios.length} tracks`,
     })
     setSearchDownloadingAll(false)
-  }
+  }, [
+    playlist,
+    selectedIds,
+    downloadedIds,
+    playlists,
+    setSearchDownloadingAll,
+    setSearchMessageToShow,
+    setSearchSelectedIds,
+    addSearchDownloadingId,
+    removeSearchDownloadingId,
+    addSearchDownloadedId,
+    addSearchFailedId,
+    addAudiosToConfig,
+    addPlaylistToConfig,
+    loadConfig,
+  ])
 
-  const allSelected =
-    playlist &&
-    playlist.audios.filter((a) => !downloadedIds.has(a.id)).length > 0 &&
-    playlist.audios
-      .filter((a) => !downloadedIds.has(a.id))
-      .every((a) => selectedIds.has(a.id))
+  // Memoize selection state
+  const { allSelected, someSelected, downloadButtonText } = useMemo(() => {
+    const downloadableAudios = playlist
+      ? playlist.audios.filter((a) => !downloadedIds.has(a.id))
+      : []
 
-  const someSelected = selectedIds.size > 0 && !allSelected
+    const all =
+      downloadableAudios.length > 0 &&
+      downloadableAudios.every((a) => selectedIds.has(a.id))
+
+    const some = selectedIds.size > 0 && !all
+
+    const downloadedCount = Array.from(selectedIds).filter((id) =>
+      downloadedIds.has(id),
+    ).length
+
+    const text = `Download ${downloadedCount} / ${selectedIds.size}`
+
+    return {
+      allSelected: all,
+      someSelected: some,
+      downloadButtonText: text,
+    }
+  }, [playlist, selectedIds, downloadedIds])
 
   return (
     <Flex vertical className="page search-page" gap="middle">
-      <Space.Compact style={{ width: "100%" }}>
-        <Search
-          placeholder="Paste audio/playlist URL here"
-          allowClear
-          value={url}
-          onChange={(e) => {
-            setSearchText(e.target.value)
-          }}
-          onSearch={handleSearch}
-          loading={searching}
-        />
-      </Space.Compact>
+      <Search
+        placeholder="Paste audio/playlist URL here"
+        allowClear
+        value={url}
+        onChange={(e) => setSearchText(e.target.value)}
+        onSearch={handleSearch}
+        loading={searching}
+        size="large"
+      />
+
+      {searching && (
+        <Flex flex={1} align="center" justify="center">
+          <Spin fullscreen size="large" />
+        </Flex>
+      )}
 
       {playlist && !searching && (
         <>
           <Flex vertical className="audio-list" gap="small">
-            {/* List Header Info */}
-            <Text type="secondary" className="search-result-info">
+            <Text type="secondary" style={{ fontSize: 14 }}>
               Found {playlist.audios.length} tracks
             </Text>
 
-            {/* Playlist Info Card */}
             {playlist.title && playlist.audios.length > 1 && (
               <Flex align="center" gap="middle" className="audio-card">
                 <Avatar
@@ -498,17 +551,12 @@ export const SearchPage: FC = () => {
                   size={56}
                   shape="square"
                   alt={playlist.title}
-                  className="audio-cover"
                 />
                 <Flex vertical flex={1} style={{ minWidth: 0 }}>
-                  <Text
-                    strong
-                    ellipsis={{ tooltip: playlist.title }}
-                    className="audio-title"
-                  >
+                  <Text strong ellipsis={{ tooltip: playlist.title }}>
                     {playlist.title}
                   </Text>
-                  <Text type="secondary" className="audio-platform">
+                  <Text type="secondary" style={{ fontSize: 12 }}>
                     {playlist.platform}
                   </Text>
                 </Flex>
@@ -529,14 +577,13 @@ export const SearchPage: FC = () => {
             ))}
           </Flex>
 
-          {/* Bottom Action Bar */}
           <Flex
             align="center"
             justify="space-between"
             className="search-bottom-bar"
           >
             <Checkbox
-              checked={!!allSelected}
+              checked={allSelected}
               indeterminate={someSelected}
               onChange={(e) => handleSelectAll(e.target.checked)}
             >
@@ -549,19 +596,14 @@ export const SearchPage: FC = () => {
               loading={downloadingAll}
               disabled={selectedIds.size === 0}
             >
-              {(() => {
-                const downloadedCount = Array.from(selectedIds).filter((id) =>
-                  downloadedIds.has(id),
-                ).length
-                return `Download ${downloadedCount} / ${selectedIds.size}`
-              })()}
+              {downloadButtonText}
             </Button>
           </Flex>
         </>
       )}
 
       {!playlist && !searching && (
-        <Flex flex={1} align="center" justify="center" className="empty-state">
+        <Flex flex={1} align="center" justify="center">
           <Avatar
             src={DEFAULT_COVER_URL}
             size={256}

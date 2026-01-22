@@ -99,9 +99,11 @@ interface AppState extends PersistentData, RuntimeData {
 }
 
 // Helper to apply theme to document
-const applyTheme = (mode: ThemeMode) => {
+const applyTheme = (mode?: ThemeMode | null) => {
   if (typeof document !== "undefined") {
-    const actualTheme = mode === "auto" ? get_system_theme() : mode
+    // Default to "auto" if mode is null or undefined
+    const effectiveMode = mode || "auto"
+    const actualTheme = effectiveMode === "auto" ? get_system_theme() : effectiveMode
     document.documentElement.setAttribute(
       "data-prefers-color-scheme",
       actualTheme,

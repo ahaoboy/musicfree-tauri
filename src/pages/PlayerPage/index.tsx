@@ -1,4 +1,4 @@
-import { FC, useState, useEffect } from "react"
+import { FC, useState, useEffect, useCallback, useMemo } from "react"
 import { useNavigate } from "react-router-dom"
 import {
   LeftOutlined,
@@ -16,60 +16,43 @@ import {
 } from "@ant-design/icons"
 import { Slider, message, Button, Typography, Avatar, Flex } from "antd"
 import { useAppStore } from "../../store"
-import { get_web_url, DEFAULT_COVER_URL } from "../../api"
+import { DEFAULT_COVER_URL } from "../../api"
+import { useCoverUrl } from "../../hooks"
 import "./index.less"
 
 const { Title, Text } = Typography
 
 const formatTime = (seconds: number) => {
-  if (!seconds) return "0:00"
+  if (!seconds || !Number.isFinite(seconds)) return "0:00"
   const mins = Math.floor(seconds / 60)
   const secs = Math.floor(seconds % 60)
   return `${mins}:${secs.toString().padStart(2, "0")}`
 }
 
-// Player page - full-screen audio player with controls and cover display
-const PlayerPage: FC = () => {
+// Player page - full-screen audio player
+export const PlayerPage: FC = () => {
   const navigate = useNavigate()
-  const {
-    currentAudio,
-    isPlaying,
-    togglePlay,
-    audioElement,
-    playNext,
-    playPrev,
-    toggleFavorite,
-    playMode,
-    togglePlayMode,
-    isFavorited,
-  } = useAppStore()
 
-  const [coverUrl, setCoverUrl] = useState<string | null>(null)
+  // Selective store subscriptions
+  const currentAudio = useAppStore((state) => state.currentAudio)
+  const isPlaying = useAppStore((state) => state.isPlaying)
+  const playMode = useAppStore((state) => state.playMode)
+  const audioElement = useAppStore((state) => state.audioElement)
+  const togglePlay = useAppStore((state) => state.togglePlay)
+  const playNext = useAppStore((state) => state.playNext)
+  const playPrev = useAppStore((state) => state.playPrev)
+  const togglePlayMode = useAppStore((state) => state.togglePlayMode)
+  const toggleFavorite = useAppStore((state) => state.toggleFavorite)
+  const isFavorited = useAppStore((state) => state.isFavorited)
+
+  const coverUrl = useCoverUrl(
+    currentAudio?.cover_path,
+    currentAudio?.audio.cover,
+  )
+
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState(0)
   const [isDragging, setIsDragging] = useState(false)
-
-  // Load cover
-  useEffect(() => {
-    const loadCover = async () => {
-      if (!currentAudio) {
-        setCoverUrl(null)
-        return
-      }
-
-      if (currentAudio.cover_path) {
-        try {
-          const url = await get_web_url(currentAudio.cover_path)
-          setCoverUrl(url)
-        } catch (error) {
-          console.error("Failed to load cover:", error)
-        }
-      } else if (currentAudio.audio.cover) {
-        setCoverUrl(currentAudio.audio.cover)
-      }
-    }
-    loadCover()
-  }, [currentAudio])
 
   // Handle time updates
   useEffect(() => {
@@ -85,7 +68,6 @@ const PlayerPage: FC = () => {
     audioElement.addEventListener("timeupdate", handleTimeUpdate)
     audioElement.addEventListener("loadedmetadata", handleTimeUpdate)
 
-    // Initial State
     setCurrentTime(audioElement.currentTime)
     setDuration(audioElement.duration || 0)
 
@@ -95,26 +77,35 @@ const PlayerPage: FC = () => {
     }
   }, [audioElement, isDragging])
 
-  const handleSeek = (value: number) => {
-    if (audioElement) {
-      audioElement.currentTime = value
-    }
-    setCurrentTime(value)
-    setIsDragging(false)
-  }
+  const handleSeek = useCallback(
+    (value: number) => {
+      if (audioElement) {
+        audioElement.currentTime = value
+      }
+      setCurrentTime(value)
+      setIsDragging(false)
+    },
+    [audioElement],
+  )
 
-  const handleShare = async () => {
+  const handleShare = useCallback(async () => {
     if (!currentAudio) return
     try {
       await navigator.clipboard.writeText(currentAudio.audio.download_url || "")
-      message.success("Download link copied to clipboard!")
-    } catch (_e) {
+      message.success("Download link copied!")
+    } catch {
       message.error("Failed to copy link")
     }
-  }
+  }, [currentAudio])
 
-  // Helper to get mode icon
-  const getModeIcon = () => {
+  const handleFavorite = useCallback(() => {
+    if (currentAudio) {
+      toggleFavorite(currentAudio)
+    }
+  }, [currentAudio, toggleFavorite])
+
+  // Memoize mode icon
+  const modeIcon = useMemo(() => {
     switch (playMode) {
       case "sequence":
         return <BarsOutlined />
@@ -123,9 +114,7 @@ const PlayerPage: FC = () => {
       case "single-loop":
         return (
           <Flex
-            style={{
-              position: "relative",
-            }}
+            style={{ position: "relative" }}
             align="center"
             justify="center"
           >
@@ -133,9 +122,9 @@ const PlayerPage: FC = () => {
             <Text
               style={{
                 position: "absolute",
-                fontSize: "10px",
-                right: "-6px",
-                top: "-4px",
+                fontSize: 10,
+                right: -6,
+                top: -4,
                 fontWeight: "bold",
                 color: "currentColor",
               }}
@@ -149,7 +138,9 @@ const PlayerPage: FC = () => {
       default:
         return <BarsOutlined />
     }
-  }
+  }, [playMode])
+
+  const isFav = currentAudio ? isFavorited(currentAudio.audio.id) : false
 
   if (!currentAudio) {
     return (
@@ -158,10 +149,7 @@ const PlayerPage: FC = () => {
         className="player-page empty"
         style={{
           position: "fixed",
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
+          inset: 0,
         }}
       >
         <Flex className="player-header" align="center" justify="space-between">
@@ -182,10 +170,7 @@ const PlayerPage: FC = () => {
       className={`player-page ${isPlaying ? "playing" : ""}`}
       style={{
         position: "fixed",
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
+        inset: 0,
       }}
     >
       {/* Header */}
@@ -268,10 +253,9 @@ const PlayerPage: FC = () => {
         <Flex align="center" justify="space-between" className="main-controls">
           <Button
             type="text"
-            icon={getModeIcon()}
+            icon={modeIcon}
             onClick={togglePlayMode}
             className="action-btn secondary"
-            style={{ cursor: "pointer" }}
           />
 
           <Button
@@ -279,7 +263,6 @@ const PlayerPage: FC = () => {
             icon={<StepBackwardOutlined />}
             onClick={() => playPrev()}
             className="action-btn secondary"
-            style={{ cursor: "pointer" }}
           />
 
           <Button
@@ -287,27 +270,26 @@ const PlayerPage: FC = () => {
             icon={isPlaying ? <PauseCircleFilled /> : <PlayCircleFilled />}
             onClick={togglePlay}
             className="play-btn large"
-            style={{ cursor: "pointer" }}
           />
 
           <Button
+            type="text"
             icon={<StepForwardOutlined />}
             onClick={() => playNext()}
             className="action-btn secondary"
-            style={{ cursor: "pointer" }}
           />
 
           <Button
+            type="text"
             icon={
-              (currentAudio ? isFavorited(currentAudio.audio.id) : false) ? (
+              isFav ? (
                 <HeartFilled style={{ color: "#ff4d4f" }} />
               ) : (
                 <HeartOutlined />
               )
             }
-            onClick={() => toggleFavorite(currentAudio)}
+            onClick={handleFavorite}
             className="action-btn secondary"
-            style={{ cursor: "pointer" }}
           />
         </Flex>
       </Flex>

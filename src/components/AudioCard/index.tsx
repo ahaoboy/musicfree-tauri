@@ -1,7 +1,8 @@
-import { FC, useState, useEffect } from "react"
-import { Flex, Typography, Avatar } from "antd"
+import { FC, memo, useMemo } from "react"
+import { Flex, Typography, Avatar, Button } from "antd"
 import { AudioOutlined } from "@ant-design/icons"
-import { DEFAULT_COVER_URL, get_web_url, LocalAudio } from "../../api"
+import { DEFAULT_COVER_URL, LocalAudio } from "../../api"
+import { useCoverUrl } from "../../hooks"
 
 const { Text } = Typography
 
@@ -13,92 +14,72 @@ interface AudioCardProps {
   onAction?: () => void
 }
 
-// Audio info display card
-// Shows cover image (left), title, platform, and optional action button (right)
-export const AudioCard: FC<AudioCardProps> = ({
-  audio,
-  onClick,
-  showAction = false,
-  actionIcon,
-  onAction,
-}) => {
-  const [coverUrl, setCoverUrl] = useState<string | null>(null)
+// Audio info display card - Optimized with memo and hooks
+export const AudioCard: FC<AudioCardProps> = memo(
+  ({ audio, onClick, showAction = false, actionIcon, onAction }) => {
+    const coverUrl = useCoverUrl(audio.cover_path, audio.audio.cover)
 
-  useEffect(() => {
-    const loadCover = async () => {
-      if (audio.cover_path) {
-        try {
-          const url = await get_web_url(audio.cover_path)
-          setCoverUrl(url)
-        } catch (error) {
-          console.error("Failed to load cover:", error)
-        }
-      } else if (audio.audio.cover) {
-        setCoverUrl(audio.audio.cover)
-      }
-    }
-    loadCover()
-  }, [audio.cover_path, audio.audio.cover])
+    const handleClick = useMemo(
+      () =>
+        onClick
+          ? (e: React.MouseEvent | React.KeyboardEvent) => {
+              if ("key" in e && e.key !== "Enter" && e.key !== " ") return
+              onClick()
+            }
+          : undefined,
+      [onClick],
+    )
 
-  const handleActionClick = (e: React.MouseEvent) => {
-    e.stopPropagation()
-    onAction?.()
-  }
+    const handleActionClick = useMemo(
+      () =>
+        onAction
+          ? (e: React.MouseEvent) => {
+              e.stopPropagation()
+              onAction()
+            }
+          : undefined,
+      [onAction],
+    )
 
-  return (
-    <Flex
-      className="audio-card"
-      onClick={onClick}
-      role="button"
-      tabIndex={0}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          onClick?.()
-        }
-      }}
-      align="center"
-      gap="middle"
-    >
-      <Avatar
-        src={coverUrl || DEFAULT_COVER_URL}
-        icon={<AudioOutlined />}
-        size={56}
-        shape="square"
-        alt={audio.audio.title}
-        className="audio-cover"
-      />
-      <Flex vertical flex={1} style={{ minWidth: 0 }}>
-        <Text
-          strong
-          ellipsis={{ tooltip: audio.audio.title }}
-          className="audio-title"
-        >
-          {audio.audio.title}
-        </Text>
-        <Flex className="audio-meta" align="center" gap="small">
-          <Text type="secondary" className="audio-platform">
+    return (
+      <Flex
+        className="audio-card"
+        onClick={handleClick}
+        role={onClick ? "button" : undefined}
+        tabIndex={onClick ? 0 : undefined}
+        onKeyDown={handleClick}
+        align="center"
+        gap="middle"
+        style={{ cursor: onClick ? "pointer" : "default" }}
+      >
+        <Avatar
+          src={coverUrl || DEFAULT_COVER_URL}
+          icon={<AudioOutlined />}
+          size={56}
+          shape="square"
+          alt={audio.audio.title}
+        />
+        <Flex vertical flex={1} style={{ minWidth: 0 }}>
+          <Text strong ellipsis={{ tooltip: audio.audio.title }}>
+            {audio.audio.title}
+          </Text>
+          <Text type="secondary" style={{ fontSize: 12 }}>
             {audio.audio.platform}
           </Text>
         </Flex>
+        {showAction && actionIcon && (
+          <Button
+            type="text"
+            icon={actionIcon}
+            onClick={handleActionClick}
+            style={{ flexShrink: 0 }}
+          />
+        )}
       </Flex>
-      {showAction && actionIcon && (
-        <div
-          className="audio-action"
-          onClick={handleActionClick}
-          role="button"
-          tabIndex={0}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === " ") {
-              e.stopPropagation()
-              onAction?.()
-            }
-          }}
-        >
-          {actionIcon}
-        </div>
-      )}
-    </Flex>
-  )
-}
+    )
+  },
+)
+
+AudioCard.displayName = "AudioCard"
 
 export default AudioCard

@@ -3,11 +3,10 @@ import {
   useEffect,
   useRef,
   useCallback,
-  createContext,
-  useContext,
   useState,
   Suspense,
   lazy,
+  memo,
 } from "react"
 import {
   BrowserRouter,
@@ -18,6 +17,7 @@ import {
   Navigate,
 } from "react-router-dom"
 import { PlayerCard } from "./components"
+import { NavigationContext, NavigationContextType } from "./contexts"
 
 type Tab = "playlists" | "music" | "search" | "settings"
 import {
@@ -35,7 +35,7 @@ import {
   Tabs,
 } from "antd"
 import { useAppStore } from "./store"
-import { useSwipe, SwipeDirection } from "./hooks"
+import { useSwipe, SwipeDirection, useIsDarkMode } from "./hooks"
 import "./styles/index.less"
 
 const PlaylistsPage = lazy(() => import("./pages/PlaylistsPage"))
@@ -62,53 +62,56 @@ const TAB_TO_ROUTE: Record<Tab, string> = {
 // Tab order for swipe navigation
 const TAB_ORDER: Tab[] = ["playlists", "music", "search", "settings"]
 
-// Navigation context for child pages to report their state
-interface NavigationContextType {
-  isInDetailView: boolean
-  setIsInDetailView: (value: boolean) => void
-  onBackFromDetail: (() => void) | null
-  setOnBackFromDetail: (callback: (() => void) | null) => void
-}
+// Tab items configuration
+const TAB_ITEMS = [
+  {
+    key: "playlists",
+    label: <UnorderedListOutlined style={{ fontSize: 24 }} />,
+  },
+  {
+    key: "music",
+    label: <CustomerServiceOutlined style={{ fontSize: 24 }} />,
+  },
+  {
+    key: "search",
+    label: <SearchOutlined style={{ fontSize: 24 }} />,
+  },
+  {
+    key: "settings",
+    label: <SettingOutlined style={{ fontSize: 24 }} />,
+  },
+]
 
-const NavigationContext = createContext<NavigationContextType | null>(null)
-
-export const useNavigation = () => {
-  const context = useContext(NavigationContext)
-  if (!context) {
-    throw new Error("useNavigation must be used within NavigationProvider")
-  }
-  return context
-}
-
-// Main layout component with navigation
-const AppLayout: FC = () => {
+// Main layout component
+const AppLayout: FC = memo(() => {
   const navigate = useNavigate()
   const location = useLocation()
   const audioRef = useRef<HTMLAudioElement>(null)
 
-  // Navigation state for detail views
+  // Navigation state
   const [isInDetailView, setIsInDetailView] = useState(false)
   const [onBackFromDetail, setOnBackFromDetail] = useState<(() => void) | null>(
     null,
   )
 
-  const {
-    loadConfig,
-    setAudioElement,
-    currentAudio,
-    config: { theme },
-    isConfigLoading,
-  } = useAppStore()
+  // Selective store subscriptions
+  const currentAudio = useAppStore((state) => state.currentAudio)
+  const isConfigLoading = useAppStore((state) => state.isConfigLoading)
+  const loadConfig = useAppStore((state) => state.loadConfig)
+  const setAudioElement = useAppStore((state) => state.setAudioElement)
 
-  // Get current tab from route
+  // Get dark mode state (handles null/undefined theme)
+  const isDark = useIsDarkMode()
+
+  // Get current tab
   const currentTab = ROUTE_TO_TAB[location.pathname] || "playlists"
 
-  // Initialize app - load config
+  // Initialize app
   useEffect(() => {
     loadConfig()
   }, [loadConfig])
 
-  // Set audio element reference
+  // Set audio element
   useEffect(() => {
     if (audioRef.current) {
       setAudioElement(audioRef.current)
@@ -120,18 +123,18 @@ const AppLayout: FC = () => {
 
   // Handle tab change
   const handleTabChange = useCallback(
-    (tab: Tab) => {
-      navigate(TAB_TO_ROUTE[tab])
+    (tab: string) => {
+      navigate(TAB_TO_ROUTE[tab as Tab])
     },
     [navigate],
   )
 
-  // Handle swipe gesture for tab switching or back navigation
+  // Handle swipe gesture
   const handleSwipe = useCallback(
     (direction: SwipeDirection) => {
       if (direction !== "left" && direction !== "right") return
 
-      // If in detail view, swipe right to go back
+      // Detail view back navigation
       if (isInDetailView && direction === "right") {
         if (onBackFromDetail) {
           onBackFromDetail()
@@ -139,32 +142,19 @@ const AppLayout: FC = () => {
         return
       }
 
-      // Normal tab switching
+      // Tab switching
       const currentIndex = TAB_ORDER.indexOf(currentTab)
 
       if (direction === "left" && currentIndex < TAB_ORDER.length - 1) {
-        // Swipe left - go to next tab
         navigate(TAB_TO_ROUTE[TAB_ORDER[currentIndex + 1]])
       } else if (direction === "right" && currentIndex > 0) {
-        // Swipe right - go to previous tab
         navigate(TAB_TO_ROUTE[TAB_ORDER[currentIndex - 1]])
       }
     },
     [currentTab, isInDetailView, onBackFromDetail, navigate],
   )
 
-  // Get swipe handlers
   const swipeHandlers = useSwipe(handleSwipe, { threshold: 50 })
-
-  // Determine if dark mode
-  const isDark = (() => {
-    if (theme === "dark") return true
-    if (theme === "light") return false
-    if (typeof window !== "undefined") {
-      return window.matchMedia("(prefers-color-scheme: dark)").matches
-    }
-    return false
-  })()
 
   // Navigation context value
   const navigationContextValue: NavigationContextType = {
@@ -172,22 +162,6 @@ const AppLayout: FC = () => {
     setIsInDetailView,
     onBackFromDetail,
     setOnBackFromDetail,
-  }
-
-  // Loading state
-  if (isConfigLoading) {
-    return (
-      <Flex
-        vertical
-        flex={1}
-        align="center"
-        justify="center"
-        className="app"
-        style={{ height: "100vh" }}
-      >
-        <Spin fullscreen size="large" tip="Loading..." />
-      </Flex>
-    )
   }
 
   return (
@@ -204,90 +178,73 @@ const AppLayout: FC = () => {
     >
       <AntApp>
         <NavigationContext.Provider value={navigationContextValue}>
-          <Flex
-            vertical
-            className="app"
-            style={{ height: "100vh" }}
-            {...swipeHandlers}
-          >
-            <Tabs
-              activeKey={currentTab}
-              onChange={(key) => handleTabChange(key as Tab)}
-              centered
-              tabBarGutter={0}
-              className="top-tabs"
-              items={[
-                {
-                  key: "playlists",
-                  label: (
-                    <UnorderedListOutlined
-                      style={{ fontSize: 24, width: "100%" }}
-                    />
-                  ),
-                },
-                {
-                  key: "music",
-                  label: (
-                    <CustomerServiceOutlined
-                      style={{ fontSize: 24, width: "100%" }}
-                    />
-                  ),
-                },
-                {
-                  key: "search",
-                  label: (
-                    <SearchOutlined style={{ fontSize: 24, width: "100%" }} />
-                  ),
-                },
-                {
-                  key: "settings",
-                  label: (
-                    <SettingOutlined style={{ fontSize: 24, width: "100%" }} />
-                  ),
-                },
-              ]}
-            />
+          {isConfigLoading ? (
             <Flex
               vertical
               flex={1}
-              component="main"
-              className="main-content"
-              style={{ overflow: "hidden" }}
+              align="center"
+              justify="center"
+              style={{ height: "100vh" }}
             >
-              <Suspense
-                fallback={
-                  <Flex flex={1} align="center" justify="center">
-                    <Spin fullscreen size="large" />
-                  </Flex>
-                }
-              >
-                <Routes>
-                  <Route
-                    path="/"
-                    element={<Navigate to="/playlists" replace />}
-                  />
-                  <Route path="/playlists/*" element={<PlaylistsPage />} />
-                  <Route path="/music" element={<MusicPage />} />
-                  <Route path="/search" element={<SearchPage />} />
-                  <Route path="/settings" element={<SettingsPage />} />
-                  <Route path="/player" element={<PlayerPage />} />
-                </Routes>
-              </Suspense>
+              <Spin fullscreen size="large" tip="Loading..." />
             </Flex>
-            {/* Hide player card on search page and settings to avoid overlapping with bottom actions */}
-            {!["search", "settings"].includes(currentTab) && (
-              <PlayerCard audio={currentAudio} />
-            )}
-            {/* biome-ignore lint/a11y/useMediaCaption: Music player does not need captions */}
-            <audio ref={audioRef} />
-          </Flex>
+          ) : (
+            <Flex
+              vertical
+              className="app"
+              style={{ height: "100vh" }}
+              {...swipeHandlers}
+            >
+              <Tabs
+                activeKey={currentTab}
+                onChange={handleTabChange}
+                centered
+                tabBarGutter={0}
+                className="top-tabs"
+                items={TAB_ITEMS}
+              />
+              <Flex
+                vertical
+                flex={1}
+                component="main"
+                className="main-content"
+                style={{ overflow: "hidden" }}
+              >
+                <Suspense
+                  fallback={
+                    <Flex flex={1} align="center" justify="center">
+                      <Spin fullscreen size="large" />
+                    </Flex>
+                  }
+                >
+                  <Routes>
+                    <Route
+                      path="/"
+                      element={<Navigate to="/playlists" replace />}
+                    />
+                    <Route path="/playlists/*" element={<PlaylistsPage />} />
+                    <Route path="/music" element={<MusicPage />} />
+                    <Route path="/search" element={<SearchPage />} />
+                    <Route path="/settings" element={<SettingsPage />} />
+                    <Route path="/player" element={<PlayerPage />} />
+                  </Routes>
+                </Suspense>
+              </Flex>
+              {!["search", "settings"].includes(currentTab) && (
+                <PlayerCard audio={currentAudio} />
+              )}
+              <audio ref={audioRef} />
+            </Flex>
+          )}
         </NavigationContext.Provider>
       </AntApp>
     </ConfigProvider>
   )
-}
+})
 
-// App entry with Router
+AppLayout.displayName = "AppLayout"
+
+// App entry
 const App: FC = () => {
   return (
     <BrowserRouter>

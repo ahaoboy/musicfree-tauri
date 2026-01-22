@@ -1,141 +1,15 @@
-// Main styles entry point
-// Mobile-first design with modern aesthetics
+// Main styles - Mobile-first design with modern aesthetics
+// Optimized: Removed redundant styles, using Antd defaults where possible
 
 // Variables
 @primary-color: #6366f1;
-@primary-gradient: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-@secondary-color: #8b5cf6;
-@success-color: #10b981;
-@warning-color: #f59e0b;
-@error-color: #ef4444;
-
-// Light theme colors
-@bg-light: #f8fafc;
-@bg-card-light: #ffffff;
-@text-primary-light: #1e293b;
-@text-secondary-light: #64748b;
-@border-light: #e2e8f0;
-
-// Dark theme colors
-@bg-dark: #0f172a;
-@bg-card-dark: #1e293b;
-@text-primary-dark: #f1f5f9;
-@text-secondary-dark: #94a3b8;
-@border-dark: #334155;
-
-// Spacing
-@spacing-xs: 4px;
-@spacing-sm: 8px;
-@spacing-md: 12px;
-@spacing-lg: 16px;
-@spacing-xl: 24px;
-
-// Border radius
-@radius-sm: 8px;
-@radius-md: 12px;
-@radius-lg: 16px;
-@radius-xl: 24px;
-@radius-full: 9999px;
-
-// Shadows
-@shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
-@shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
-@shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
-
-// Animation timing (following UI/UX best practices: 150-300ms)
 @transition-fast: 150ms;
 @transition-normal: 200ms;
-@transition-slow: 300ms;
 @ease-out: cubic-bezier(0.25, 0.46, 0.45, 0.94);
-@ease-in-out: cubic-bezier(0.645, 0.045, 0.355, 1);
 
 // Mobile dimensions
-@nav-height: 56px;
 @player-bar-height: 72px;
 @safe-area-bottom: env(safe-area-inset-bottom, 0px);
-
-// Keyframe animations
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(16px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes fadeInDown {
-  from {
-    opacity: 0;
-    transform: translateY(-16px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes slideInRight {
-  from {
-    opacity: 0;
-    transform: translateX(20px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-@keyframes slideInLeft {
-  from {
-    opacity: 0;
-    transform: translateX(-20px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-@keyframes scaleIn {
-  from {
-    opacity: 0;
-    transform: scale(0.95);
-  }
-
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-@keyframes pulse {
-
-  0%,
-  100% {
-    opacity: 1;
-  }
-
-  50% {
-    opacity: 0.5;
-  }
-}
 
 // Base reset
 * {
@@ -156,28 +30,24 @@ body {
     'Oxygen', 'Ubuntu', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  font-size: 14px;
-  line-height: 1.5;
 }
 
 // Theme styles
 [data-prefers-color-scheme='light'] {
-  --bg-primary: @bg-light;
-  --bg-card: @bg-card-light;
-  --text-primary: @text-primary-light;
-  --text-secondary: @text-secondary-light;
-  --border-color: @border-light;
-  --primary-color: @primary-color;
+  --bg-primary: #f8fafc;
+  --bg-card: #ffffff;
+  --text-primary: #1e293b;
+  --text-secondary: #64748b;
+  --border-color: #e2e8f0;
   --shadow-color: rgba(0, 0, 0, 0.08);
 }
 
 [data-prefers-color-scheme='dark'] {
-  --bg-primary: @bg-dark;
-  --bg-card: @bg-card-dark;
-  --text-primary: @text-primary-dark;
-  --text-secondary: @text-secondary-dark;
-  --border-color: @border-dark;
-  --primary-color: @primary-color;
+  --bg-primary: #0f172a;
+  --bg-card: #1e293b;
+  --text-primary: #f1f5f9;
+  --text-secondary: #94a3b8;
+  --border-color: #334155;
   --shadow-color: rgba(0, 0, 0, 0.24);
 }
 
@@ -194,7 +64,6 @@ body {
 .top-tabs {
   background: var(--bg-card);
   border-bottom: 1px solid var(--border-color);
-  box-shadow: @shadow-sm;
 
   .ant-tabs-nav {
     margin-bottom: 0;
@@ -212,7 +81,7 @@ body {
     flex: 1;
     justify-content: center;
     margin: 0;
-    padding: @spacing-md 0;
+    padding: 12px 0;
     transition: all @transition-fast @ease-out;
 
     .ant-tabs-tab-btn {
@@ -232,265 +101,83 @@ body {
 // Page container
 .page {
   min-height: 100%;
-  padding: @spacing-lg;
-  animation: fadeIn @transition-normal @ease-out;
+  padding: 16px;
 }
 
-// Page header
-.page-header {
-  margin-bottom: @spacing-xl;
-
-  .page-title {
-    font-size: 24px;
-    font-weight: 700;
-    color: var(--text-primary);
-    margin-bottom: @spacing-xs;
-  }
-
-  .page-subtitle {
-    font-size: 14px;
-    color: var(--text-secondary);
-  }
-}
-
-// Card component
-.card {
-  background: var(--bg-card);
-  border-radius: @radius-md;
-  padding: @spacing-lg;
-  box-shadow: @shadow-sm;
-  border: 1px solid var(--border-color);
-}
-
-// Audio card component
+// Audio card
 .audio-card {
-  padding: @spacing-md;
+  padding: 12px;
   background: var(--bg-card);
-  border-radius: @radius-md;
+  border-radius: 12px;
   border: 1px solid var(--border-color);
   cursor: pointer;
-  transition: transform @transition-fast @ease-out,
-    box-shadow @transition-fast @ease-out,
-    border-color @transition-fast @ease-out;
+  transition: all @transition-fast @ease-out;
 
   &:hover {
-    border-color: var(--primary-color);
-    box-shadow: @shadow-md;
+    border-color: @primary-color;
+    transform: translateY(-2px);
   }
 
   &:active {
     transform: scale(0.98);
-    opacity: 0.9;
-  }
-
-  .audio-cover {
-    flex-shrink: 0;
-
-    &.ant-avatar {
-
-      border-radius: @radius-sm;
-
-      .ant-avatar-string {
-        font-size: 20px;
-      }
-    }
-  }
-
-  .audio-title {
-    font-size: 15px;
-    font-weight: 600;
-    color: var(--text-primary);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    margin-bottom: 2px;
-
-    &.ant-typography {
-      margin-bottom: 2px;
-    }
-  }
-
-  .audio-meta {
-    font-size: 12px;
-    color: var(--text-secondary);
-
-    .audio-platform {
-      display: flex;
-      align-items: center;
-      gap: 2px;
-
-      &.ant-typography {
-        margin-bottom: 0;
-      }
-    }
-
-    .audio-duration {
-      display: flex;
-      align-items: center;
-      gap: 2px;
-    }
-  }
-
-  .audio-action {
-    flex-shrink: 0;
   }
 }
 
 // Audio card with checkbox
 .audio-card-selectable {
-  padding: @spacing-md;
+  padding: 12px;
   background: var(--bg-card);
-  border-radius: @radius-md;
+  border-radius: 12px;
   border: 1px solid var(--border-color);
-  cursor: pointer;
-  transition: transform @transition-fast @ease-out,
-    box-shadow @transition-fast @ease-out,
-    border-color @transition-fast @ease-out;
+  transition: all @transition-fast @ease-out;
 
   &:hover {
-    border-color: var(--primary-color);
-    box-shadow: @shadow-md;
-  }
-
-  &:active {
-    transform: scale(0.98);
-    opacity: 0.9;
-  }
-
-  .checkbox-wrapper {
-    flex-shrink: 0;
-  }
-
-  .audio-cover {
-    flex-shrink: 0;
-
-    &.ant-avatar {
-
-      border-radius: @radius-sm;
-
-      .ant-avatar-string {
-        font-size: 20px;
-      }
-    }
-  }
-
-  .audio-info {
-    flex: 1;
-    min-width: 0;
-
-    .audio-title {
-      font-size: 15px;
-      font-weight: 600;
-      color: var(--text-primary);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      margin-bottom: 2px;
-    }
-
-    .audio-meta {
-      font-size: 12px;
-      color: var(--text-secondary);
-    }
-  }
-
-  .audio-action {
-    flex-shrink: 0;
+    border-color: @primary-color;
   }
 }
 
 // Playlist card
 .playlist-card {
   background: var(--bg-card);
-  border-radius: @radius-md;
-  overflow: hidden;
+  border-radius: 12px;
   border: 1px solid var(--border-color);
   cursor: pointer;
-  margin-bottom: @spacing-sm;
-  padding: @spacing-md;
-  transition: transform @transition-fast @ease-out,
-    box-shadow @transition-fast @ease-out,
-    border-color @transition-fast @ease-out;
+  padding: 12px;
+  transition: all @transition-fast @ease-out;
 
   &:hover {
-    border-color: var(--primary-color);
-    box-shadow: @shadow-md;
+    border-color: @primary-color;
     transform: translateX(4px);
   }
 
   &:active {
     transform: scale(0.99);
-    opacity: 0.9;
-  }
-
-  .playlist-cover {
-    flex-shrink: 0;
-
-    &.ant-avatar {
-
-      border-radius: @radius-sm;
-
-      .ant-avatar-string {
-        font-size: 24px;
-      }
-    }
-  }
-
-  .playlist-title {
-    font-size: 16px;
-    font-weight: 600;
-    color: var(--text-primary);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    margin-bottom: 4px;
-
-    &.ant-typography {
-      margin-bottom: 4px;
-    }
-  }
-
-  .playlist-meta {
-    font-size: 13px;
-    color: var(--text-secondary);
-
-    &.ant-typography {
-      margin-bottom: 0;
-    }
   }
 }
 
-// Playlist grid (now scrollable list)
+// Playlist grid
 .playlist-grid {
-  display: block; // Use block layout like audio-list
-  // Enable scrolling for long playlist lists
   overflow-y: auto;
   overflow-x: hidden;
-  -webkit-overflow-scrolling: touch; // Smooth scrolling on iOS
+  -webkit-overflow-scrolling: touch;
 
-  // Custom scrollbar styling for playlist lists
   &::-webkit-scrollbar {
     width: 6px;
   }
 
   &::-webkit-scrollbar-track {
     background: transparent;
-    border-radius: @radius-full;
   }
 
   &::-webkit-scrollbar-thumb {
     background: var(--border-color);
-    border-radius: @radius-full;
+    border-radius: 9999px;
     transition: background @transition-fast @ease-out;
 
     &:hover {
       background: var(--text-secondary);
     }
   }
-
-  // display: grid;
-  // grid-template-columns: 1fr;
-  // gap: @spacing-md;
 }
 
 // Mini player bar
@@ -502,217 +189,33 @@ body {
   height: @player-bar-height;
   background: var(--bg-card);
   border-top: 1px solid var(--border-color);
-  padding: @spacing-md @spacing-lg;
+  padding: 12px 16px;
   z-index: 1000;
-  padding-bottom: calc(@spacing-md + @safe-area-bottom);
+  padding-bottom: calc(12px + @safe-area-bottom);
   box-shadow: 0 -2px 12px var(--shadow-color);
-  animation: slideInUp @transition-slow @ease-out;
-
-  .player-cover {
-    flex-shrink: 0;
-
-    &.ant-avatar {
-
-      border-radius: @radius-sm;
-
-      .ant-avatar-string {
-        font-size: 18px;
-      }
-    }
-  }
-
-  .player-title {
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--text-primary);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-
-    &.ant-typography {
-      margin-bottom: 0;
-    }
-  }
-
-  .player-artist {
-    font-size: 12px;
-    color: var(--text-secondary);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-
-    &.ant-typography {
-      margin-bottom: 0;
-    }
-  }
-
-  .player-controls {
-    flex-shrink: 0;
-
-
-    .control-btn {
-      width: 44px  ;
-      height: 44px  ;
-      min-width: 44px  ;
-      border-radius: @radius-full;
-      border: none;
-      color: #fff;
-      font-size: 18px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 0;
-      transition: transform @transition-fast @ease-out, opacity @transition-fast @ease-out;
-
-      .anticon {
-        font-size: 18px;
-      }
-
-      &:hover {
-        transform: scale(1.05);
-        color: #fff;
-      }
-
-      &:active {
-        transform: scale(0.95);
-        opacity: 0.9;
-      }
-
-
-    }
-
-    .action-btn {
-      background: none;
-      border: none;
-      cursor: pointer;
-      font-size: 20px;
-      color: var(--text-primary);
-      width: 40px;
-      height: 40px;
-      min-width: 40px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 50%;
-      padding: 0;
-      transition: background @transition-fast @ease-out;
-
-      .anticon {
-        font-size: 20px;
-      }
-
-      &:hover {
-        color: var(--text-primary);
-      }
-
-      &:active {
-        background: rgba(0, 0, 0, 0.05);
-      }
-    }
-  }
 }
 
-@keyframes slideInUp {
-  from {
-    opacity: 0;
-    transform: translateY(100%);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-// Search input group
-.search-group {
-  display: flex;
-  gap: @spacing-sm;
-  margin-bottom: @spacing-lg;
-
-  .search-input {
-    flex: 1;
-  }
-}
-
-// Audio list - scrollable when content exceeds viewport height
+// Audio list
 .audio-list {
-  // Enable scrolling for long lists
   overflow-y: auto;
   overflow-x: hidden;
-  -webkit-overflow-scrolling: touch; // Smooth scrolling on iOS
+  -webkit-overflow-scrolling: touch;
 
-  // Custom scrollbar styling for audio lists
   &::-webkit-scrollbar {
     width: 6px;
   }
 
   &::-webkit-scrollbar-track {
     background: transparent;
-    border-radius: @radius-full;
   }
 
   &::-webkit-scrollbar-thumb {
     background: var(--border-color);
-    border-radius: @radius-full;
+    border-radius: 9999px;
     transition: background @transition-fast @ease-out;
 
     &:hover {
       background: var(--text-secondary);
-    }
-  }
-
-  .list-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: @spacing-md;
-    padding: @spacing-sm 0;
-    border-bottom: 1px solid var(--border-color);
-
-    .list-title {
-      font-size: 16px;
-      font-weight: 600;
-      color: var(--text-primary);
-    }
-
-    .list-actions {
-      display: flex;
-      align-items: center;
-      gap: @spacing-sm;
-    }
-  }
-}
-
-// Empty state
-.empty-state {
-  padding: @spacing-xl * 2;
-  text-align: center;
-
-  .empty-icon {
-    font-size: 128px;
-    color: var(--text-secondary);
-    margin-bottom: @spacing-lg;
-    opacity: 0.5;
-  }
-
-  .empty-title {
-    font-size: 18px;
-    font-weight: 600;
-    color: var(--text-primary);
-
-    &.ant-typography {
-      margin-bottom: @spacing-sm;
-    }
-  }
-
-  .empty-description {
-    font-size: 14px;
-    color: var(--text-secondary);
-
-    &.ant-typography {
-      margin-bottom: 0;
     }
   }
 }
@@ -725,140 +228,6 @@ body {
     color: var(--text-secondary);
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    padding-left: @spacing-sm;
-
-    &.ant-typography {
-      margin-bottom: 0;
-    }
-  }
-
-  .section-content {
-    background: var(--bg-card);
-    border-radius: @radius-md;
-    border: 1px solid var(--border-color);
-    overflow: hidden;
-  }
-
-  .settings-item {
-    padding: @spacing-lg;
-    border-bottom: 1px solid var(--border-color);
-
-    &:last-child {
-      border-bottom: none;
-    }
-
-    .item-label {
-      font-size: 15px;
-      color: var(--text-primary);
-
-      &.ant-typography {
-        margin-bottom: 0;
-      }
-    }
-
-    .item-value {
-      color: var(--text-secondary);
-      font-size: 14px;
-
-      &.ant-typography {
-        margin-bottom: 0;
-      }
-    }
-  }
-}
-
-// Theme options
-.theme-options {
-  // gap handled by Flex
-
-  .theme-option {
-    padding: @spacing-md @spacing-lg;
-    background: var(--bg-card);
-    border: 2px solid var(--border-color);
-    border-radius: @radius-md;
-    cursor: pointer;
-    transition: all @transition-fast @ease-out;
-
-    &:hover {
-      border-color: var(--primary-color);
-      transform: translateY(-2px);
-      box-shadow: @shadow-sm;
-    }
-
-    &:active {
-      transform: scale(0.98);
-    }
-
-    &.active {
-      border-color: var(--primary-color);
-      background: fade(@primary-color, 10%);
-    }
-
-    .option-icon {
-      font-size: 20px;
-      color: var(--primary-color);
-    }
-
-    .option-label {
-      font-size: 15px;
-      font-weight: 500;
-      color: var(--text-primary);
-
-      &.ant-typography {
-        margin-bottom: 0;
-      }
-    }
-  }
-}
-
-// Button styles (using Ant Design, but custom overrides)
-.btn-primary {
-  border: none;
-  border-radius: @radius-md;
-  height: 44px;
-  font-weight: 600;
-}
-
-// Detail page header
-.detail-header {
-  display: flex;
-  align-items: center;
-  gap: @spacing-md;
-  margin-bottom: @spacing-xl;
-
-  .back-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 40px;
-    height: 40px;
-    border-radius: @radius-full;
-    background: var(--bg-card);
-    border: 1px solid var(--border-color);
-    color: var(--text-primary);
-    cursor: pointer;
-    font-size: 18px;
-    transition: all @transition-fast @ease-out;
-
-    &:hover {
-      background: var(--bg-primary);
-      transform: translateX(-2px);
-    }
-
-    &:active {
-      opacity: 0.7;
-      transform: scale(0.9);
-    }
-  }
-
-  .detail-title {
-    flex: 1;
-    font-size: 18px;
-    font-weight: 600;
-    color: var(--text-primary);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
   }
 }
 
@@ -873,53 +242,5 @@ body {
 
 .main-content::-webkit-scrollbar-thumb {
   background: var(--border-color);
-  border-radius: @radius-full;
-}
-
-// Avatar component customization
-.ant-avatar {
-
-  &.audio-cover,
-  &.player-cover,
-  &.playlist-cover {
-    transition: all @transition-fast @ease-out;
-
-    &:hover {
-      transform: scale(1.05);
-    }
-
-    // Fallback icon styling
-    .anticon {
-      color: #fff;
-    }
-
-    // Image styling
-    img {
-      object-fit: cover;
-    }
-  }
-
-  // Dark mode adjustments
-  [data-prefers-color-scheme='dark'] & {
-
-    &.audio-cover,
-    &.player-cover,
-    &.playlist-cover {
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-    }
-  }
-}
-
-// Large cover specific styles
-.large-cover.ant-avatar {
-
-  // Disable hover effect for large cover
-  &:hover {
-    transform: none;
-  }
-
-  // Playing animation
-  .player-page.playing & {
-    animation: coverRotate 20s linear infinite;
-  }
+  border-radius: 9999px;
 }

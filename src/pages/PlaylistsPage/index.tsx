@@ -2,21 +2,23 @@ import { FC, useState, useEffect, useCallback } from "react"
 import { Flex, Avatar } from "antd"
 import { DeleteOutlined } from "@ant-design/icons"
 import { useAppStore } from "../../store"
-import { LocalPlaylist, LocalAudio, FAVORITE_PLAYLIST_ID, DEFAULT_COVER_URL } from "../../api"
+import {
+  LocalPlaylist,
+  LocalAudio,
+  FAVORITE_PLAYLIST_ID,
+  DEFAULT_COVER_URL,
+} from "../../api"
 import { PlaylistCard, AudioCard } from "../../components"
-import { useNavigation } from "../../App"
+import { useNavigation } from "../../contexts"
 import { useConfirm } from "../../hooks"
 
 // Playlists page - displays all downloaded playlists
-// Clicking a playlist shows its detail with playable audios
-// Supports swipe right gesture to go back from detail view
 export const PlaylistsPage: FC = () => {
-  const {
-    config: { playlists },
-    playAudio,
-    deleteAudio,
-    deletePlaylist,
-  } = useAppStore()
+  const playlists = useAppStore((state) => state.config.playlists)
+  const playAudio = useAppStore((state) => state.playAudio)
+  const deleteAudio = useAppStore((state) => state.deleteAudio)
+  const deletePlaylist = useAppStore((state) => state.deletePlaylist)
+
   const [selectedPlaylist, setSelectedPlaylist] =
     useState<LocalPlaylist | null>(null)
   const { setIsInDetailView, setOnBackFromDetail } = useNavigation()
@@ -27,7 +29,7 @@ export const PlaylistsPage: FC = () => {
     setSelectedPlaylist(null)
   }, [])
 
-  // Register detail view state with navigation context
+  // Register detail view state
   useEffect(() => {
     const isDetail = selectedPlaylist !== null
     setIsInDetailView(isDetail)
@@ -38,38 +40,55 @@ export const PlaylistsPage: FC = () => {
       setOnBackFromDetail(null)
     }
 
-    // Cleanup on unmount
     return () => {
       setIsInDetailView(false)
       setOnBackFromDetail(null)
     }
   }, [selectedPlaylist, setIsInDetailView, setOnBackFromDetail, handleBack])
 
-  // Handle playlist click - show detail view
-  const handlePlaylistClick = (playlist: LocalPlaylist) => {
+  const handlePlaylistClick = useCallback((playlist: LocalPlaylist) => {
     setSelectedPlaylist(playlist)
-  }
+  }, [])
 
-  // Handle audio click - play the audio
-  const handleAudioClick = (audio: LocalAudio) => {
-    if (selectedPlaylist) {
-      playAudio(audio, selectedPlaylist.audios)
-    } else {
-      playAudio(audio)
-    }
-  }
+  const handleAudioClick = useCallback(
+    (audio: LocalAudio) => {
+      if (selectedPlaylist) {
+        playAudio(audio, selectedPlaylist.audios)
+      } else {
+        playAudio(audio)
+      }
+    },
+    [selectedPlaylist, playAudio],
+  )
+
+  const handleDeleteAudio = useCallback(
+    (audioId: string, title: string) => {
+      showConfirm({
+        title: "Delete Audio",
+        content: `Are you sure you want to delete "${title}"?`,
+        onOk: () => deleteAudio(audioId),
+      })
+    },
+    [showConfirm, deleteAudio],
+  )
+
+  const handleDeletePlaylist = useCallback(
+    (playlistId: string) => {
+      showConfirm({
+        title: "Delete Playlist",
+        content: `Are you sure you want to delete "${playlistId}"?`,
+        onOk: () => deletePlaylist(playlistId),
+      })
+    },
+    [showConfirm, deletePlaylist],
+  )
 
   // Render playlist detail view
   if (selectedPlaylist) {
-    return (
-      <Flex vertical className="page" gap="small">
-        {selectedPlaylist.audios.length === 0 ? (
-          <Flex
-            flex={1}
-            align="center"
-            justify="center"
-            className="empty-state"
-          >
+    if (selectedPlaylist.audios.length === 0) {
+      return (
+        <Flex vertical className="page" flex={1}>
+          <Flex flex={1} align="center" justify="center">
             <Avatar
               src={DEFAULT_COVER_URL}
               size={256}
@@ -78,40 +97,33 @@ export const PlaylistsPage: FC = () => {
               alt="No Audio"
             />
           </Flex>
-        ) : (
-          <Flex vertical gap="small" className="audio-list">
-            {selectedPlaylist.audios.map((audio, index) => (
-              <AudioCard
-                key={`${audio.audio.id}-${index}`}
-                audio={audio}
-                onClick={() => handleAudioClick(audio)}
-                showAction
-                actionIcon={<DeleteOutlined />}
-                onAction={() => {
-                  showConfirm({
-                    title: "Delete Audio",
-                    content: "Are you sure you want to delete this track?",
-                    onOk: () => deleteAudio(audio.audio.id),
-                  })
-                }}
-              />
-            ))}
-          </Flex>
-        )}
+        </Flex>
+      )
+    }
+
+    return (
+      <Flex vertical className="page audio-list" gap="small">
+        {selectedPlaylist.audios.map((audio, index) => (
+          <AudioCard
+            key={`${audio.audio.id}-${index}`}
+            audio={audio}
+            onClick={() => handleAudioClick(audio)}
+            showAction
+            actionIcon={<DeleteOutlined />}
+            onAction={() =>
+              handleDeleteAudio(audio.audio.id, audio.audio.title)
+            }
+          />
+        ))}
       </Flex>
     )
   }
 
-  // Render playlists grid
-  return (
-    <Flex vertical className="page" gap="small">
-      {playlists.length === 0 ? (
-        <Flex
-          flex={1}
-          align="center"
-          justify="center"
-          className="empty-state"
-        >
+  // Render playlists list
+  if (playlists.length === 0) {
+    return (
+      <Flex vertical className="page" flex={1}>
+        <Flex flex={1} align="center" justify="center">
           <Avatar
             src={DEFAULT_COVER_URL}
             size={256}
@@ -120,26 +132,22 @@ export const PlaylistsPage: FC = () => {
             alt="No Playlists"
           />
         </Flex>
-      ) : (
-        <Flex vertical gap="small" className="playlist-grid">
-          {playlists.map((playlist, index) => (
-            <PlaylistCard
-              key={`${playlist.id}-${index}`}
-              playlist={playlist}
-              onClick={() => handlePlaylistClick(playlist)}
-              showAction={playlist.id !== FAVORITE_PLAYLIST_ID}
-              actionIcon={<DeleteOutlined />}
-              onAction={() => {
-                showConfirm({
-                  title: "Delete Playlist",
-                  content: "Are you sure you want to delete this playlist?",
-                  onOk: () => deletePlaylist(playlist.id),
-                })
-              }}
-            />
-          ))}
-        </Flex>
-      )}
+      </Flex>
+    )
+  }
+
+  return (
+    <Flex vertical className="page playlist-grid" gap="small">
+      {playlists.map((playlist, index) => (
+        <PlaylistCard
+          key={`${playlist.id}-${index}`}
+          playlist={playlist}
+          onClick={() => handlePlaylistClick(playlist)}
+          showAction={playlist.id !== FAVORITE_PLAYLIST_ID}
+          actionIcon={<DeleteOutlined />}
+          onAction={() => handleDeletePlaylist(playlist.id)}
+        />
+      ))}
     </Flex>
   )
 }
