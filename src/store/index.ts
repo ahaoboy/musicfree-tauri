@@ -11,6 +11,7 @@ import {
   ThemeMode,
   get_system_theme,
   FAVORITE_PLAYLIST_ID,
+  Playlist,
 } from "../api"
 
 // Persistent data interface (saved to config)
@@ -36,9 +37,19 @@ interface RuntimeData {
 
   // Search page runtime state
   searchText: string
+  searchPlaylist: Playlist | null
+  searchSelectedIds: Set<string>
   searchDownloadingIds: Set<string>
   searchDownloadedIds: Set<string>
   searchFailedIds: Set<string>
+  searchSearching: boolean
+  searchDownloadingAll: boolean
+  searchMessageToShow: {
+    type: "success" | "error" | "warning"
+    text: string
+  } | null
+  searchCoverUrls: Record<string, string>
+  searchPlaylistCoverUrl: string | null
 }
 
 // App state interface
@@ -68,11 +79,22 @@ interface AppState extends PersistentData, RuntimeData {
 
   // Search page runtime actions
   setSearchText: (text: string) => void
+  setSearchPlaylist: (playlist: Playlist | null) => void
+  addSearchSelectedId: (id: string) => void
+  removeSearchSelectedId: (id: string) => void
+  setSearchSelectedIds: (ids: Set<string>) => void
   addSearchDownloadingId: (id: string) => void
   removeSearchDownloadingId: (id: string) => void
   addSearchDownloadedId: (id: string) => void
   addSearchFailedId: (id: string) => void
   removeSearchFailedId: (id: string) => void
+  setSearchSearching: (searching: boolean) => void
+  setSearchDownloadingAll: (downloadingAll: boolean) => void
+  setSearchMessageToShow: (
+    message: { type: "success" | "error" | "warning"; text: string } | null,
+  ) => void
+  setSearchCoverUrls: (urls: Record<string, string>) => void
+  setSearchPlaylistCoverUrl: (url: string | null) => void
   clearSearchRuntimeData: () => void
 }
 
@@ -104,9 +126,16 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   // Search page runtime state
   searchText: "",
+  searchPlaylist: null,
+  searchSelectedIds: new Set(),
   searchDownloadingIds: new Set(),
   searchDownloadedIds: new Set(),
   searchFailedIds: new Set(),
+  searchSearching: false,
+  searchDownloadingAll: false,
+  searchMessageToShow: null,
+  searchCoverUrls: {},
+  searchPlaylistCoverUrl: null,
 
   // Load config from backend
   loadConfig: async () => {
@@ -520,6 +549,28 @@ export const useAppStore = create<AppState>((set, get) => ({
     set({ searchText: text })
   },
 
+  setSearchPlaylist: (playlist: Playlist | null) => {
+    set({ searchPlaylist: playlist })
+  },
+
+  addSearchSelectedId: (id: string) => {
+    set((state) => ({
+      searchSelectedIds: new Set(state.searchSelectedIds).add(id),
+    }))
+  },
+
+  removeSearchSelectedId: (id: string) => {
+    set((state) => {
+      const newSet = new Set(state.searchSelectedIds)
+      newSet.delete(id)
+      return { searchSelectedIds: newSet }
+    })
+  },
+
+  setSearchSelectedIds: (ids: Set<string>) => {
+    set({ searchSelectedIds: ids })
+  },
+
   addSearchDownloadingId: (id: string) => {
     set((state) => ({
       searchDownloadingIds: new Set(state.searchDownloadingIds).add(id),
@@ -554,12 +605,41 @@ export const useAppStore = create<AppState>((set, get) => ({
     })
   },
 
+  setSearchSearching: (searching: boolean) => {
+    set({ searchSearching: searching })
+  },
+
+  setSearchDownloadingAll: (downloadingAll: boolean) => {
+    set({ searchDownloadingAll: downloadingAll })
+  },
+
+  setSearchMessageToShow: (
+    message: { type: "success" | "error" | "warning"; text: string } | null,
+  ) => {
+    set({ searchMessageToShow: message })
+  },
+
+  setSearchCoverUrls: (urls: Record<string, string>) => {
+    set({ searchCoverUrls: urls })
+  },
+
+  setSearchPlaylistCoverUrl: (url: string | null) => {
+    set({ searchPlaylistCoverUrl: url })
+  },
+
   clearSearchRuntimeData: () => {
     set({
       searchText: "",
+      searchPlaylist: null,
+      searchSelectedIds: new Set(),
       searchDownloadingIds: new Set(),
       searchDownloadedIds: new Set(),
       searchFailedIds: new Set(),
+      searchSearching: false,
+      searchDownloadingAll: false,
+      searchMessageToShow: null,
+      searchCoverUrls: {},
+      searchPlaylistCoverUrl: null,
     })
   },
 }))
@@ -577,9 +657,43 @@ export const useThemeMode = () =>
 
 // Search page runtime hooks
 export const useSearchText = () => useAppStore((state) => state.searchText)
+export const useSearchPlaylist = () =>
+  useAppStore((state) => state.searchPlaylist)
+export const useSearchSelectedIds = () =>
+  useAppStore((state) => state.searchSelectedIds)
 export const useSearchDownloadingIds = () =>
   useAppStore((state) => state.searchDownloadingIds)
 export const useSearchDownloadedIds = () =>
   useAppStore((state) => state.searchDownloadedIds)
 export const useSearchFailedIds = () =>
   useAppStore((state) => state.searchFailedIds)
+export const useSearchSearching = () =>
+  useAppStore((state) => state.searchSearching)
+export const useSearchDownloadingAll = () =>
+  useAppStore((state) => state.searchDownloadingAll)
+export const useSearchMessageToShow = () =>
+  useAppStore((state) => state.searchMessageToShow)
+export const useSearchCoverUrls = () =>
+  useAppStore((state) => state.searchCoverUrls)
+export const useSearchPlaylistCoverUrl = () =>
+  useAppStore((state) => state.searchPlaylistCoverUrl)
+
+// Search page runtime actions
+export const {
+  setSearchText,
+  setSearchPlaylist,
+  addSearchSelectedId,
+  removeSearchSelectedId,
+  setSearchSelectedIds,
+  addSearchDownloadingId,
+  removeSearchDownloadingId,
+  addSearchDownloadedId,
+  addSearchFailedId,
+  removeSearchFailedId,
+  setSearchSearching,
+  setSearchDownloadingAll,
+  setSearchMessageToShow,
+  setSearchCoverUrls,
+  setSearchPlaylistCoverUrl,
+  clearSearchRuntimeData,
+} = useAppStore.getState()

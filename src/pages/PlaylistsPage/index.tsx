@@ -6,7 +6,7 @@ import { LocalPlaylist, LocalAudio, FAVORITE_PLAYLIST_ID } from "../../api"
 import { PlaylistCard, AudioCard } from "../../components"
 import { useNavigation } from "../../App"
 
-// Playlists page - shows all downloaded playlists
+// Playlists page - displays all downloaded playlists
 // Clicking a playlist shows its detail with playable audios
 // Supports swipe right gesture to go back from detail view
 export const PlaylistsPage: FC = () => {

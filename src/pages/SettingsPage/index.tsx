@@ -1,3 +1,4 @@
+// Settings page - application configuration and preferences
 import { FC, useEffect, useState } from "react"
 import { Button, App, Tooltip, Typography, Flex } from "antd"
 import {

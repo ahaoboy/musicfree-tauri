@@ -9,7 +9,7 @@ import {
   Typography,
   Avatar,
 } from "antd"
-import { FC, useEffect, useState } from "react"
+import { FC, useEffect } from "react"
 import {
   Audio,
   DEFAULT_COVER_URL,
@@ -21,10 +21,33 @@ import {
   get_web_url,
   LocalAudio,
   LocalPlaylist,
-  Playlist,
 } from "../../api"
 import {
   useAppStore,
+  useSearchText,
+  useSearchPlaylist,
+  useSearchSelectedIds,
+  useSearchDownloadingIds,
+  useSearchDownloadedIds,
+  useSearchSearching,
+  useSearchDownloadingAll,
+  useSearchMessageToShow,
+  useSearchCoverUrls,
+  useSearchPlaylistCoverUrl,
+  // Search page actions
+  setSearchText,
+  setSearchPlaylist,
+  setSearchSelectedIds,
+  addSearchDownloadingId,
+  removeSearchDownloadingId,
+  addSearchDownloadedId,
+  addSearchFailedId,
+  setSearchSearching,
+  setSearchDownloadingAll,
+  setSearchMessageToShow,
+  setSearchCoverUrls,
+  setSearchPlaylistCoverUrl,
+  clearSearchRuntimeData,
 } from "../../store"
 import "./index.less"
 
@@ -98,46 +121,44 @@ const AudioItem: FC<AudioItemProps> = ({
   )
 }
 
-// Search page - search and download audio
+// Search page - search for audio content and download tracks/playlists
 export const SearchPage: FC = () => {
   const { message } = App.useApp()
-  const [url, setUrl] = useState("")
-  const [playlist, setPlaylist] = useState<Playlist | null>(null)
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
-  const [downloadingIds, setDownloadingIds] = useState<Set<string>>(new Set())
-  const [downloadedIds, setDownloadedIds] = useState<Set<string>>(new Set())
-  const [searching, setSearching] = useState(false)
-  const [downloadingAll, setDownloadingAll] = useState(false)
-  const [messageToShow, setMessageToShow] = useState<{
-    type: "success" | "error" | "warning"
-    text: string
-  } | null>(null)
 
-  // Cover URL cache: audio id -> web accessible URL
-  const [coverUrls, setCoverUrls] = useState<Record<string, string>>({})
-  const [playlistCoverUrl, setPlaylistCoverUrl] = useState<string | null>(null)
+  // Use global store for search page state persistence
+  const url = useSearchText()
+  const playlist = useSearchPlaylist()
+  const selectedIds = useSearchSelectedIds()
+  const downloadingIds = useSearchDownloadingIds()
+  const downloadedIds = useSearchDownloadedIds()
+  const searching = useSearchSearching()
+  const downloadingAll = useSearchDownloadingAll()
+  const messageToShow = useSearchMessageToShow()
+  const coverUrls = useSearchCoverUrls()
+  const playlistCoverUrl = useSearchPlaylistCoverUrl()
 
   const {
-    config: { audios, playlists },
+    config: { playlists },
     addAudiosToConfig,
     addPlaylistToConfig,
     loadConfig,
   } = useAppStore()
-
-  // Mark already downloaded audios
-  useEffect(() => {
-    const downloaded = new Set(audios.map((a) => a.audio.id))
-    setDownloadedIds(downloaded)
-  }, [audios])
 
   // Handle messages in effect to avoid React 18 concurrent mode issues
   useEffect(() => {
     if (messageToShow) {
       const { type, text } = messageToShow
       message[type](text)
-      setMessageToShow(null)
+      setSearchMessageToShow(null)
     }
   }, [messageToShow, message])
+
+  // Clear search results when search text is empty
+  useEffect(() => {
+    if (!url.trim()) {
+      clearSearchRuntimeData()
+    }
+  }, [url])
 
   // Download and cache cover image
   const downloadAndCacheCover = async (
@@ -157,7 +178,7 @@ export const SearchPage: FC = () => {
 
       // Cache the URL if audioId provided
       if (audioId) {
-        setCoverUrls((prev) => ({ ...prev, [audioId]: webUrl }))
+        setSearchCoverUrls({ ...coverUrls, [audioId]: webUrl })
       }
 
       return webUrl
@@ -170,20 +191,26 @@ export const SearchPage: FC = () => {
   // Handle search
   const handleSearch = async () => {
     if (!url.trim()) {
-      setMessageToShow({ type: "warning", text: "Please enter a URL" })
+      setSearchMessageToShow({ type: "warning", text: "Please enter a URL" })
       return
     }
 
-    setSearching(true)
-    setPlaylist(null)
-    setSelectedIds(new Set())
-    setCoverUrls({})
-    setPlaylistCoverUrl(null)
+    setSearchSearching(true)
+    setSearchPlaylist(null)
+    setSearchSelectedIds(new Set())
+    setSearchCoverUrls({})
+    setSearchPlaylistCoverUrl(null)
 
     try {
       const result = await extract_audios(url)
-      setPlaylist(result)
-      setMessageToShow({
+
+      // Ensure search wasn't cleared while waiting
+      if (!useAppStore.getState().searchText.trim()) {
+        return
+      }
+
+      setSearchPlaylist(result)
+      setSearchMessageToShow({
         type: "success",
         text: `Found ${result.audios.length} tracks`,
       })
@@ -210,20 +237,20 @@ export const SearchPage: FC = () => {
           updatedDownloadedIds.add(audio.id)
         }
       }
-      setCoverUrls((prev) => ({ ...prev, ...coverCache }))
+      setSearchCoverUrls({ ...coverUrls, ...coverCache })
       // Add existing audios to config ONLY if it's a single track
       if (existingLocalAudios.length > 0 && result.audios.length === 1) {
         await addAudiosToConfig(existingLocalAudios)
       }
 
-      // Update downloaded ids
-      setDownloadedIds(updatedDownloadedIds)
+      // Update downloaded ids - this is now handled by the store automatically
+      // The downloadedIds state is derived from the searchDownloadedIds Set
 
       // Download playlist cover
       if (result.cover) {
         downloadAndCacheCover(result.cover, result.platform).then((webUrl) => {
           if (webUrl) {
-            setPlaylistCoverUrl(webUrl)
+            setSearchPlaylistCoverUrl(webUrl)
           }
         })
       }
@@ -236,12 +263,12 @@ export const SearchPage: FC = () => {
       })
     } catch (error) {
       console.error("Search failed:", error)
-      setMessageToShow({
+      setSearchMessageToShow({
         type: "error",
         text: "Search failed. Please check the URL.",
       })
     } finally {
-      setSearching(false)
+      setSearchSearching(false)
     }
   }
 
@@ -253,7 +280,7 @@ export const SearchPage: FC = () => {
     } else {
       newSelected.delete(audioId)
     }
-    setSelectedIds(newSelected)
+    setSearchSelectedIds(newSelected)
   }
 
   // Handle select all
@@ -266,9 +293,9 @@ export const SearchPage: FC = () => {
           .filter((a) => !downloadedIds.has(a.id))
           .map((a) => a.id),
       )
-      setSelectedIds(allIds)
+      setSearchSelectedIds(allIds)
     } else {
-      setSelectedIds(new Set())
+      setSearchSelectedIds(new Set())
     }
   }
 
@@ -276,49 +303,42 @@ export const SearchPage: FC = () => {
   const handleDownloadSingle = async (audio: Audio) => {
     if (downloadingIds.has(audio.id) || downloadedIds.has(audio.id)) return
 
-    setDownloadingIds((prev) => new Set(prev).add(audio.id))
+    addSearchDownloadingId(audio.id)
 
     try {
       const localAudios = await download_audio(audio)
 
       if (localAudios.length > 0) {
         await addAudiosToConfig(localAudios)
-        setDownloadedIds((prev) => {
-          const newSet = new Set(prev)
-          localAudios.forEach((a) => newSet.add(a.audio.id))
-          return newSet
-        })
-        setMessageToShow({
+        localAudios.forEach((a) => addSearchDownloadedId(a.audio.id))
+        setSearchMessageToShow({
           type: "success",
           text: `Downloaded: ${audio.title}`,
         })
       }
     } catch (error) {
       console.error("Download failed:", error)
-      setMessageToShow({
+      addSearchFailedId(audio.id)
+      setSearchMessageToShow({
         type: "error",
         text: `Failed to download: ${audio.title}`,
       })
     } finally {
-      setDownloadingIds((prev) => {
-        const newSet = new Set(prev)
-        newSet.delete(audio.id)
-        return newSet
-      })
+      removeSearchDownloadingId(audio.id)
     }
   }
 
   // Handle download all selected
   const handleDownloadAll = async () => {
     if (!playlist || selectedIds.size === 0) {
-      setMessageToShow({
+      setSearchMessageToShow({
         type: "warning",
         text: "Please select audio to download",
       })
       return
     }
 
-    setDownloadingAll(true)
+    setSearchDownloadingAll(true)
 
     const selectedAudios = playlist.audios.filter((a) => selectedIds.has(a.id))
     let successCount = 0
@@ -327,27 +347,20 @@ export const SearchPage: FC = () => {
     for (const audio of selectedAudios) {
       if (downloadedIds.has(audio.id)) continue
 
-      setDownloadingIds((prev) => new Set(prev).add(audio.id))
+      addSearchDownloadingId(audio.id)
 
       try {
         const localAudios = await download_audio(audio)
         if (localAudios.length > 0) {
           downloadedLocalAudios.push(...localAudios)
-          setDownloadedIds((prev) => {
-            const newSet = new Set(prev)
-            localAudios.forEach((a) => newSet.add(a.audio.id))
-            return newSet
-          })
+          localAudios.forEach((a) => addSearchDownloadedId(a.audio.id))
           successCount++
         }
       } catch (error) {
         console.error(`Download failed for ${audio.title}:`, error)
+        addSearchFailedId(audio.id)
       } finally {
-        setDownloadingIds((prev) => {
-          const newSet = new Set(prev)
-          newSet.delete(audio.id)
-          return newSet
-        })
+        removeSearchDownloadingId(audio.id)
       }
     }
 
@@ -418,7 +431,7 @@ export const SearchPage: FC = () => {
       }
 
       await addPlaylistToConfig(localPlaylist)
-      setMessageToShow({
+      setSearchMessageToShow({
         type: "success",
         text: `${existingPlaylist ? "Updated" : "Created"} playlist: ${playlistId}`,
       })
@@ -436,12 +449,12 @@ export const SearchPage: FC = () => {
     // Reload config to refresh UI
     await loadConfig()
 
-    setSelectedIds(new Set())
-    setMessageToShow({
+    setSearchSelectedIds(new Set())
+    setSearchMessageToShow({
       type: "success",
       text: `Downloaded ${successCount}/${selectedAudios.length} tracks`,
     })
-    setDownloadingAll(false)
+    setSearchDownloadingAll(false)
   }
 
   const allSelected =
@@ -461,14 +474,7 @@ export const SearchPage: FC = () => {
           allowClear
           value={url}
           onChange={(e) => {
-            const val = e.target.value
-            setUrl(val)
-            if (!val) {
-              setPlaylist(null)
-              setSelectedIds(new Set())
-              setCoverUrls({})
-              setPlaylistCoverUrl(null)
-            }
+            setSearchText(e.target.value)
           }}
           onSearch={handleSearch}
           loading={searching}

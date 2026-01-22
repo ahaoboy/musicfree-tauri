@@ -4,6 +4,7 @@ import { DeleteOutlined, ExclamationCircleOutlined } from "@ant-design/icons"
 import { useAppStore } from "../../store"
 import { AudioCard } from "../../components"
 
+// Music page - displays all downloaded individual audio files
 export const MusicPage: FC = () => {
   const {
     config: { audios },

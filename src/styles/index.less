@@ -460,9 +460,34 @@ body {
   }
 }
 
-// Playlist grid (now list)
+// Playlist grid (now scrollable list)
 .playlist-grid {
   display: block; // Use block layout like audio-list
+  // Enable scrolling for long playlist lists
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch; // Smooth scrolling on iOS
+
+  // Custom scrollbar styling for playlist lists
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+    border-radius: @radius-full;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: @radius-full;
+    transition: background @transition-fast @ease-out;
+
+    &:hover {
+      background: var(--text-secondary);
+    }
+  }
+
   // display: grid;
   // grid-template-columns: 1fr;
   // gap: @spacing-md;
@@ -611,8 +636,33 @@ body {
   }
 }
 
-// Audio list
+// Audio list - scrollable when content exceeds viewport height
 .audio-list {
+  // Enable scrolling for long lists
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch; // Smooth scrolling on iOS
+
+  // Custom scrollbar styling for audio lists
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+    border-radius: @radius-full;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: @radius-full;
+    transition: background @transition-fast @ease-out;
+
+    &:hover {
+      background: var(--text-secondary);
+    }
+  }
+
   .list-header {
     display: flex;
     align-items: center;

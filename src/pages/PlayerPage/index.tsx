@@ -28,6 +28,7 @@ const formatTime = (seconds: number) => {
   return `${mins}:${secs.toString().padStart(2, "0")}`
 }
 
+// Player page - full-screen audio player with controls and cover display
 const PlayerPage: FC = () => {
   const navigate = useNavigate()
   const {
