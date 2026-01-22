@@ -10,6 +10,17 @@ A modern music player application built with Rust, Tauri, and React.
 
 This is a desktop music player application that provides a seamless music listening experience.
 
+## Installation
+
+### Download Pre-built Binaries
+
+Download the installer for your platform from the [Releases](https://github.com/ahaoboy/musicfree-tauri/releases) page.
+
+### CLI
+
+If you prefer a pure CLI without GUI, check out: [musicfree](https://github.com/ahaoboy/musicfree)
+
+
 ## Development Notice
 
 ⚠️ **This project is still in development. Breaking changes may occur at any time.**
