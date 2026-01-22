@@ -255,28 +255,28 @@ export const PlayerPage: FC = () => {
             type="text"
             icon={modeIcon}
             onClick={togglePlayMode}
-            className="action-btn secondary"
+            className="player-control-btn"
           />
 
           <Button
             type="text"
             icon={<StepBackwardOutlined />}
             onClick={() => playPrev()}
-            className="action-btn secondary"
+            className="player-control-btn"
           />
 
           <Button
             type="text"
             icon={isPlaying ? <PauseCircleFilled /> : <PlayCircleFilled />}
             onClick={togglePlay}
-            className="play-btn large"
+            className="player-control-btn play"
           />
 
           <Button
             type="text"
             icon={<StepForwardOutlined />}
             onClick={() => playNext()}
-            className="action-btn secondary"
+            className="player-control-btn"
           />
 
           <Button
@@ -289,7 +289,7 @@ export const PlayerPage: FC = () => {
               )
             }
             onClick={handleFavorite}
-            className="action-btn secondary"
+            className="player-control-btn"
           />
         </Flex>
       </Flex>

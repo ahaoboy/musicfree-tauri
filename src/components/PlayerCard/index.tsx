@@ -107,13 +107,13 @@ export const PlayerCard: FC<PlayerCardProps> = memo(({ audio }) => {
             )
           }
           onClick={handleFavoriteClick}
+          className="mini-player-btn"
         />
         <Button
-          type="primary"
-          shape="circle"
+          type="text"
           icon={isPlaying ? <PauseCircleFilled /> : <PlayCircleFilled />}
           onClick={handlePlayClick}
-          size="large"
+          className="mini-player-btn play"
         />
       </Flex>
     </Flex>

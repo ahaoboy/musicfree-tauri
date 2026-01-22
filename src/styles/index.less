@@ -1,15 +1,7 @@
 // Main styles - Mobile-first design with modern aesthetics
-// Optimized: Removed redundant styles, using Antd defaults where possible
+// Optimized: Using centralized variables and mixins
 
-// Variables
-@primary-color: #6366f1;
-@transition-fast: 150ms;
-@transition-normal: 200ms;
-@ease-out: cubic-bezier(0.25, 0.46, 0.45, 0.94);
-
-// Mobile dimensions
-@player-bar-height: 72px;
-@safe-area-bottom: env(safe-area-inset-bottom, 0px);
+@import './variables.less';
 
 // Base reset
 * {
@@ -95,7 +87,8 @@ body {
 // Main content area
 .main-content {
   -webkit-overflow-scrolling: touch;
-  padding-bottom: calc(@player-bar-height + @safe-area-bottom);
+  .safe-area-padding(padding-bottom, @player-bar-height);
+  .custom-scrollbar(4px);
 }
 
 // Page container
@@ -108,18 +101,21 @@ body {
 .audio-card {
   padding: 12px;
   background: var(--bg-card);
-  border-radius: 12px;
+  border-radius: @radius-sm;
   border: 1px solid var(--border-color);
   cursor: pointer;
-  transition: all @transition-fast @ease-out;
+  .card-hover-effect(-2px);
 
-  &:hover {
-    border-color: @primary-color;
-    transform: translateY(-2px);
+  .card-avatar {
+    transition: transform @transition-normal @ease-out;
+    will-change: transform;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    transform: translateZ(0);
   }
 
-  &:active {
-    transform: scale(0.98);
+  &:hover .card-avatar {
+    transform: translateZ(0) scale(1.05);
   }
 }
 
@@ -127,7 +123,7 @@ body {
 .audio-card-selectable {
   padding: 12px;
   background: var(--bg-card);
-  border-radius: 12px;
+  border-radius: @radius-sm;
   border: 1px solid var(--border-color);
   transition: all @transition-fast @ease-out;
 
@@ -139,19 +135,22 @@ body {
 // Playlist card
 .playlist-card {
   background: var(--bg-card);
-  border-radius: 12px;
+  border-radius: @radius-sm;
   border: 1px solid var(--border-color);
   cursor: pointer;
   padding: 12px;
-  transition: all @transition-fast @ease-out;
+  .card-hover-effect(-3px);
 
-  &:hover {
-    border-color: @primary-color;
-    transform: translateX(4px);
+  .card-avatar {
+    transition: transform @transition-normal @ease-out;
+    will-change: transform;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    transform: translateZ(0);
   }
 
-  &:active {
-    transform: scale(0.99);
+  &:hover .card-avatar {
+    transform: translateZ(0) scale(1.05);
   }
 }
 
@@ -160,24 +159,7 @@ body {
   overflow-y: auto;
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
-
-  &::-webkit-scrollbar {
-    width: 6px;
-  }
-
-  &::-webkit-scrollbar-track {
-    background: transparent;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background: var(--border-color);
-    border-radius: 9999px;
-    transition: background @transition-fast @ease-out;
-
-    &:hover {
-      background: var(--text-secondary);
-    }
-  }
+  .custom-scrollbar(6px);
 }
 
 // Mini player bar
@@ -191,8 +173,36 @@ body {
   border-top: 1px solid var(--border-color);
   padding: 12px 16px;
   z-index: 1000;
-  padding-bottom: calc(12px + @safe-area-bottom);
+  .safe-area-padding(padding-bottom, 12px);
   box-shadow: 0 -2px 12px var(--shadow-color);
+
+  // Mini player buttons
+  .mini-player-btn {
+    .control-btn-base(@btn-size-sm, 20px, @radius-sm);
+    transform: none; // Override default hover transform
+
+    &:hover {
+      transform: translateY(-2px) scale(1.05);
+      box-shadow: 0 4px 12px @primary-alpha-20;
+    }
+
+    &.play {
+      font-size: 32px;
+      width: @btn-size-md;
+      height: @btn-size-md;
+      min-width: @btn-size-md;
+
+      .anticon {
+        font-size: 32px;
+      }
+    }
+
+    [data-prefers-color-scheme='dark'] & {
+      &:hover {
+        box-shadow: 0 4px 16px @primary-alpha-30;
+      }
+    }
+  }
 }
 
 // Audio list
@@ -200,24 +210,7 @@ body {
   overflow-y: auto;
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
-
-  &::-webkit-scrollbar {
-    width: 6px;
-  }
-
-  &::-webkit-scrollbar-track {
-    background: transparent;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background: var(--border-color);
-    border-radius: 9999px;
-    transition: background @transition-fast @ease-out;
-
-    &:hover {
-      background: var(--text-secondary);
-    }
-  }
+  .custom-scrollbar(6px);
 }
 
 // Settings page
@@ -231,26 +224,12 @@ body {
   }
 }
 
-// Scrollbar styling
-.main-content::-webkit-scrollbar {
-  width: 4px;
-}
-
-.main-content::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.main-content::-webkit-scrollbar-thumb {
-  background: var(--border-color);
-  border-radius: 9999px;
-}
-
 // Message notification styling
 .ant-message {
   z-index: 2000;
 
   .ant-message-notice-content {
-    border-radius: 12px;
+    border-radius: @radius-sm;
     box-shadow: 0 4px 12px var(--shadow-color);
     backdrop-filter: blur(8px);
   }

@@ -470,9 +470,10 @@ export const useAppStore = create<AppState>((set, get) => ({
     if (!favPlaylist) {
       favPlaylist = {
         id: FAVORITE_PLAYLIST_ID,
+        title: FAVORITE_PLAYLIST_ID,
         cover_path: null,
         audios: [],
-        platform: "File",
+        platform: "FAVORITE_PLAYLIST_ID",
       }
       playlists.unshift(favPlaylist)
     }
@@ -495,6 +496,12 @@ export const useAppStore = create<AppState>((set, get) => ({
     playlists = playlists.map((p) =>
       p.id === FAVORITE_PLAYLIST_ID ? updatedFavPlaylist : p,
     )
+    if (
+      playlists[0]?.id === FAVORITE_PLAYLIST_ID &&
+      playlists[0].audios.length === 0
+    ) {
+      playlists.shift()
+    }
 
     const updatedConfig: Config = {
       ...config,

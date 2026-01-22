@@ -451,6 +451,7 @@ export const SearchPage: FC = () => {
 
       const localPlaylist: LocalPlaylist = {
         id: playlistId,
+        title: playlist.title,
         cover_path: coverPath,
         cover: playlist.cover,
         audios: finalLocalAudios,

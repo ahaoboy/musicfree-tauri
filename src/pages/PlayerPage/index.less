@@ -1,9 +1,12 @@
+// Player Page Styles - Using centralized variables and mixins
+@import '../../styles/variables.less';
+
 .player-page {
   background: var(--bg-primary);
   z-index: 2000;
   overflow: hidden;
   padding-top: env(safe-area-inset-top);
-  transition: background 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  transition: background @transition-normal @ease-out;
 
   &.empty {
     background: var(--bg-primary);
@@ -26,7 +29,7 @@
   filter: blur(24px) brightness(0.4);
   z-index: -1;
   opacity: 0.6;
-  transition: opacity 300ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  transition: opacity @transition-slower @ease-out;
 
   [data-prefers-color-scheme='dark'] & {
     filter: blur(24px) brightness(0.3);
@@ -36,16 +39,13 @@
 
 .player-header {
   padding: 16px 20px;
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(16px) saturate(180%);
-  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  .glass-effect(16px, rgba(255, 255, 255, 0.1), rgba(0, 0, 0, 0.2));
   z-index: 10;
   color: var(--text-primary);
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  transition: all 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  transition: all @transition-normal @ease-out;
 
   [data-prefers-color-scheme='dark'] & {
-    background: rgba(0, 0, 0, 0.2);
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     color: var(--text-primary-dark);
   }
@@ -62,7 +62,7 @@
 }
 
 .icon-btn {
-  background: rgba(255, 255, 255, 0.1);
+  .glass-effect(8px, rgba(255, 255, 255, 0.1), rgba(0, 0, 0, 0.2));
   border: none;
   font-size: 20px;
   color: inherit;
@@ -71,13 +71,11 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 12px;
-  transition: all 150ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  width: 44px;
-  height: 44px;
-  min-width: 44px;
+  border-radius: @radius-sm;
+  transition: all @transition-fast @ease-out;
+  width: @btn-size-sm;
+  height: @btn-size-sm;
+  min-width: @btn-size-sm;
 
   &:hover {
     background: rgba(255, 255, 255, 0.15);
@@ -115,11 +113,10 @@
 .large-cover {
   flex-shrink: 0;
   margin-bottom: 40px;
-  transition: transform 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  transition: transform @transition-normal @ease-out;
 
   &.ant-avatar {
-
-    border-radius: 24px;
+    border-radius: @radius-lg;
     box-shadow: 0 16px 48px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.2);
     position: relative;
 
@@ -132,7 +129,7 @@
       bottom: 0;
       background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0) 50%);
       pointer-events: none;
-      border-radius: 24px;
+      border-radius: @radius-lg;
     }
 
     .ant-avatar-string {
@@ -155,11 +152,7 @@
   .ant-typography {
     color: inherit;
     margin-bottom: 8px;
-    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-
-    [data-prefers-color-scheme='dark'] & {
-      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
-    }
+    .text-shadow-light();
   }
 
   h3.ant-typography {
@@ -171,27 +164,20 @@
   .ant-typography-secondary {
     font-size: 16px;
     font-weight: 500;
-    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
-
-    [data-prefers-color-scheme='dark'] & {
-      text-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
-    }
+    .text-shadow-light();
   }
 }
 
 .player-controls-container {
   padding: 32px 24px;
-  background: rgba(255, 255, 255, 0.05); // Fully transparent glass
-  border-radius: 32px 32px 0 0;
+  .glass-effect(24px, rgba(255, 255, 255, 0.05), rgba(0, 0, 0, 0.2));
+  border-radius: @radius-xl @radius-xl 0 0;
   z-index: 10;
   box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.2);
-  backdrop-filter: blur(24px) saturate(180%);
-  -webkit-backdrop-filter: blur(24px) saturate(180%);
   border-top: 1px solid rgba(255, 255, 255, 0.1);
-  transition: all 300ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  transition: all @transition-slower @ease-out;
 
   [data-prefers-color-scheme='dark'] & {
-    background: rgba(0, 0, 0, 0.2);
     box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.4);
     border-top: 1px solid rgba(255, 255, 255, 0.05);
   }
@@ -220,14 +206,14 @@
   }
 
   .ant-slider-track {
-    background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 100%);
+    background: linear-gradient(90deg, @primary-color 0%, #8b5cf6 100%);
     height: 6px;
     border-radius: 3px;
   }
 
   .ant-slider-handle {
     &::after {
-      box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+      box-shadow: 0 2px 8px @primary-alpha-30;
       width: 16px;
       height: 16px;
       inset-block-start: 50%;
@@ -236,12 +222,12 @@
     }
 
     &:hover::after {
-      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+      box-shadow: 0 4px 12px @primary-alpha-40;
       transform: translateY(-50%) scale(1.1);
     }
 
     &:focus::after {
-      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.5);
+      box-shadow: 0 4px 12px @primary-alpha-50;
     }
   }
 
@@ -262,74 +248,32 @@
   padding: 0 16px;
 }
 
-.action-btn {
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  cursor: pointer;
-  font-size: 24px;
-  color: #ffffff; // Force white for better contrast on dark blur
-  width: 52px;
-  height: 52px;
-  min-width: 52px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 18px;
-  transition: all 250ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  padding: 0;
+.player-control-btn {
+  .control-btn-base(@btn-size-lg, 24px, @radius-md);
 
-  &:hover {
-    background: rgba(255, 255, 255, 0.2);
-    transform: translateY(-4px) scale(1.05);
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
-    color: #ffffff;
-  }
-
-  &:active {
-    background: rgba(255, 255, 255, 0.15);
-    transform: translateY(0) scale(0.95);
-  }
-
-  &.secondary {
-    font-size: 22px;
+  &.play {
+    font-size: 64px;
+    width: @btn-size-xl;
+    height: @btn-size-xl;
+    min-width: @btn-size-xl;
+    border-radius: @radius-lg;
+    margin: 0 8px;
 
     .anticon {
-      font-size: 22px;
+      font-size: 64px;
     }
-  }
 
-  .anticon {
-    font-size: 24px;
+    &:hover {
+      transform: translateY(-6px) scale(1.08);
+      box-shadow: 0 12px 32px @primary-alpha-40;
+    }
   }
 
   [data-prefers-color-scheme='dark'] & {
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-
-    &:hover {
-      background: rgba(255, 255, 255, 0.15);
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    &.play:hover {
+      box-shadow: 0 12px 36px @primary-alpha-50;
     }
   }
-}
-
-.speed-text {
-  font-size: 14px;
-  font-weight: 600;
-}
-
-.play-btn.large {
-  font-size: 72px;
-  color: #ffffff; // White icon on vibrant background
-  border: none;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  margin: 0 24px;
 }
 
 // Responsive design for smaller screens
@@ -363,34 +307,28 @@
     padding: 0 8px;
   }
 
-  .action-btn {
-    width: 48px;
-    height: 48px;
-    min-width: 48px;
+  .player-control-btn {
+    width: @btn-size-md;
+    height: @btn-size-md;
+    min-width: @btn-size-md;
     font-size: 20px;
+    border-radius: 14px;
 
     .anticon {
       font-size: 20px;
     }
 
-    &.secondary {
-      font-size: 18px;
+    &.play {
+      width: 72px;
+      height: 72px;
+      min-width: 72px;
+      font-size: 56px;
+      border-radius: 20px;
+      margin: 0 4px;
 
       .anticon {
-        font-size: 18px;
+        font-size: 56px;
       }
-    }
-  }
-
-  .play-btn.large {
-    width: 72px;
-    height: 72px;
-    min-width: 72px;
-    font-size: 64px;
-    margin: 0 16px;
-
-    .anticon {
-      font-size: 64px;
     }
   }
 }
@@ -437,8 +375,8 @@
     }
   }
 
-  .action-btn,
+  .player-control-btn,
   .icon-btn {
-    border: 1px solid var(--border-color);
+    border: 2px solid var(--border-color);
   }
 }

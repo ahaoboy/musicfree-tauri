@@ -1,28 +1,12 @@
-// Search page styles - Optimized and simplified
+// Search page styles - Using centralized variables and mixins
+@import '../../styles/variables.less';
 
 .search-page {
   .audio-list {
     overflow-y: auto;
     overflow-x: hidden;
     -webkit-overflow-scrolling: touch;
-
-    &::-webkit-scrollbar {
-      width: 6px;
-    }
-
-    &::-webkit-scrollbar-track {
-      background: transparent;
-    }
-
-    &::-webkit-scrollbar-thumb {
-      background: var(--border-color);
-      border-radius: 9999px;
-      transition: background 150ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
-
-      &:hover {
-        background: var(--text-secondary);
-      }
-    }
+    .custom-scrollbar(6px);
   }
 
   .search-bottom-bar {
@@ -35,6 +19,6 @@
     border-top: 1px solid var(--border-color);
     box-shadow: 0 -2px 12px var(--shadow-color);
     z-index: 100;
-    padding-bottom: calc(16px + env(safe-area-inset-bottom));
+    .safe-area-padding(padding-bottom, 16px);
   }
 }

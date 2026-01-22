@@ -1,0 +1,173 @@
+// ============================================
+// LESS Variables & Mixins
+// Centralized style definitions for the app
+// ============================================
+
+// ============================================
+// Colors
+// ============================================
+@primary-color: #6366f1;
+@primary-color-light: #8b8ff6;
+@primary-color-lighter: #9fa3f7;
+@error-color: #ff4d4f;
+
+// Primary color with opacity
+@primary-alpha-10: rgba(99, 102, 241, 0.1);
+@primary-alpha-15: rgba(99, 102, 241, 0.15);
+@primary-alpha-20: rgba(99, 102, 241, 0.2);
+@primary-alpha-25: rgba(99, 102, 241, 0.25);
+@primary-alpha-30: rgba(99, 102, 241, 0.3);
+@primary-alpha-40: rgba(99, 102, 241, 0.4);
+@primary-alpha-50: rgba(99, 102, 241, 0.5);
+
+// ============================================
+// Timing & Easing
+// ============================================
+@transition-fast: 150ms;
+@transition-normal: 200ms;
+@transition-slow: 250ms;
+@transition-slower: 300ms;
+@ease-out: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+
+// ============================================
+// Dimensions
+// ============================================
+@player-bar-height: 72px;
+@safe-area-bottom: env(safe-area-inset-bottom, 0px);
+
+// Border radius
+@radius-sm: 12px;
+@radius-md: 16px;
+@radius-lg: 24px;
+@radius-xl: 32px;
+@radius-full: 9999px;
+
+// Button sizes
+@btn-size-sm: 44px;
+@btn-size-md: 48px;
+@btn-size-lg: 52px;
+@btn-size-xl: 80px;
+
+// ============================================
+// Mixins
+// ============================================
+
+// Glass-morphism effect
+.glass-effect(@blur: 8px, @bg-light: rgba(255, 255, 255, 0.1), @bg-dark: rgba(0, 0, 0, 0.2)) {
+  backdrop-filter: blur(@blur) saturate(180%);
+  -webkit-backdrop-filter: blur(@blur) saturate(180%);
+  background: @bg-light;
+
+  [data-prefers-color-scheme='dark'] & {
+    background: @bg-dark;
+  }
+}
+
+// Scrollbar styling
+.custom-scrollbar(@width: 6px) {
+  &::-webkit-scrollbar {
+    width: @width;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: @radius-full;
+    transition: background @transition-fast @ease-out;
+
+    &:hover {
+      background: var(--text-secondary);
+    }
+  }
+}
+
+// Control button base style
+.control-btn-base(@size, @font-size, @radius) {
+  background: @primary-alpha-10;
+  border: 1px solid @primary-alpha-20;
+  cursor: pointer;
+  font-size: @font-size;
+  color: @primary-color;
+  width: @size;
+  height: @size;
+  min-width: @size;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: @radius;
+  transition: all @transition-slow @ease-out;
+  .glass-effect(12px, @primary-alpha-10, @primary-alpha-15);
+  padding: 0;
+
+  &:hover {
+    background: @primary-alpha-20;
+    transform: translateY(-4px) scale(1.05);
+    box-shadow: 0 8px 20px @primary-alpha-30;
+    color: @primary-color;
+    border-color: @primary-alpha-30;
+  }
+
+  &:active {
+    background: @primary-alpha-25;
+    transform: translateY(0) scale(0.95);
+  }
+
+  .anticon {
+    font-size: @font-size;
+  }
+
+  [data-prefers-color-scheme='dark'] & {
+    background: @primary-alpha-15;
+    border: 1px solid @primary-alpha-25;
+    color: @primary-color-light;
+
+    &:hover {
+      background: @primary-alpha-25;
+      box-shadow: 0 8px 24px @primary-alpha-40;
+      color: @primary-color-lighter;
+    }
+  }
+}
+
+// Card hover effect
+.card-hover-effect(@lift: -2px) {
+  transition: all @transition-fast @ease-out;
+  will-change: transform, box-shadow;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+
+  &:hover {
+    border-color: @primary-color;
+    transform: translateY(@lift) scale(1.02) translateZ(0);
+    box-shadow: 0 4px 12px var(--shadow-color);
+  }
+
+  &:active {
+    transform: scale(0.98) translateZ(0);
+  }
+}
+
+// Text shadow for better readability
+.text-shadow-light() {
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+
+  [data-prefers-color-scheme='dark'] & {
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  }
+}
+
+// Safe area padding
+.safe-area-padding(@property, @base-value) {
+  @{property}: @base-value;
+  @{property}: calc(@base-value + @safe-area-bottom);
+}
+
+// Responsive breakpoint
+.mobile-small(@rules) {
+  @media (max-width: 375px) {
+    @rules();
+  }
+}

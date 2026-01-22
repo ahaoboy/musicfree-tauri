@@ -19,6 +19,7 @@ export const PlaylistCard: FC<PlaylistCardProps> = memo(
   ({ playlist, onClick, showAction = false, actionIcon, onAction }) => {
     const coverUrl = useCoverUrl(playlist.cover_path, playlist.cover)
     const audioCount = playlist.audios?.length || 0
+    const displayName = playlist.title || playlist.id
 
     const handleClick = useMemo(
       () =>
@@ -58,11 +59,12 @@ export const PlaylistCard: FC<PlaylistCardProps> = memo(
           icon={<FolderOutlined />}
           size={72}
           shape="square"
-          alt={playlist.id}
+          alt={displayName}
+          className="card-avatar"
         />
         <Flex vertical flex={1} style={{ minWidth: 0 }}>
-          <Text strong ellipsis={{ tooltip: playlist.id }}>
-            {playlist.id}
+          <Text strong ellipsis={{ tooltip: displayName }}>
+            {displayName}
           </Text>
           <Text type="secondary" style={{ fontSize: 13 }}>
             {audioCount} tracks · {playlist.platform}

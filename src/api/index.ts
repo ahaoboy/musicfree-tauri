@@ -27,6 +27,7 @@ export type Playlist = {
 
 export type LocalPlaylist = {
   id: string
+  title?: string
   cover_path: string | null
   cover?: string
   audios: LocalAudio[]

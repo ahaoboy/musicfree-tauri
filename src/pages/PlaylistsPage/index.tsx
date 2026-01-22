@@ -73,10 +73,11 @@ export const PlaylistsPage: FC = () => {
   )
 
   const handleDeletePlaylist = useCallback(
-    (playlistId: string) => {
+    (playlistId: string, playlistTitle?: string) => {
+      const displayName = playlistTitle || playlistId
       showConfirm({
         title: "Delete Playlist",
-        content: `Are you sure you want to delete "${playlistId}"?`,
+        content: `Are you sure you want to delete "${displayName}"?`,
         onOk: () => deletePlaylist(playlistId),
       })
     },
@@ -145,7 +146,7 @@ export const PlaylistsPage: FC = () => {
           onClick={() => handlePlaylistClick(playlist)}
           showAction={playlist.id !== FAVORITE_PLAYLIST_ID}
           actionIcon={<DeleteOutlined />}
-          onAction={() => handleDeletePlaylist(playlist.id)}
+          onAction={() => handleDeletePlaylist(playlist.id, playlist.title)}
         />
       ))}
     </Flex>

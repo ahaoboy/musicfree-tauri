@@ -58,6 +58,7 @@ export const AudioCard: FC<AudioCardProps> = memo(
           size={56}
           shape="square"
           alt={audio.audio.title}
+          className="card-avatar"
         />
         <Flex vertical flex={1} style={{ minWidth: 0 }}>
           <Text strong ellipsis={{ tooltip: audio.audio.title }}>
