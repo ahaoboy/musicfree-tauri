@@ -76,11 +76,15 @@
   width: @btn-size-sm;
   height: @btn-size-sm;
   min-width: @btn-size-sm;
+  -webkit-tap-highlight-color: transparent;
 
-  &:hover {
-    background: rgba(255, 255, 255, 0.15);
-    transform: scale(1.05);
-    color: inherit;
+  // Desktop hover effects
+  @media (hover: hover) and (pointer: fine) {
+    &:hover {
+      background: rgba(255, 255, 255, 0.15);
+      transform: scale(1.05);
+      color: inherit;
+    }
   }
 
   &:active {
@@ -95,8 +99,11 @@
   [data-prefers-color-scheme='dark'] & {
     background: rgba(0, 0, 0, 0.2);
 
-    &:hover {
-      background: rgba(0, 0, 0, 0.3);
+    // Desktop hover effects
+    @media (hover: hover) and (pointer: fine) {
+      &:hover {
+        background: rgba(0, 0, 0, 0.3);
+      }
     }
 
     &:active {
@@ -262,15 +269,21 @@
       font-size: 64px;
     }
 
-    &:hover {
-      transform: translateY(-6px) scale(1.08);
-      box-shadow: 0 12px 32px var(--primary-alpha-40);
+    // Desktop hover effects only
+    @media (hover: hover) and (pointer: fine) {
+      &:hover {
+        transform: translateY(-6px) scale(1.08);
+        box-shadow: 0 12px 32px var(--primary-alpha-40);
+      }
     }
   }
 
   [data-prefers-color-scheme='dark'] & {
-    &.play:hover {
-      box-shadow: 0 12px 36px var(--primary-alpha-50);
+    // Desktop hover effects only
+    @media (hover: hover) and (pointer: fine) {
+      &.play:hover {
+        box-shadow: 0 12px 36px var(--primary-alpha-50);
+      }
     }
   }
 }

@@ -103,13 +103,17 @@
   transition: all @transition-slow @ease-out;
   .glass-effect(12px, var(--primary-alpha-10), var(--primary-alpha-15));
   padding: 0;
+  -webkit-tap-highlight-color: transparent;
 
-  &:hover {
-    background: var(--primary-alpha-20);
-    transform: translateY(-4px) scale(1.05);
-    box-shadow: 0 8px 20px var(--primary-alpha-30);
-    color: var(--primary-color);
-    border-color: var(--primary-alpha-30);
+  // Desktop hover effects only
+  @media (hover: hover) and (pointer: fine) {
+    &:hover {
+      background: var(--primary-alpha-20);
+      transform: translateY(-4px) scale(1.05);
+      box-shadow: 0 8px 20px var(--primary-alpha-30);
+      color: var(--primary-color);
+      border-color: var(--primary-alpha-30);
+    }
   }
 
   &:active {
@@ -126,10 +130,13 @@
     border: 1px solid var(--primary-alpha-25);
     color: var(--primary-color-light);
 
-    &:hover {
-      background: var(--primary-alpha-25);
-      box-shadow: 0 8px 24px var(--primary-alpha-40);
-      color: var(--primary-color-lighter);
+    // Desktop hover effects only
+    @media (hover: hover) and (pointer: fine) {
+      &:hover {
+        background: var(--primary-alpha-25);
+        box-shadow: 0 8px 24px var(--primary-alpha-40);
+        color: var(--primary-color-lighter);
+      }
     }
   }
 }
@@ -140,11 +147,15 @@
   will-change: transform, box-shadow;
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
+  -webkit-tap-highlight-color: transparent;
 
-  &:hover {
-    border-color: var(--primary-color);
-    transform: translateY(@lift) scale(1.02) translateZ(0);
-    box-shadow: 0 4px 12px var(--shadow-color);
+  // Desktop hover effects only
+  @media (hover: hover) and (pointer: fine) {
+    &:hover {
+      border-color: var(--primary-color);
+      transform: translateY(@lift) scale(1.02) translateZ(0);
+      box-shadow: 0 4px 12px var(--shadow-color);
+    }
   }
 
   &:active {
