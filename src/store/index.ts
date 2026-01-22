@@ -94,6 +94,7 @@ interface AppState extends PersistentData, RuntimeData {
     message: { type: "success" | "error" | "warning"; text: string } | null,
   ) => void
   setSearchCoverUrls: (urls: Record<string, string>) => void
+  addSearchCoverUrl: (audioId: string, url: string) => void
   setSearchPlaylistCoverUrl: (url: string | null) => void
   clearSearchRuntimeData: () => void
 }
@@ -103,7 +104,8 @@ const applyTheme = (mode?: ThemeMode | null) => {
   if (typeof document !== "undefined") {
     // Default to "auto" if mode is null or undefined
     const effectiveMode = mode || "auto"
-    const actualTheme = effectiveMode === "auto" ? get_system_theme() : effectiveMode
+    const actualTheme =
+      effectiveMode === "auto" ? get_system_theme() : effectiveMode
     document.documentElement.setAttribute(
       "data-prefers-color-scheme",
       actualTheme,
@@ -625,6 +627,12 @@ export const useAppStore = create<AppState>((set, get) => ({
     set({ searchCoverUrls: urls })
   },
 
+  addSearchCoverUrl: (audioId: string, url: string) => {
+    set((state) => ({
+      searchCoverUrls: { ...state.searchCoverUrls, [audioId]: url },
+    }))
+  },
+
   setSearchPlaylistCoverUrl: (url: string | null) => {
     set({ searchPlaylistCoverUrl: url })
   },
@@ -696,6 +704,7 @@ export const {
   setSearchDownloadingAll,
   setSearchMessageToShow,
   setSearchCoverUrls,
+  addSearchCoverUrl,
   setSearchPlaylistCoverUrl,
   clearSearchRuntimeData,
 } = useAppStore.getState()

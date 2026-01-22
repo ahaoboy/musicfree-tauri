@@ -31,7 +31,13 @@ import {
   SearchOutlined,
   SettingOutlined,
 } from "@ant-design/icons"
-import { ConfigProvider, theme as antdTheme, App as AntApp, Tabs, Flex } from "antd"
+import {
+  ConfigProvider,
+  theme as antdTheme,
+  App as AntApp,
+  Tabs,
+  Flex,
+} from "antd"
 import { useAppStore } from "./store"
 import { useSwipe, SwipeDirection, useIsDarkMode } from "./hooks"
 import "./styles/index.less"
@@ -208,7 +214,10 @@ const AppLayout: FC = memo(() => {
                           path="/"
                           element={<Navigate to="/playlists" replace />}
                         />
-                        <Route path="/playlists/*" element={<PlaylistsPage />} />
+                        <Route
+                          path="/playlists/*"
+                          element={<PlaylistsPage />}
+                        />
                         <Route path="/music" element={<MusicPage />} />
                         <Route path="/search" element={<SearchPage />} />
                         <Route path="/settings" element={<SettingsPage />} />
@@ -220,6 +229,7 @@ const AppLayout: FC = memo(() => {
                 {!["search", "settings"].includes(currentTab) && (
                   <PlayerCard audio={currentAudio} />
                 )}
+                {/* biome-ignore lint/a11y/useMediaCaption: Music player does not need captions */}
                 <audio ref={audioRef} />
               </Flex>
             )}

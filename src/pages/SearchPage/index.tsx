@@ -147,6 +147,7 @@ export const SearchPage: FC = () => {
     (state) => state.setSearchMessageToShow,
   )
   const setSearchCoverUrls = useAppStore((state) => state.setSearchCoverUrls)
+  const addSearchCoverUrl = useAppStore((state) => state.addSearchCoverUrl)
   const setSearchPlaylistCoverUrl = useAppStore(
     (state) => state.setSearchPlaylistCoverUrl,
   )
@@ -173,7 +174,7 @@ export const SearchPage: FC = () => {
     }
   }, [url, clearSearchRuntimeData])
 
-  // Download and cache cover
+  // Download and cache cover - Fixed to handle concurrent updates
   const downloadAndCacheCover = useCallback(
     async (
       coverUrl: string | undefined,
@@ -189,7 +190,8 @@ export const SearchPage: FC = () => {
         const webUrl = await get_web_url(localPath)
 
         if (audioId) {
-          setSearchCoverUrls({ ...coverUrls, [audioId]: webUrl })
+          // Use new method to avoid race conditions
+          addSearchCoverUrl(audioId, webUrl)
         }
 
         return webUrl
@@ -198,7 +200,7 @@ export const SearchPage: FC = () => {
         return null
       }
     },
-    [coverUrls, setSearchCoverUrls],
+    [addSearchCoverUrl],
   )
 
   // Handle search
@@ -229,7 +231,6 @@ export const SearchPage: FC = () => {
 
       // Check existing audios
       const existingLocalAudios: LocalAudio[] = []
-      const coverCache: Record<string, string> = {}
 
       for (const audio of result.audios) {
         const audioPath = await exists_audio(audio)
@@ -237,7 +238,10 @@ export const SearchPage: FC = () => {
           let coverPath: string | null = null
           if (audio.cover) {
             coverPath = await exists_cover(audio.cover, audio.platform)
-            if (coverPath) coverCache[audio.id] = await get_web_url(coverPath)
+            if (coverPath) {
+              const webUrl = await get_web_url(coverPath)
+              addSearchCoverUrl(audio.id, webUrl)
+            }
           }
           existingLocalAudios.push({
             audio,
@@ -247,8 +251,6 @@ export const SearchPage: FC = () => {
           addSearchDownloadedId(audio.id)
         }
       }
-
-      setSearchCoverUrls({ ...coverUrls, ...coverCache })
 
       if (existingLocalAudios.length > 0 && result.audios.length === 1) {
         await addAudiosToConfig(existingLocalAudios)
@@ -284,9 +286,9 @@ export const SearchPage: FC = () => {
     setSearchPlaylistCoverUrl,
     setSearchMessageToShow,
     addSearchDownloadedId,
+    addSearchCoverUrl,
     downloadAndCacheCover,
     addAudiosToConfig,
-    coverUrls,
     downloadedIds,
   ])
 
