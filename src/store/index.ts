@@ -473,7 +473,7 @@ export const useAppStore = create<AppState>((set, get) => ({
         title: FAVORITE_PLAYLIST_ID,
         cover_path: null,
         audios: [],
-        platform: "FAVORITE_PLAYLIST_ID",
+        platform: "File",
       }
       playlists.unshift(favPlaylist)
     }

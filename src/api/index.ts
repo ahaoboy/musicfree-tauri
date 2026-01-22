@@ -1,7 +1,7 @@
 import { invoke, convertFileSrc } from "@tauri-apps/api/core"
 import { join } from "@tauri-apps/api/path"
 
-export type Platform = string
+export type Platform = `Bilibili` | `Youtube` | `File` | (string & {})
 
 export type Audio = {
   id: string
