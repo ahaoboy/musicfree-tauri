@@ -281,8 +281,11 @@ export const PlayerPage: FC = () => {
           <Button
             type="text"
             icon={<StepBackwardOutlined />}
-            onClick={() => playPrev()}
-            disabled={!canPlayPrev()}
+            onClick={() => {
+              if (canPlayPrev()) {
+                playPrev()
+              }
+            }}
             className="player-control-btn"
           />
 
