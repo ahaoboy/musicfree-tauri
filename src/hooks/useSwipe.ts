@@ -21,7 +21,7 @@ interface SwipeState {
   startTime: number
 }
 
-const DEFAULT_THRESHOLD = 50
+const DEFAULT_THRESHOLD = 30
 const DEFAULT_ALLOWED_TIME = 500
 
 // Custom hook for detecting swipe gestures on both touch and mouse
