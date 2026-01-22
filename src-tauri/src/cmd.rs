@@ -31,7 +31,7 @@ pub async fn app_version() -> &'static str {
 }
 
 #[tauri::command]
-pub async fn extract_audios(url: &str) -> AppResult<Playlist> {
+pub async fn extract_audios(url: &str) -> AppResult<(Playlist, Option<usize>)> {
     musicfree::extract(url)
         .await
         .map_err(|e| AppError::MusicFree(e.to_string()))
@@ -82,7 +82,7 @@ pub async fn exists_cover(
     platform: Platform,
     app_handle: tauri::AppHandle,
 ) -> AppResult<Option<String>> {
-    let dir = app_dir(app_handle).await ?;
+    let dir = app_dir(app_handle).await?;
     api::exists_cover(url, platform, dir).await
 }
 

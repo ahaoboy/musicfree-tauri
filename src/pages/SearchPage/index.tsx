@@ -219,22 +219,22 @@ export const SearchPage: FC = () => {
     setSearchPlaylistCoverUrl(null)
 
     try {
-      const result = await extract_audios(url)
+      const [playlist, defaultAudioIndex] = await extract_audios(url)
 
       if (!useAppStore.getState().searchText.trim()) {
         return
       }
 
-      setSearchPlaylist(result)
+      setSearchPlaylist(playlist)
       setSearchMessageToShow({
         type: "success",
-        text: `Found ${result.audios.length} tracks`,
+        text: `Found ${playlist.audios.length} tracks`,
       })
 
       // Check existing audios
       const existingLocalAudios: LocalAudio[] = []
 
-      for (const audio of result.audios) {
+      for (const audio of playlist.audios) {
         const audioPath = await exists_audio(audio)
         if (audioPath) {
           let coverPath: string | null = null
@@ -254,18 +254,32 @@ export const SearchPage: FC = () => {
         }
       }
 
-      if (existingLocalAudios.length > 0 && result.audios.length === 1) {
+      if (existingLocalAudios.length > 0 && playlist.audios.length === 1) {
         await addAudiosToConfig(existingLocalAudios)
       }
 
-      // Download covers in background
-      if (result.cover) {
-        downloadAndCacheCover(result.cover, result.platform).then((webUrl) => {
-          if (webUrl) setSearchPlaylistCoverUrl(webUrl)
-        })
+      // Auto-select default audio if specified
+      if (
+        defaultAudioIndex !== null &&
+        defaultAudioIndex >= 0 &&
+        defaultAudioIndex < playlist.audios.length
+      ) {
+        const defaultAudio = playlist.audios[defaultAudioIndex]
+        if (defaultAudio) {
+          setSearchSelectedIds(new Set([defaultAudio.id]))
+        }
       }
 
-      result.audios.forEach((audio) => {
+      // Download covers in background
+      if (playlist.cover) {
+        downloadAndCacheCover(playlist.cover, playlist.platform).then(
+          (webUrl) => {
+            if (webUrl) setSearchPlaylistCoverUrl(webUrl)
+          },
+        )
+      }
+
+      playlist.audios.forEach((audio) => {
         if (audio.cover && !downloadedIds.has(audio.id)) {
           downloadAndCacheCover(audio.cover, audio.platform, audio.id)
         }

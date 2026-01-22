@@ -54,7 +54,9 @@ export function get_default_config(): Config {
   }
 }
 
-export function extract_audios(url: string): Promise<Playlist> {
+export function extract_audios(
+  url: string,
+): Promise<[playlist: Playlist, default_audio: number | null]> {
   return invoke("extract_audios", { url })
 }
 
