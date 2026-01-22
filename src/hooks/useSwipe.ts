@@ -6,6 +6,7 @@ export type SwipeDirection = "left" | "right" | "up" | "down" | null
 interface SwipeConfig {
   threshold?: number // Minimum distance to trigger swipe
   allowedTime?: number // Maximum time allowed for swipe gesture
+  excludeSelectors?: string[] // CSS selectors to exclude from swipe detection
 }
 
 interface SwipeHandlers {
@@ -24,13 +25,31 @@ interface SwipeState {
 const DEFAULT_THRESHOLD = 30
 const DEFAULT_ALLOWED_TIME = 500
 
+// Check if element or its parents match any of the exclude selectors
+function shouldExcludeElement(
+  element: EventTarget | null,
+  excludeSelectors: string[],
+): boolean {
+  if (!element || !(element instanceof Element)) return false
+
+  for (const selector of excludeSelectors) {
+    if (element.closest(selector)) {
+      return true
+    }
+  }
+  return false
+}
+
 // Custom hook for detecting swipe gestures on both touch and mouse
 export function useSwipe(
   onSwipe: (direction: SwipeDirection) => void,
   config: SwipeConfig = {},
 ): SwipeHandlers {
-  const { threshold = DEFAULT_THRESHOLD, allowedTime = DEFAULT_ALLOWED_TIME } =
-    config
+  const {
+    threshold = DEFAULT_THRESHOLD,
+    allowedTime = DEFAULT_ALLOWED_TIME,
+    excludeSelectors = [],
+  } = config
 
   const stateRef = useRef<SwipeState>({
     startX: 0,
@@ -38,16 +57,30 @@ export function useSwipe(
     startTime: 0,
   })
 
-  const handleStart = useCallback((x: number, y: number) => {
-    stateRef.current = {
-      startX: x,
-      startY: y,
-      startTime: Date.now(),
-    }
-  }, [])
+  const handleStart = useCallback(
+    (x: number, y: number, target: EventTarget | null) => {
+      // Don't start swipe if target is in exclude list
+      if (shouldExcludeElement(target, excludeSelectors)) {
+        return false
+      }
+
+      stateRef.current = {
+        startX: x,
+        startY: y,
+        startTime: Date.now(),
+      }
+      return true
+    },
+    [excludeSelectors],
+  )
 
   const handleEnd = useCallback(
-    (x: number, y: number) => {
+    (x: number, y: number, target: EventTarget | null) => {
+      // Don't process swipe if target is in exclude list
+      if (shouldExcludeElement(target, excludeSelectors)) {
+        return
+      }
+
       const { startX, startY, startTime } = stateRef.current
       const deltaX = x - startX
       const deltaY = y - startY
@@ -72,14 +105,14 @@ export function useSwipe(
         onSwipe(direction)
       }
     },
-    [threshold, allowedTime, onSwipe],
+    [threshold, allowedTime, onSwipe, excludeSelectors],
   )
 
   // Touch event handlers
   const onTouchStart = useCallback(
     (e: React.TouchEvent) => {
       const touch = e.touches[0]
-      handleStart(touch.clientX, touch.clientY)
+      handleStart(touch.clientX, touch.clientY, e.target)
     },
     [handleStart],
   )
@@ -87,7 +120,7 @@ export function useSwipe(
   const onTouchEnd = useCallback(
     (e: React.TouchEvent) => {
       const touch = e.changedTouches[0]
-      handleEnd(touch.clientX, touch.clientY)
+      handleEnd(touch.clientX, touch.clientY, e.target)
     },
     [handleEnd],
   )
@@ -95,14 +128,14 @@ export function useSwipe(
   // Mouse event handlers
   const onMouseDown = useCallback(
     (e: React.MouseEvent) => {
-      handleStart(e.clientX, e.clientY)
+      handleStart(e.clientX, e.clientY, e.target)
     },
     [handleStart],
   )
 
   const onMouseUp = useCallback(
     (e: React.MouseEvent) => {
-      handleEnd(e.clientX, e.clientY)
+      handleEnd(e.clientX, e.clientY, e.target)
     },
     [handleEnd],
   )

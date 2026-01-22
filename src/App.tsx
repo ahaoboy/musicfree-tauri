@@ -158,7 +158,17 @@ const AppLayout: FC = memo(() => {
     [currentTab, isInDetailView, onBackFromDetail, navigate],
   )
 
-  const swipeHandlers = useSwipe(handleSwipe, { threshold: 50 })
+  const swipeHandlers = useSwipe(handleSwipe, {
+    threshold: 50,
+    excludeSelectors: [
+      ".ant-slider", // Exclude Ant Design Slider
+      ".player-controls-container", // Exclude player controls
+      ".progress-bar", // Exclude progress bar
+      "button", // Exclude all buttons
+      "input", // Exclude inputs
+      ".ant-checkbox", // Exclude checkboxes
+    ],
+  })
 
   // Navigation context value
   const navigationContextValue: NavigationContextType = {

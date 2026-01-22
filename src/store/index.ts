@@ -73,6 +73,7 @@ interface AppState extends PersistentData, RuntimeData {
     queue?: LocalAudio[],
     addToHistory?: boolean,
   ) => Promise<void>
+  loadAudioMetadata: (audio: LocalAudio) => Promise<void>
   pauseAudio: () => void
   resumeAudio: () => void
   togglePlay: () => void
@@ -129,7 +130,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   audioUrl: null,
   isPlaying: false,
   playbackRate: 1,
-  playMode: "sequence",
+  playMode: "sequence" as const,
   playbackQueue: [],
   playbackHistory: [], // Initialize empty history stack
   isConfigLoading: false,
@@ -185,6 +186,12 @@ export const useAppStore = create<AppState>((set, get) => ({
           }
         }
         set({ playbackQueue: queue })
+
+        // Load metadata if audio element is already set
+        const { audioElement } = get()
+        if (audioElement) {
+          get().loadAudioMetadata(config.last_audio)
+        }
       }
     } catch (error) {
       console.error("Failed to load config:", error)
@@ -227,6 +234,33 @@ export const useAppStore = create<AppState>((set, get) => ({
       element.onended = () => {
         get().playNext(true)
       }
+
+      // Load metadata for current audio if it exists
+      const { currentAudio } = get()
+      if (currentAudio) {
+        get().loadAudioMetadata(currentAudio)
+      }
+    }
+  },
+
+  // Load audio metadata without playing (for preloading)
+  loadAudioMetadata: async (audio: LocalAudio) => {
+    const { audioElement } = get()
+    try {
+      const url = await get_web_url(audio.path)
+      console.log("audioElement,loadAudioMetadata", audioElement)
+
+      set({
+        currentAudio: audio,
+        audioUrl: url,
+      })
+
+      if (audioElement) {
+        audioElement.src = url
+        audioElement.load() // Load metadata without playing
+      }
+    } catch (error) {
+      console.error("Failed to load audio metadata:", error)
     }
   },
 

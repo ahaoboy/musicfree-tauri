@@ -54,16 +54,13 @@ export const PlayerPage: FC = () => {
 
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState(0)
-  const [isDragging, setIsDragging] = useState(false)
 
   // Handle time updates
   useEffect(() => {
     if (!audioElement) return
 
     const handleTimeUpdate = () => {
-      if (!isDragging) {
-        setCurrentTime(audioElement.currentTime)
-      }
+      setCurrentTime(audioElement.currentTime)
       setDuration(audioElement.duration || 0)
     }
 
@@ -77,17 +74,30 @@ export const PlayerPage: FC = () => {
       audioElement.removeEventListener("timeupdate", handleTimeUpdate)
       audioElement.removeEventListener("loadedmetadata", handleTimeUpdate)
     }
-  }, [audioElement, isDragging])
+  }, [audioElement])
 
-  const handleSeek = useCallback(
-    (value: number) => {
-      if (audioElement) {
-        audioElement.currentTime = value
+  // Handle slider click to seek (click-only, no drag support)
+  const handleSliderChange = useCallback(
+    (value: number | number[]) => {
+      const seekValue = Array.isArray(value) ? value[0] : value
+      if (audioElement && Number.isFinite(seekValue)) {
+        audioElement.currentTime = seekValue
+        setCurrentTime(seekValue)
+
+        // If audio is not playing, start playback after seeking
+        if (!isPlaying && currentAudio) {
+          audioElement
+            .play()
+            .then(() => {
+              useAppStore.setState({ isPlaying: true })
+            })
+            .catch((error) => {
+              console.error("Failed to play after seek:", error)
+            })
+        }
       }
-      setCurrentTime(value)
-      setIsDragging(false)
     },
-    [audioElement],
+    [audioElement, isPlaying, currentAudio],
   )
 
   const handleShare = useCallback(async () => {
@@ -246,14 +256,13 @@ export const PlayerPage: FC = () => {
           <Slider
             style={{ flex: 1 }}
             min={0}
-            max={duration}
+            max={duration || 100}
             value={currentTime}
-            onChange={(val: number) => {
-              setIsDragging(true)
-              setCurrentTime(val)
+            onChange={handleSliderChange}
+            tooltip={{
+              formatter: (value) => (value ? formatTime(value) : "0:00"),
             }}
-            onChangeComplete={handleSeek}
-            tooltip={{ formatter: null }}
+            disabled={!duration || duration === 0}
           />
           <Text type="secondary" className="time-text">
             {formatTime(duration)}
