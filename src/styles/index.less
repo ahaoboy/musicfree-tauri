@@ -15,6 +15,9 @@ html,
 body {
   height: 100%;
   overflow: hidden;
+  // Prevent pinch-to-zoom on mobile
+  touch-action: pan-x pan-y;
+  -ms-touch-action: pan-x pan-y;
 }
 
 body {
@@ -56,6 +59,7 @@ body {
 .top-tabs {
   background: var(--bg-card);
   border-bottom: 1px solid var(--border-color);
+  padding-top: env(safe-area-inset-top);
 
   .ant-tabs-nav {
     margin-bottom: 0;
@@ -95,6 +99,7 @@ body {
 .page {
   min-height: 100%;
   padding: 8px;
+  padding-top: max(8px, env(safe-area-inset-top));
 }
 
 // Audio card
@@ -104,6 +109,7 @@ body {
   border-radius: @radius-sm;
   border: 1px solid var(--border-color);
   cursor: pointer;
+  touch-action: manipulation;
   .card-hover-effect(-2px);
 
   .card-avatar {
@@ -126,6 +132,7 @@ body {
   border-radius: @radius-sm;
   border: 1px solid var(--border-color);
   transition: all @transition-fast @ease-out;
+  touch-action: manipulation;
 
   &:hover {
     border-color: @primary-color;
@@ -139,6 +146,7 @@ body {
   border: 1px solid var(--border-color);
   cursor: pointer;
   padding: 12px;
+  touch-action: manipulation;
   .card-hover-effect(-2px);
 
   .card-avatar {
@@ -173,6 +181,7 @@ body {
   border-top: 1px solid var(--border-color);
   padding: 12px 16px;
   z-index: 1000;
+  touch-action: manipulation;
   .safe-area-padding(padding-bottom, 12px);
   box-shadow: 0 -2px 12px var(--shadow-color);
 
@@ -180,6 +189,7 @@ body {
   .mini-player-btn {
     .control-btn-base(@btn-size-sm, 20px, @radius-sm);
     transform: none; // Override default hover transform
+    touch-action: manipulation;
 
     &:hover {
       transform: translateY(-2px) scale(1.05);
@@ -219,6 +229,7 @@ body {
 // Message notification styling
 .ant-message {
   z-index: 2000;
+  top: max(100px, calc(100px + env(safe-area-inset-top))) !important;
 
   .ant-message-notice-content {
     border-radius: @radius-sm;
