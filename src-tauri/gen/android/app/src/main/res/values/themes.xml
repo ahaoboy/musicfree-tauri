@@ -2,5 +2,6 @@
     <!-- Base application theme. -->
     <style name="Theme.musicfree" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         <!-- Customize your theme here. -->
+        <item name="android:fitsSystemWindows">true</item>
     </style>
 </resources>

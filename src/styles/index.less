@@ -35,6 +35,20 @@ body {
   --text-secondary: #64748b;
   --border-color: #e2e8f0;
   --shadow-color: rgba(0, 0, 0, 0.08);
+
+  // Primary color CSS variables - Darker/more saturated for light theme
+  // Ensures 4.5:1 contrast ratio on light backgrounds (WCAG AA compliant)
+  --primary-color: #4f46e5; // Darker indigo for better contrast
+  --primary-color-light: #6366f1;
+  --primary-color-lighter: #818cf8;
+  --primary-alpha-10: rgba(79, 70, 229, 0.1);
+  --primary-alpha-15: rgba(79, 70, 229, 0.15);
+  --primary-alpha-20: rgba(79, 70, 229, 0.2);
+  --primary-alpha-25: rgba(79, 70, 229, 0.25);
+  --primary-alpha-30: rgba(79, 70, 229, 0.3);
+  --primary-alpha-35: rgba(79, 70, 229, 0.35);
+  --primary-alpha-40: rgba(79, 70, 229, 0.4);
+  --primary-alpha-50: rgba(79, 70, 229, 0.5);
 }
 
 [data-prefers-color-scheme='dark'] {
@@ -44,6 +58,20 @@ body {
   --text-secondary: #94a3b8;
   --border-color: #334155;
   --shadow-color: rgba(0, 0, 0, 0.24);
+
+  // Primary color CSS variables - Lighter/brighter for dark theme
+  // Ensures visibility and vibrancy on dark backgrounds
+  --primary-color: #818cf8; // Lighter indigo for dark backgrounds
+  --primary-color-light: #a5b4fc;
+  --primary-color-lighter: #c7d2fe;
+  --primary-alpha-10: rgba(129, 140, 248, 0.1);
+  --primary-alpha-15: rgba(129, 140, 248, 0.15);
+  --primary-alpha-20: rgba(129, 140, 248, 0.2);
+  --primary-alpha-25: rgba(129, 140, 248, 0.25);
+  --primary-alpha-30: rgba(129, 140, 248, 0.3);
+  --primary-alpha-35: rgba(129, 140, 248, 0.35);
+  --primary-alpha-40: rgba(129, 140, 248, 0.4);
+  --primary-alpha-50: rgba(129, 140, 248, 0.5);
 }
 
 // App container
@@ -99,7 +127,7 @@ body {
 .page {
   min-height: 100%;
   padding: 8px;
-  padding-top: max(8px, env(safe-area-inset-top));
+  // padding-top: max(8px, env(safe-area-inset-top));
 }
 
 // Audio card
@@ -135,7 +163,7 @@ body {
   touch-action: manipulation;
 
   &:hover {
-    border-color: @primary-color;
+    border-color: var(--primary-color);
   }
 }
 
@@ -193,7 +221,7 @@ body {
 
     &:hover {
       transform: translateY(-2px) scale(1.05);
-      box-shadow: 0 4px 12px @primary-alpha-20;
+      box-shadow: 0 4px 12px var(--primary-alpha-20);
     }
 
     &.play {
@@ -209,7 +237,7 @@ body {
 
     [data-prefers-color-scheme='dark'] & {
       &:hover {
-        box-shadow: 0 4px 16px @primary-alpha-30;
+        box-shadow: 0 4px 16px var(--primary-alpha-30);
       }
     }
   }

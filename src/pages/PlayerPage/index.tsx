@@ -179,7 +179,12 @@ export const PlayerPage: FC = () => {
       }}
     >
       {/* Header */}
-      <Flex className="player-header" align="center" justify="space-between">
+      <Flex
+        className="player-header"
+        align="center"
+        justify="space-between"
+        gap={"small"}
+      >
         <Button
           type="text"
           icon={<LeftOutlined />}

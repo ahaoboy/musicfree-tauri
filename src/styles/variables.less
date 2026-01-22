@@ -4,19 +4,21 @@
 // ============================================
 
 // ============================================
-// Colors
+// Colors - Using CSS Custom Properties for dynamic theming
 // ============================================
+// LESS variables for fallback and compilation
 @primary-color: #6366f1;
 @primary-color-light: #8b8ff6;
 @primary-color-lighter: #9fa3f7;
 @error-color: #ff4d4f;
 
-// Primary color with opacity
+// Primary color with opacity (LESS variables for compilation)
 @primary-alpha-10: rgba(99, 102, 241, 0.1);
 @primary-alpha-15: rgba(99, 102, 241, 0.15);
 @primary-alpha-20: rgba(99, 102, 241, 0.2);
 @primary-alpha-25: rgba(99, 102, 241, 0.25);
 @primary-alpha-30: rgba(99, 102, 241, 0.3);
+@primary-alpha-35: rgba(99, 102, 241, 0.35);
 @primary-alpha-40: rgba(99, 102, 241, 0.4);
 @primary-alpha-50: rgba(99, 102, 241, 0.5);
 
@@ -32,7 +34,7 @@
 // ============================================
 // Dimensions
 // ============================================
-@player-bar-height: 72px;
+@player-bar-height: 80px;
 @safe-area-bottom: env(safe-area-inset-bottom, 0px);
 
 // Border radius
@@ -86,11 +88,11 @@
 
 // Control button base style
 .control-btn-base(@size, @font-size, @radius) {
-  background: @primary-alpha-10;
-  border: 1px solid @primary-alpha-20;
+  background: var(--primary-alpha-10);
+  border: 1px solid var(--primary-alpha-20);
   cursor: pointer;
   font-size: @font-size;
-  color: @primary-color;
+  // color: var(--primary-color);
   width: @size;
   height: @size;
   min-width: @size;
@@ -99,19 +101,19 @@
   justify-content: center;
   border-radius: @radius;
   transition: all @transition-slow @ease-out;
-  .glass-effect(12px, @primary-alpha-10, @primary-alpha-15);
+  .glass-effect(12px, var(--primary-alpha-10), var(--primary-alpha-15));
   padding: 0;
 
   &:hover {
-    background: @primary-alpha-20;
+    background: var(--primary-alpha-20);
     transform: translateY(-4px) scale(1.05);
-    box-shadow: 0 8px 20px @primary-alpha-30;
-    color: @primary-color;
-    border-color: @primary-alpha-30;
+    box-shadow: 0 8px 20px var(--primary-alpha-30);
+    color: var(--primary-color);
+    border-color: var(--primary-alpha-30);
   }
 
   &:active {
-    background: @primary-alpha-25;
+    background: var(--primary-alpha-25);
     transform: translateY(0) scale(0.95);
   }
 
@@ -120,14 +122,14 @@
   }
 
   [data-prefers-color-scheme='dark'] & {
-    background: @primary-alpha-15;
-    border: 1px solid @primary-alpha-25;
-    color: @primary-color-light;
+    background: var(--primary-alpha-15);
+    border: 1px solid var(--primary-alpha-25);
+    color: var(--primary-color-light);
 
     &:hover {
-      background: @primary-alpha-25;
-      box-shadow: 0 8px 24px @primary-alpha-40;
-      color: @primary-color-lighter;
+      background: var(--primary-alpha-25);
+      box-shadow: 0 8px 24px var(--primary-alpha-40);
+      color: var(--primary-color-lighter);
     }
   }
 }
@@ -140,7 +142,7 @@
   -webkit-backface-visibility: hidden;
 
   &:hover {
-    border-color: @primary-color;
+    border-color: var(--primary-color);
     transform: translateY(@lift) scale(1.02) translateZ(0);
     box-shadow: 0 4px 12px var(--shadow-color);
   }
