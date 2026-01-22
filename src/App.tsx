@@ -180,7 +180,7 @@ const AppLayout: FC = memo(() => {
         },
       }}
     >
-      <AntApp>
+      <AntApp message={{ top: 100 }}>
         <ErrorBoundary onReset={() => window.location.reload()}>
           <NavigationContext.Provider value={navigationContextValue}>
             {isConfigLoading ? (

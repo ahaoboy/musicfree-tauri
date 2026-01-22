@@ -19,7 +19,7 @@ export const LoadingFallback: FC<LoadingFallbackProps> = ({
 
   return (
     <Flex flex={1} align="center" justify="center" className="page">
-      <Spin size="large" tip={tip} />
+      <Spin fullscreen size="large" tip={tip} />
     </Flex>
   )
 }
