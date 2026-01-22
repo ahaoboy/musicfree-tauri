@@ -93,10 +93,41 @@ export function download_cover(
   return invoke("download_cover", { url, platform })
 }
 
+// Cache for converted URLs to avoid repeated conversions
+const urlCache = new Map<string, string>()
+
+// Cache for blob URLs to manage memory
+const blobUrlCache = new Map<string, string>()
+
+// Clean up blob URLs when they're no longer needed
+export function revokeBlobUrl(path: string) {
+  const blobUrl = blobUrlCache.get(path)
+  if (blobUrl) {
+    URL.revokeObjectURL(blobUrl)
+    blobUrlCache.delete(path)
+  }
+}
+
+// Clear all cached blob URLs (useful for memory management)
+export function clearBlobCache() {
+  blobUrlCache.forEach((url) => URL.revokeObjectURL(url))
+  blobUrlCache.clear()
+}
+
 export async function get_convert_url(path: string): Promise<string> {
+  // Check cache first
+  const cached = urlCache.get(path)
+  if (cached) {
+    return cached
+  }
+
   const appDataDirPath: string = await invoke("app_dir")
   const localPath = await join(appDataDirPath, path)
   const assetUrl = convertFileSrc(localPath)
+
+  // Cache the result
+  urlCache.set(path, assetUrl)
+
   return assetUrl
 }
 
@@ -105,9 +136,19 @@ function is_android() {
 }
 
 export async function get_web_blob(path: string): Promise<string> {
+  // Check cache first
+  const cached = blobUrlCache.get(path)
+  if (cached) {
+    return cached
+  }
+
   const bin = await read_file(path)
   const blob = new Blob([new Uint8Array(bin)])
   const assetUrl = URL.createObjectURL(blob)
+
+  // Cache the blob URL
+  blobUrlCache.set(path, assetUrl)
+
   return assetUrl
 }
 
