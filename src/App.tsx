@@ -16,7 +16,12 @@ import {
   useLocation,
   Navigate,
 } from "react-router-dom"
-import { PlayerCard } from "./components"
+import {
+  PlayerCard,
+  ErrorBoundary,
+  PageErrorBoundary,
+  LoadingFallback,
+} from "./components"
 import { NavigationContext, NavigationContextType } from "./contexts"
 
 type Tab = "playlists" | "music" | "search" | "settings"
@@ -26,14 +31,7 @@ import {
   SearchOutlined,
   SettingOutlined,
 } from "@ant-design/icons"
-import {
-  ConfigProvider,
-  theme as antdTheme,
-  App as AntApp,
-  Spin,
-  Flex,
-  Tabs,
-} from "antd"
+import { ConfigProvider, theme as antdTheme, App as AntApp, Tabs, Flex } from "antd"
 import { useAppStore } from "./store"
 import { useSwipe, SwipeDirection, useIsDarkMode } from "./hooks"
 import "./styles/index.less"
@@ -177,66 +175,56 @@ const AppLayout: FC = memo(() => {
       }}
     >
       <AntApp>
-        <NavigationContext.Provider value={navigationContextValue}>
-          {isConfigLoading ? (
-            <Flex
-              vertical
-              flex={1}
-              align="center"
-              justify="center"
-              style={{ height: "100vh" }}
-            >
-              <Spin fullscreen size="large" tip="Loading..." />
-            </Flex>
-          ) : (
-            <Flex
-              vertical
-              className="app"
-              style={{ height: "100vh" }}
-              {...swipeHandlers}
-            >
-              <Tabs
-                activeKey={currentTab}
-                onChange={handleTabChange}
-                centered
-                tabBarGutter={0}
-                className="top-tabs"
-                items={TAB_ITEMS}
-              />
+        <ErrorBoundary onReset={() => window.location.reload()}>
+          <NavigationContext.Provider value={navigationContextValue}>
+            {isConfigLoading ? (
+              <LoadingFallback fullscreen tip="Loading configuration..." />
+            ) : (
               <Flex
                 vertical
-                flex={1}
-                component="main"
-                className="main-content"
-                style={{ overflow: "hidden" }}
+                className="app"
+                style={{ height: "100vh" }}
+                {...swipeHandlers}
               >
-                <Suspense
-                  fallback={
-                    <Flex flex={1} align="center" justify="center">
-                      <Spin fullscreen size="large" />
-                    </Flex>
-                  }
+                <Tabs
+                  activeKey={currentTab}
+                  onChange={handleTabChange}
+                  centered
+                  tabBarGutter={0}
+                  className="top-tabs"
+                  items={TAB_ITEMS}
+                />
+                <Flex
+                  vertical
+                  flex={1}
+                  component="main"
+                  className="main-content"
+                  style={{ overflow: "hidden" }}
                 >
-                  <Routes>
-                    <Route
-                      path="/"
-                      element={<Navigate to="/playlists" replace />}
-                    />
-                    <Route path="/playlists/*" element={<PlaylistsPage />} />
-                    <Route path="/music" element={<MusicPage />} />
-                    <Route path="/search" element={<SearchPage />} />
-                    <Route path="/settings" element={<SettingsPage />} />
-                    <Route path="/player" element={<PlayerPage />} />
-                  </Routes>
-                </Suspense>
+                  <Suspense fallback={<LoadingFallback />}>
+                    <PageErrorBoundary>
+                      <Routes>
+                        <Route
+                          path="/"
+                          element={<Navigate to="/playlists" replace />}
+                        />
+                        <Route path="/playlists/*" element={<PlaylistsPage />} />
+                        <Route path="/music" element={<MusicPage />} />
+                        <Route path="/search" element={<SearchPage />} />
+                        <Route path="/settings" element={<SettingsPage />} />
+                        <Route path="/player" element={<PlayerPage />} />
+                      </Routes>
+                    </PageErrorBoundary>
+                  </Suspense>
+                </Flex>
+                {!["search", "settings"].includes(currentTab) && (
+                  <PlayerCard audio={currentAudio} />
+                )}
+                <audio ref={audioRef} />
               </Flex>
-              {!["search", "settings"].includes(currentTab) && (
-                <PlayerCard audio={currentAudio} />
-              )}
-              <audio ref={audioRef} />
-            </Flex>
-          )}
-        </NavigationContext.Provider>
+            )}
+          </NavigationContext.Provider>
+        </ErrorBoundary>
       </AntApp>
     </ConfigProvider>
   )

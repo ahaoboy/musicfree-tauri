@@ -7,6 +7,7 @@ import { useConfirm } from "../../hooks"
 import { DEFAULT_COVER_URL, LocalAudio } from "../../api"
 
 // Music page - displays all downloaded individual audio files
+// Wrapped with ErrorBoundary in App.tsx
 export const MusicPage: FC = () => {
   const audios = useAppStore((state) => state.config.audios)
   const playAudio = useAppStore((state) => state.playAudio)
