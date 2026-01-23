@@ -18,4 +18,4 @@ key.properties
 /.tauri
 /tauri.settings.gradle
 
-./buildSrc
+/buildSrc
