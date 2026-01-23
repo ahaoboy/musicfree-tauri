@@ -498,6 +498,8 @@ export const useAppStore = create<AppState>((set, get) => ({
       const mergedPlaylist: LocalPlaylist = {
         ...playlist,
         audios: mergedAudios,
+        // Use new cover_path if available, otherwise keep existing
+        cover_path: playlist.cover_path || existing.cover_path,
       }
 
       updatedPlaylists = [...config.playlists]

@@ -251,6 +251,7 @@ export const SearchPage: FC = () => {
   const coverUrls = useAppStore((state) => state.searchCoverUrls)
   const playlistCoverUrl = useAppStore((state) => state.searchPlaylistCoverUrl)
   const configAudios = useAppStore((state) => state.config.audios)
+  const configPlaylists = useAppStore((state) => state.config.playlists)
 
   // Track if all operations are complete (all selected audios are downloaded/added)
   const allOperationsComplete = useMemo(() => {
@@ -260,8 +261,33 @@ export const SearchPage: FC = () => {
     const allDownloaded = selectedArray.every((id) => downloadedIds.has(id))
     const noFailed = selectedArray.every((id) => !failedIds.has(id))
 
-    return allDownloaded && noFailed
-  }, [playlist, selectedIds, downloadedIds, failedIds])
+    // If not all downloaded or has failed, operations not complete
+    if (!allDownloaded || !noFailed) return false
+
+    // For playlists (multiple audios), check if playlist already exists in config
+    const isPlaylist = playlist.audios.length > 1
+    if (isPlaylist) {
+      const playlistId =
+        playlist.id || playlist.title || new Date().toISOString()
+      const existingPlaylist = configPlaylists.find((p) => p.id === playlistId)
+
+      // If playlist exists and has all the same audios, operations complete
+      if (existingPlaylist) {
+        const existingAudioIds = new Set(
+          existingPlaylist.audios.map((a) => a.audio.id),
+        )
+        const allAudiosInPlaylist = selectedArray.every((id) =>
+          existingAudioIds.has(id),
+        )
+        return allAudiosInPlaylist
+      }
+      // Playlist doesn't exist yet, operations not complete
+      return false
+    }
+
+    // For single audio, if downloaded, operations complete
+    return true
+  }, [playlist, selectedIds, downloadedIds, failedIds, configPlaylists])
 
   // Store actions
   const setSearchText = useAppStore((state) => state.setSearchText)
@@ -371,6 +397,14 @@ export const SearchPage: FC = () => {
         downloadCoverToWeb(playlist.cover, playlist.platform).then((webUrl) => {
           if (webUrl) setSearchPlaylistCoverUrl(webUrl)
         })
+      } else {
+        // If playlist has no cover, use first audio's cover
+        const firstAudioWithCover = playlist.audios.find((audio) => audio.cover)
+        if (firstAudioWithCover?.cover) {
+          downloadCoverToWeb(firstAudioWithCover.cover, firstAudioWithCover.platform).then((webUrl) => {
+            if (webUrl) setSearchPlaylistCoverUrl(webUrl)
+          })
+        }
       }
 
       playlist.audios.forEach((audio) => {
@@ -680,9 +714,26 @@ export const SearchPage: FC = () => {
         let coverPath: string | null = null
         if (playlist.cover) {
           try {
+            console.log("Downloading playlist cover:", playlist.cover)
             coverPath = await download_cover(playlist.cover, playlist.platform)
+            console.log("Downloaded playlist cover_path:", coverPath)
           } catch (error) {
             console.error("Failed to download playlist cover:", error)
+          }
+        } else {
+          // If playlist has no cover, use first audio's cover
+          const firstAudioWithCover = playlist.audios.find((audio) => audio.cover)
+          if (firstAudioWithCover?.cover) {
+            try {
+              console.log("Downloading fallback cover from first audio:", firstAudioWithCover.cover)
+              coverPath = await download_cover(
+                firstAudioWithCover.cover,
+                firstAudioWithCover.platform,
+              )
+              console.log("Downloaded fallback cover_path:", coverPath)
+            } catch (error) {
+              console.error("Failed to download fallback cover:", error)
+            }
           }
         }
 
@@ -702,6 +753,12 @@ export const SearchPage: FC = () => {
           audios: finalAudios,
           platform: playlist.platform,
         }
+
+        console.log("Adding playlist to config:", {
+          id: localPlaylist.id,
+          cover_path: localPlaylist.cover_path,
+          cover: localPlaylist.cover,
+        })
 
         await addPlaylistToConfig(localPlaylist)
         await loadConfig()
@@ -808,12 +865,13 @@ export const SearchPage: FC = () => {
         onChange={(e) => setSearchText(e.target.value)}
         onSearch={handleSearch}
         loading={searching}
+        disabled={searching}
         size="large"
       />
 
       {searching && (
         <Flex flex={1} align="center" justify="center">
-          <Spin fullscreen size="large" />
+          <Spin size="large" tip="Searching..." />
         </Flex>
       )}
 
