@@ -106,12 +106,16 @@ jobs:
       - name: install frontend dependencies
         run: |
           pnpm install
-
+      - name: git after install
+        run: |
+          git diff
       - name: tauri android init
         if: matrix.mobile == 'android'
         run: |
           pnpm tauri android init
-
+      - name: git after init
+        run: |
+          git diff
       - name: setup Android signing
         if: matrix.mobile == 'android'
         run: |
@@ -137,6 +141,6 @@ jobs:
           uploadPlainBinary: true
           releaseDraft: false
           prerelease: false
-      - name: git status
+      - name: git after action
         run: |
-          git status
+          git diff

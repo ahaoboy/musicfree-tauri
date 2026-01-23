@@ -104,6 +104,7 @@ interface AppState extends PersistentData, RuntimeData {
   addSearchCoverUrl: (audioId: string, url: string) => void
   setSearchPlaylistCoverUrl: (url: string | null) => void
   clearSearchRuntimeData: () => void
+  clearSearchStatesOnly: () => void // Clear states but keep searchText
 }
 
 // Helper to apply theme to document
@@ -474,15 +475,18 @@ export const useAppStore = create<AppState>((set, get) => ({
       const existingAudioMap = new Map(
         existing.audios.map((a) => [a.audio.id, a]),
       )
-      const newAudioMap = new Map(
-        playlist.audios.map((a) => [a.audio.id, a]),
-      )
+      const newAudioMap = new Map(playlist.audios.map((a) => [a.audio.id, a]))
 
       // Merge audios: prefer new data, preserve order from new playlist
-      const mergedAudios = playlist.audios.map((audio) => {
-        // Use new audio if available, otherwise use existing
-        return newAudioMap.get(audio.audio.id) || existingAudioMap.get(audio.audio.id)
-      }).filter(Boolean) as LocalAudio[]
+      const mergedAudios = playlist.audios
+        .map((audio) => {
+          // Use new audio if available, otherwise use existing
+          return (
+            newAudioMap.get(audio.audio.id) ||
+            existingAudioMap.get(audio.audio.id)
+          )
+        })
+        .filter(Boolean) as LocalAudio[]
 
       // Add any existing audios not in new playlist (append at end)
       existing.audios.forEach((audio) => {
@@ -735,6 +739,21 @@ export const useAppStore = create<AppState>((set, get) => ({
   clearSearchRuntimeData: () => {
     set({
       searchText: "",
+      searchPlaylist: null,
+      searchSelectedIds: new Set(),
+      searchDownloadingIds: new Set(),
+      searchDownloadedIds: new Set(),
+      searchFailedIds: new Set(),
+      searchSearching: false,
+      searchDownloadingAll: false,
+      searchMessageToShow: null,
+      searchCoverUrls: {},
+      searchPlaylistCoverUrl: null,
+    })
+  },
+
+  clearSearchStatesOnly: () => {
+    set({
       searchPlaylist: null,
       searchSelectedIds: new Set(),
       searchDownloadingIds: new Set(),
