@@ -1,6 +1,6 @@
-import { FC, memo, useMemo } from "react"
+import { FC, memo, useCallback } from "react"
 import { Flex, Typography, Avatar, Button } from "antd"
-import { AudioOutlined } from "@ant-design/icons"
+import AudioOutlined from "@ant-design/icons/AudioOutlined"
 import { DEFAULT_COVER_URL, LocalAudio } from "../../api"
 import { useCoverUrl } from "../../hooks"
 
@@ -19,35 +19,29 @@ export const AudioCard: FC<AudioCardProps> = memo(
   ({ audio, onClick, showAction = false, actionIcon, onAction }) => {
     const coverUrl = useCoverUrl(audio.cover_path, audio.audio.cover)
 
-    const handleClick = useMemo(
-      () =>
-        onClick
-          ? (e: React.MouseEvent | React.KeyboardEvent) => {
-              if ("key" in e && e.key !== "Enter" && e.key !== " ") return
-              onClick()
-            }
-          : undefined,
+    const handleClick = useCallback(
+      (e: React.MouseEvent | React.KeyboardEvent) => {
+        if ("key" in e && e.key !== "Enter" && e.key !== " ") return
+        onClick?.()
+      },
       [onClick],
     )
 
-    const handleActionClick = useMemo(
-      () =>
-        onAction
-          ? (e: React.MouseEvent) => {
-              e.stopPropagation()
-              onAction()
-            }
-          : undefined,
+    const handleActionClick = useCallback(
+      (e: React.MouseEvent) => {
+        e.stopPropagation()
+        onAction?.()
+      },
       [onAction],
     )
 
     return (
       <Flex
         className="audio-card"
-        onClick={handleClick}
+        onClick={onClick ? handleClick : undefined}
         role={onClick ? "button" : undefined}
         tabIndex={onClick ? 0 : undefined}
-        onKeyDown={handleClick}
+        onKeyDown={onClick ? handleClick : undefined}
         align="center"
         gap="middle"
         style={{ cursor: onClick ? "pointer" : "default" }}
@@ -61,7 +55,7 @@ export const AudioCard: FC<AudioCardProps> = memo(
           className="card-avatar"
         />
         <Flex vertical flex={1} style={{ minWidth: 0 }}>
-          <Text strong ellipsis={{ tooltip: audio.audio.title }}>
+          <Text strong ellipsis>
             {audio.audio.title}
           </Text>
           <Text type="secondary" style={{ fontSize: 12 }}>
@@ -72,7 +66,7 @@ export const AudioCard: FC<AudioCardProps> = memo(
           <Button
             type="text"
             icon={actionIcon}
-            onClick={handleActionClick}
+            onClick={onAction ? handleActionClick : undefined}
             style={{ flexShrink: 0 }}
           />
         )}

@@ -1,5 +1,5 @@
 import { App } from "antd"
-import { ExclamationCircleOutlined } from "@ant-design/icons"
+import ExclamationCircleOutlined from "@ant-design/icons/ExclamationCircleOutlined"
 import { useCallback } from "react"
 
 interface ConfirmOptions {

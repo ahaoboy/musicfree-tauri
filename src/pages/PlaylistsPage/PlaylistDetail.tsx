@@ -1,7 +1,7 @@
 import { FC, useCallback, useEffect } from "react"
 import { useNavigate, useParams } from "react-router-dom"
 import { Flex, Avatar } from "antd"
-import { DeleteOutlined } from "@ant-design/icons"
+import DeleteOutlined from "@ant-design/icons/DeleteOutlined"
 import { useAppStore } from "../../store"
 import { LocalAudio, DEFAULT_COVER_URL } from "../../api"
 import { AudioCard } from "../../components"
@@ -99,7 +99,7 @@ export const PlaylistDetail: FC = () => {
     <Flex vertical className="page audio-list" gap="small">
       {playlist.audios.map((audio, index) => (
         <AudioCard
-          key={`${audio.audio.id}-${index}`}
+          key={`${audio.audio.id}-${index}-${playlist.id}`}
           audio={audio}
           onClick={() => handleAudioClick(audio)}
           showAction

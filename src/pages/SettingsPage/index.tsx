@@ -1,12 +1,10 @@
 import { FC, useEffect, useState, useCallback, useMemo } from "react"
-import { Button, App, Tooltip, Typography, Flex, Space } from "antd"
-import {
-  BulbOutlined,
-  MoonOutlined,
-  DesktopOutlined,
-  CopyOutlined,
-  CheckOutlined,
-} from "@ant-design/icons"
+import { Button, App, Typography, Flex, Space } from "antd"
+import BulbOutlined from "@ant-design/icons/BulbOutlined"
+import MoonOutlined from "@ant-design/icons/MoonOutlined"
+import DesktopOutlined from "@ant-design/icons/DesktopOutlined"
+import CopyOutlined from "@ant-design/icons/CopyOutlined"
+import CheckOutlined from "@ant-design/icons/CheckOutlined"
 import { writeText } from "@tauri-apps/plugin-clipboard-manager"
 import { useAppStore } from "../../store"
 import {
@@ -202,13 +200,11 @@ export const SettingsPage: FC = () => {
           </Flex>
           <Flex align="center" justify="space-between" style={{ padding: 16 }}>
             <Text>App Directory</Text>
-            <Tooltip title="Copy Path">
-              <Button
-                type="text"
-                icon={copied ? <CheckOutlined /> : <CopyOutlined />}
-                onClick={handleCopyPath}
-              />
-            </Tooltip>
+            <Button
+              type="text"
+              icon={copied ? <CheckOutlined /> : <CopyOutlined />}
+              onClick={handleCopyPath}
+            />
           </Flex>
         </Flex>
       </Flex>

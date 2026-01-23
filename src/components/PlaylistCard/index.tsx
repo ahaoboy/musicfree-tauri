@@ -1,6 +1,6 @@
-import { FC, memo, useMemo } from "react"
+import { FC, memo, useCallback } from "react"
 import { Flex, Typography, Avatar, Button } from "antd"
-import { FolderOutlined } from "@ant-design/icons"
+import FolderOutlined from "@ant-design/icons/FolderOutlined"
 import { DEFAULT_COVER_URL, LocalPlaylist } from "../../api"
 import { useCoverUrl } from "../../hooks"
 
@@ -21,35 +21,29 @@ export const PlaylistCard: FC<PlaylistCardProps> = memo(
     const audioCount = playlist.audios?.length || 0
     const displayName = playlist.title || playlist.id
 
-    const handleClick = useMemo(
-      () =>
-        onClick
-          ? (e: React.MouseEvent | React.KeyboardEvent) => {
-              if ("key" in e && e.key !== "Enter" && e.key !== " ") return
-              onClick()
-            }
-          : undefined,
+    const handleClick = useCallback(
+      (e: React.MouseEvent | React.KeyboardEvent) => {
+        if ("key" in e && e.key !== "Enter" && e.key !== " ") return
+        onClick?.()
+      },
       [onClick],
     )
 
-    const handleActionClick = useMemo(
-      () =>
-        onAction
-          ? (e: React.MouseEvent) => {
-              e.stopPropagation()
-              onAction()
-            }
-          : undefined,
+    const handleActionClick = useCallback(
+      (e: React.MouseEvent) => {
+        e.stopPropagation()
+        onAction?.()
+      },
       [onAction],
     )
 
     return (
       <Flex
         className="playlist-card"
-        onClick={handleClick}
+        onClick={onClick ? handleClick : undefined}
         role={onClick ? "button" : undefined}
         tabIndex={onClick ? 0 : undefined}
-        onKeyDown={handleClick}
+        onKeyDown={onClick ? handleClick : undefined}
         align="center"
         gap="middle"
         style={{ cursor: onClick ? "pointer" : "default" }}
@@ -63,7 +57,7 @@ export const PlaylistCard: FC<PlaylistCardProps> = memo(
           className="card-avatar"
         />
         <Flex vertical flex={1} style={{ minWidth: 0 }}>
-          <Text strong ellipsis={{ tooltip: displayName }}>
+          <Text strong ellipsis>
             {displayName}
           </Text>
           <Text type="secondary" style={{ fontSize: 12 }}>
@@ -74,7 +68,7 @@ export const PlaylistCard: FC<PlaylistCardProps> = memo(
           <Button
             type="text"
             icon={actionIcon}
-            onClick={handleActionClick}
+            onClick={onAction ? handleActionClick : undefined}
             style={{ flexShrink: 0 }}
           />
         )}

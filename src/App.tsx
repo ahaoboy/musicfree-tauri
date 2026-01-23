@@ -6,6 +6,7 @@ import {
   lazy,
   memo,
   useEffect,
+  useMemo,
 } from "react"
 import {
   BrowserRouter,
@@ -24,12 +25,10 @@ import {
 import { NavigationContext, NavigationContextType } from "./contexts"
 
 type Tab = "playlists" | "music" | "search" | "settings"
-import {
-  UnorderedListOutlined,
-  CustomerServiceOutlined,
-  SearchOutlined,
-  SettingOutlined,
-} from "@ant-design/icons"
+import UnorderedListOutlined from "@ant-design/icons/UnorderedListOutlined"
+import CustomerServiceOutlined from "@ant-design/icons/CustomerServiceOutlined"
+import SearchOutlined from "@ant-design/icons/SearchOutlined"
+import SettingOutlined from "@ant-design/icons/SettingOutlined"
 import {
   ConfigProvider,
   theme as antdTheme,
@@ -101,11 +100,13 @@ const AppLayout: FC = memo(() => {
   const isConfigLoading = useAppStore((state) => state.isConfigLoading)
   const loadConfig = useAppStore((state) => state.loadConfig)
 
-  // Get dark mode state (handles null/undefined theme)
   const isDark = useAppStore((state) => state.isDark())
 
-  // Get current tab
-  const currentTab = ROUTE_TO_TAB[location.pathname] || "playlists"
+  // Get current tab - memoize to avoid recalculation
+  const currentTab = useMemo(
+    () => ROUTE_TO_TAB[location.pathname] || "playlists",
+    [location.pathname],
+  )
 
   // Handle tab change
   const handleTabChange = useCallback(

@@ -1,20 +1,18 @@
 import { FC, useCallback, useMemo } from "react"
 import { useNavigate } from "react-router-dom"
-import {
-  LeftOutlined,
-  ShareAltOutlined,
-  HeartOutlined,
-  HeartFilled,
-  StepBackwardOutlined,
-  StepForwardOutlined,
-  PlayCircleFilled,
-  PauseCircleFilled,
-  RetweetOutlined,
-  SwapOutlined,
-  BarsOutlined,
-  AudioOutlined,
-} from "@ant-design/icons"
-import { Slider, message, Button, Typography, Avatar, Flex } from "antd"
+import LeftOutlined from "@ant-design/icons/LeftOutlined"
+import ShareAltOutlined from "@ant-design/icons/ShareAltOutlined"
+import HeartOutlined from "@ant-design/icons/HeartOutlined"
+import HeartFilled from "@ant-design/icons/HeartFilled"
+import StepBackwardOutlined from "@ant-design/icons/StepBackwardOutlined"
+import StepForwardOutlined from "@ant-design/icons/StepForwardOutlined"
+import PlayCircleFilled from "@ant-design/icons/PlayCircleFilled"
+import PauseCircleFilled from "@ant-design/icons/PauseCircleFilled"
+import RetweetOutlined from "@ant-design/icons/RetweetOutlined"
+import SwapOutlined from "@ant-design/icons/SwapOutlined"
+import BarsOutlined from "@ant-design/icons/BarsOutlined"
+import AudioOutlined from "@ant-design/icons/AudioOutlined"
+import { Slider, Button, Typography, Avatar, Flex, App } from "antd"
 import { useAppStore, useCurrentTime, useDuration } from "../../store"
 import { DEFAULT_COVER_URL } from "../../api"
 import { useCoverUrl } from "../../hooks"
@@ -32,20 +30,20 @@ const formatTime = (seconds: number) => {
 // Player page - full-screen audio player
 export const PlayerPage: FC = () => {
   const navigate = useNavigate()
+  const { message } = App.useApp()
 
   // Selective store subscriptions
   const currentAudio = useAppStore((state) => state.currentAudio)
   const isPlaying = useAppStore((state) => state.isPlaying)
   const playMode = useAppStore((state) => state.playMode)
   const audioElement = useAppStore((state) => state.audioElement)
-  const _playlists = useAppStore((state) => state.config.playlists)
   const togglePlay = useAppStore((state) => state.togglePlay)
   const playNext = useAppStore((state) => state.playNext)
   const playPrev = useAppStore((state) => state.playPrev)
   const canPlayPrev = useAppStore((state) => state.canPlayPrev)
   const togglePlayMode = useAppStore((state) => state.togglePlayMode)
   const toggleFavorite = useAppStore((state) => state.toggleFavorite)
-  const _isFavorited = useAppStore((state) => state.isFavoritedAudio)
+  const isFavoritedAudio = useAppStore((state) => state.isFavoritedAudio)
 
   const coverUrl = useCoverUrl(
     currentAudio?.cover_path,
@@ -130,9 +128,10 @@ export const PlayerPage: FC = () => {
     }
   }, [playMode])
 
-  // Memoize favorite status - recalculates when playlists or currentAudio changes
-  const isFav = useAppStore(
-    (state) => currentAudio && state.isFavoritedAudio(currentAudio.audio.id),
+  // Memoize favorite status - recalculates when currentAudio changes
+  const isFav = useMemo(
+    () => currentAudio && isFavoritedAudio(currentAudio.audio.id),
+    [currentAudio, isFavoritedAudio],
   )
 
   if (!currentAudio) {
@@ -180,10 +179,7 @@ export const PlayerPage: FC = () => {
           className="icon-btn"
         />
         <Flex flex={1} justify="center" style={{ minWidth: 0 }}>
-          <Text
-            ellipsis={{ tooltip: currentAudio.audio.title }}
-            className="header-title"
-          >
+          <Text ellipsis className="header-title">
             {currentAudio.audio.title}
           </Text>
         </Flex>
@@ -213,10 +209,7 @@ export const PlayerPage: FC = () => {
         />
 
         <Flex vertical align="center" className="track-info">
-          <Title
-            level={3}
-            ellipsis={{ rows: 2, tooltip: currentAudio.audio.title }}
-          >
+          <Title level={3} ellipsis={{ rows: 2 }}>
             {currentAudio.audio.title}
           </Title>
           <Text type="secondary">{currentAudio.audio.platform}</Text>
@@ -236,9 +229,6 @@ export const PlayerPage: FC = () => {
             max={duration || 100}
             value={currentTime}
             onChange={handleSliderChange}
-            tooltip={{
-              formatter: (value) => (value ? formatTime(value) : "0:00"),
-            }}
             disabled={!duration || duration === 0}
           />
           <Text type="secondary" className="time-text">

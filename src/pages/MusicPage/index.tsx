@@ -1,6 +1,6 @@
 import { FC, useCallback } from "react"
 import { Spin, Flex, Avatar } from "antd"
-import { DeleteOutlined } from "@ant-design/icons"
+import DeleteOutlined from "@ant-design/icons/DeleteOutlined"
 import { useAppStore, useAudios } from "../../store"
 import { AudioCard } from "../../components"
 import { useConfirm } from "../../hooks"
@@ -19,7 +19,7 @@ export const MusicPage: FC = () => {
     (audio: LocalAudio) => {
       playAudio(audio, AUDIO_PLAYLIST_ID)
     },
-    [playAudio, audios],
+    [playAudio],
   )
 
   const handleDelete = useCallback(

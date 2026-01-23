@@ -1,12 +1,10 @@
 import { FC, memo, useCallback } from "react"
 import { useNavigate } from "react-router-dom"
-import {
-  HeartFilled,
-  HeartOutlined,
-  PauseCircleFilled,
-  PlayCircleFilled,
-  AudioOutlined,
-} from "@ant-design/icons"
+import HeartFilled from "@ant-design/icons/HeartFilled"
+import HeartOutlined from "@ant-design/icons/HeartOutlined"
+import PauseCircleFilled from "@ant-design/icons/PauseCircleFilled"
+import PlayCircleFilled from "@ant-design/icons/PlayCircleFilled"
+import AudioOutlined from "@ant-design/icons/AudioOutlined"
 import { Button, Flex, Typography, Avatar } from "antd"
 import { DEFAULT_COVER_URL, LocalAudio } from "../../api"
 import { useAppStore } from "../../store"
@@ -82,10 +80,10 @@ export const PlayerCard: FC<PlayerCardProps> = memo(({ audio }) => {
         alt={audio.audio.title}
       />
       <Flex vertical flex={1} style={{ minWidth: 0 }}>
-        <Text strong ellipsis={{ tooltip: audio.audio.title }}>
+        <Text strong ellipsis>
           {audio.audio.title}
         </Text>
-        <Text type="secondary" ellipsis={{ tooltip: audio.audio.platform }}>
+        <Text type="secondary" ellipsis>
           {audio.audio.platform}
         </Text>
       </Flex>

@@ -1,11 +1,9 @@
-import {
-  DownloadOutlined,
-  AudioOutlined,
-  ReloadOutlined,
-  PlusOutlined,
-  DeleteOutlined,
-  StopOutlined,
-} from "@ant-design/icons"
+import DownloadOutlined from "@ant-design/icons/DownloadOutlined"
+import AudioOutlined from "@ant-design/icons/AudioOutlined"
+import ReloadOutlined from "@ant-design/icons/ReloadOutlined"
+import PlusOutlined from "@ant-design/icons/PlusOutlined"
+import DeleteOutlined from "@ant-design/icons/DeleteOutlined"
+import StopOutlined from "@ant-design/icons/StopOutlined"
 import { Button, Checkbox, Input, Flex, Typography, Avatar, Spin } from "antd"
 import { FC, useEffect, useCallback, useMemo, memo } from "react"
 import {
@@ -174,7 +172,7 @@ const AudioItem: FC<AudioItemProps> = memo(
           alt={audio.title}
         />
         <Flex vertical flex={1} style={{ minWidth: 0 }}>
-          <Text strong ellipsis={{ tooltip: audio.title }}>
+          <Text strong ellipsis>
             {audio.title}
           </Text>
           <Flex align="center" gap="small">
@@ -908,7 +906,7 @@ export const SearchPage: FC = () => {
                   alt={playlist.title}
                 />
                 <Flex vertical flex={1} style={{ minWidth: 0 }}>
-                  <Text strong ellipsis={{ tooltip: playlist.title }}>
+                  <Text strong ellipsis>
                     {playlist.title}
                   </Text>
                   <Text type="secondary" style={{ fontSize: 12 }}>

@@ -1,7 +1,7 @@
 import { FC, useCallback, useEffect } from "react"
 import { Routes, Route, useNavigate } from "react-router-dom"
 import { Flex, Avatar } from "antd"
-import { DeleteOutlined } from "@ant-design/icons"
+import DeleteOutlined from "@ant-design/icons/DeleteOutlined"
 import { useAppStore, usePlaylistsPageData } from "../../store"
 import {
   LocalPlaylist,

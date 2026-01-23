@@ -1,6 +1,7 @@
 import { FC } from "react"
 import { Result, Button, Flex } from "antd"
-import { ReloadOutlined, HomeOutlined } from "@ant-design/icons"
+import ReloadOutlined from "@ant-design/icons/ReloadOutlined"
+import HomeOutlined from "@ant-design/icons/HomeOutlined"
 import { useNavigate } from "react-router-dom"
 import { ErrorBoundary } from "../ErrorBoundary"
 
