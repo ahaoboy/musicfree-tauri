@@ -1,15 +1,9 @@
 use crate::{
-    core::{LocalAudio, LocalPlaylist},
+    core::{ASSETS_DIR, AUDIOS_DIR, COVERS_DIR, LocalAudio},
     error::AppResult,
 };
 use musicfree::{Audio, Platform};
-use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
-
-pub const ASSETS_DIR: &str = "assets";
-pub const AUDIOS_DIR: &str = "audios";
-pub const COVERS_DIR: &str = "covers";
-pub const CONFIG_FILE: &str = "musicfree.json";
 
 fn write<P: AsRef<Path>, C: AsRef<[u8]>>(p: P, c: C) -> std::io::Result<()> {
     let p = p.as_ref();
@@ -123,16 +117,4 @@ pub async fn download_cover(
         return Some(cover_path);
     }
     None
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, Default)]
-pub struct Config {
-    pub audios: Vec<LocalAudio>,
-    pub playlists: Vec<LocalPlaylist>,
-    pub theme: Option<String>,
-    pub last_audio: Option<LocalAudio>,
-}
-
-pub fn get_config_path(app_dir: PathBuf) -> PathBuf {
-    app_dir.join(CONFIG_FILE)
 }

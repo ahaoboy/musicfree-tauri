@@ -1,4 +1,4 @@
-import { FC, memo, useCallback, useMemo } from "react"
+import { FC, memo, useCallback } from "react"
 import { useNavigate } from "react-router-dom"
 import {
   HeartFilled,
@@ -8,7 +8,7 @@ import {
   AudioOutlined,
 } from "@ant-design/icons"
 import { Button, Flex, Typography, Avatar } from "antd"
-import { DEFAULT_COVER_URL, FAVORITE_PLAYLIST_ID, LocalAudio } from "../../api"
+import { DEFAULT_COVER_URL, LocalAudio } from "../../api"
 import { useAppStore } from "../../store"
 import { useCoverUrl } from "../../hooks"
 
@@ -27,17 +27,10 @@ export const PlayerCard: FC<PlayerCardProps> = memo(({ audio }) => {
   const isPlaying = useAppStore((state) => state.isPlaying)
   const togglePlay = useAppStore((state) => state.togglePlay)
   const toggleFavorite = useAppStore((state) => state.toggleFavorite)
-  const playlists = useAppStore((state) => state.config.playlists)
 
   // Memoize favorite check
-  const isFavorited = useMemo(
-    () =>
-      audio
-        ? playlists
-            .find((p) => p.id === FAVORITE_PLAYLIST_ID)
-            ?.audios.some((a) => a.audio.id === audio.audio.id) || false
-        : false,
-    [audio, playlists],
+  const isFavorited = useAppStore(
+    (state) => audio && state.isFavoritedAudio(audio.audio.id),
   )
 
   const handleCardClick = useCallback(() => {

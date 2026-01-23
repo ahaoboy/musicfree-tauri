@@ -1,15 +1,15 @@
 import { FC, useCallback } from "react"
 import { Spin, Flex, Avatar } from "antd"
 import { DeleteOutlined } from "@ant-design/icons"
-import { useAppStore } from "../../store"
+import { useAppStore, useAudios } from "../../store"
 import { AudioCard } from "../../components"
 import { useConfirm } from "../../hooks"
-import { DEFAULT_COVER_URL, LocalAudio } from "../../api"
+import { DEFAULT_COVER_URL, LocalAudio, AUDIO_PLAYLIST_ID } from "../../api"
 
 // Music page - displays all downloaded individual audio files
 // Wrapped with ErrorBoundary in App.tsx
 export const MusicPage: FC = () => {
-  const audios = useAppStore((state) => state.config.audios)
+  const audios = useAudios()
   const playAudio = useAppStore((state) => state.playAudio)
   const deleteAudio = useAppStore((state) => state.deleteAudio)
   const isConfigLoading = useAppStore((state) => state.isConfigLoading)
@@ -17,7 +17,7 @@ export const MusicPage: FC = () => {
 
   const handleAudioClick = useCallback(
     (audio: LocalAudio) => {
-      playAudio(audio, audios)
+      playAudio(audio, AUDIO_PLAYLIST_ID)
     },
     [playAudio, audios],
   )
@@ -27,7 +27,7 @@ export const MusicPage: FC = () => {
       showConfirm({
         title: "Delete Audio",
         content: `Are you sure you want to delete "${title}"?`,
-        onOk: () => deleteAudio(audioId),
+        onOk: () => deleteAudio(audioId, AUDIO_PLAYLIST_ID),
       })
     },
     [showConfirm, deleteAudio],

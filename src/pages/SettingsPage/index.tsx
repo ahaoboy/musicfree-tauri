@@ -9,8 +9,14 @@ import {
 } from "@ant-design/icons"
 import { writeText } from "@tauri-apps/plugin-clipboard-manager"
 import { useAppStore } from "../../store"
-import { clear_all_data, app_dir, app_version, ThemeMode } from "../../api"
-import { useConfirm, useEffectiveTheme } from "../../hooks"
+import {
+  clear_all_data,
+  app_dir,
+  app_version,
+  ThemeMode,
+  is_builtin,
+} from "../../api"
+import { useConfirm } from "../../hooks"
 
 const { Title, Text } = Typography
 
@@ -50,10 +56,17 @@ const ThemeOption: FC<ThemeOptionProps> = ({
 
 // Settings page - app configuration
 export const SettingsPage: FC = () => {
-  const theme = useEffectiveTheme()
-  const audios = useAppStore((state) => state.config.audios)
-  const playlists = useAppStore((state) => state.config.playlists)
+  const theme = useAppStore((state) => state.theme)
   const setThemeMode = useAppStore((state) => state.setThemeMode)
+
+  // Calculate total audios across all playlists (excluding duplicates)
+  const totalAudios = useAppStore((state) => state.getTotalAudios().length)
+
+  // Count user playlists (excluding special playlists)
+  const userPlaylistsCount = useAppStore(
+    (state) =>
+      state.config.playlists.filter(({ id }) => !is_builtin(id)).length,
+  )
 
   const [appDirPath, setAppDirPath] = useState<string>("")
   const [version, setVersion] = useState<string>("")
@@ -153,11 +166,11 @@ export const SettingsPage: FC = () => {
             }}
           >
             <Text>Downloaded Tracks</Text>
-            <Text type="secondary">{audios.length}</Text>
+            <Text type="secondary">{totalAudios}</Text>
           </Flex>
           <Flex align="center" justify="space-between" style={{ padding: 16 }}>
             <Text>Playlists</Text>
-            <Text type="secondary">{playlists.length}</Text>
+            <Text type="secondary">{userPlaylistsCount}</Text>
           </Flex>
         </Flex>
       </Flex>

@@ -11,30 +11,43 @@ import {
   ThemeMode,
   get_system_theme,
   FAVORITE_PLAYLIST_ID,
+  FAVORITE_PLAYLIST_TITLE,
+  AUDIO_PLAYLIST_ID,
+  AUDIO_PLAYLIST_TITLE,
   Playlist,
+  storage,
 } from "../api"
 
-// Persistent data interface (saved to config)
+const MAX_HISTORY_SIZE = 64
+
+// ============================================
+// Persistent Data Interface
+// ============================================
 interface PersistentData {
   config: Config
 }
 
-// Runtime data interface (lost on app restart)
+// ============================================
+// Runtime Data Interface
+// ============================================
 interface RuntimeData {
   // Current playback state
   currentAudio: LocalAudio | null
+  currentPlaylistId: string | null // Track which playlist is playing
   audioUrl: string | null
   isPlaying: boolean
   playbackRate: number
   playMode: PlayMode
-  playbackQueue: LocalAudio[]
-  playbackHistory: LocalAudio[] // History stack for previous button
+  playbackHistory: LocalAudio[]
+  theme: ThemeMode // Theme stored in localStorage
+  duration: number
+  currentTime: number
 
   // Loading states
   isConfigLoading: boolean
 
-  // Audio element reference (managed externally)
-  audioElement: HTMLAudioElement | null
+  // Audio element reference
+  audioElement: HTMLAudioElement
 
   // Search page runtime state
   searchText: string
@@ -45,50 +58,54 @@ interface RuntimeData {
   searchFailedIds: Set<string>
   searchSearching: boolean
   searchDownloadingAll: boolean
-  searchMessageToShow: {
-    type: "success" | "error" | "warning"
-    text: string
-  } | null
   searchCoverUrls: Record<string, string>
   searchPlaylistCoverUrl: string | null
 }
 
-// App state interface
+// ============================================
+// App State Interface
+// ============================================
 interface AppState extends PersistentData, RuntimeData {
-  // Actions for persistent data
+  // Config actions
   loadConfig: () => Promise<void>
   saveConfig: (config: Config) => Promise<void>
   setThemeMode: (mode: ThemeMode) => void
-  addAudiosToConfig: (audios: LocalAudio[]) => Promise<void>
-  addPlaylistToConfig: (playlist: LocalPlaylist) => Promise<void>
-  setLastAudio: (audio: LocalAudio) => Promise<void>
-  toggleFavorite: (audio: LocalAudio) => Promise<void>
-  isFavorited: (id: string) => boolean
-  deleteAudio: (id: string) => Promise<void>
-  deletePlaylist: (id: string) => Promise<void>
+  isDark: () => boolean
 
-  // Actions for runtime data
+  // Playlist actions
+  addPlaylistToConfig: (playlist: LocalPlaylist) => Promise<void>
+  deletePlaylist: (id: string) => Promise<void>
+  getTotalAudios: () => LocalAudio[]
+
+  // Audio actions (operates on AUDIO_PLAYLIST)
+  addAudiosToConfig: (audios: LocalAudio[]) => Promise<void>
+  deleteAudio: (audioId: string, playlistId: string) => Promise<void>
+
+  // Favorite actions
+  toggleFavorite: (audio: LocalAudio) => Promise<void>
+  isFavoritedAudio: (id: string) => boolean
+
+  // Playback actions
   playAudio: (
     audio: LocalAudio,
-    queue?: LocalAudio[],
+    playlistId: string,
     addToHistory?: boolean,
   ) => Promise<void>
   loadAudioMetadata: (audio: LocalAudio) => Promise<void>
   pauseAudio: () => void
   resumeAudio: () => void
   togglePlay: () => void
-  playNext: (auto?: boolean) => Promise<void>
+  playNext: () => Promise<void>
   playPrev: () => Promise<void>
   canPlayPrev: () => boolean
   togglePlayMode: () => void
-  setAudioElement: (element: HTMLAudioElement | null) => void
-  setPlaybackRate: (rate: number) => void
+  setupAudioListeners: () => void
+  listenersInitialized: boolean
+  seekTo: (time: number) => void
 
-  // Search page runtime actions
+  // Search page actions
   setSearchText: (text: string) => void
   setSearchPlaylist: (playlist: Playlist | null) => void
-  addSearchSelectedId: (id: string) => void
-  removeSearchSelectedId: (id: string) => void
   setSearchSelectedIds: (ids: Set<string>) => void
   addSearchDownloadingId: (id: string) => void
   removeSearchDownloadingId: (id: string) => void
@@ -97,23 +114,23 @@ interface AppState extends PersistentData, RuntimeData {
   removeSearchFailedId: (id: string) => void
   setSearchSearching: (searching: boolean) => void
   setSearchDownloadingAll: (downloadingAll: boolean) => void
-  setSearchMessageToShow: (
-    message: { type: "success" | "error" | "warning"; text: string } | null,
-  ) => void
-  setSearchCoverUrls: (urls: Record<string, string>) => void
   addSearchCoverUrl: (audioId: string, url: string) => void
   setSearchPlaylistCoverUrl: (url: string | null) => void
   clearSearchRuntimeData: () => void
-  clearSearchStatesOnly: () => void // Clear states but keep searchText
+  clearSearchStatesOnly: () => void
 }
 
-// Helper to apply theme to document
-const applyTheme = (mode?: ThemeMode | null) => {
+// ============================================
+// Helper Functions
+// ============================================
+
+// Apply theme to document
+export const applyTheme = (mode?: ThemeMode | null) => {
   if (typeof document !== "undefined") {
-    // Default to "auto" if mode is null or undefined
     const effectiveMode = mode || "auto"
     const actualTheme =
       effectiveMode === "auto" ? get_system_theme() : effectiveMode
+
     document.documentElement.setAttribute(
       "data-prefers-color-scheme",
       actualTheme,
@@ -121,23 +138,61 @@ const applyTheme = (mode?: ThemeMode | null) => {
   }
 }
 
-// Create the store
-export const useAppStore = create<AppState>((set, get) => ({
-  // Persistent data initial state
-  config: get_default_config(),
+// Get or create AUDIO playlist
+const getOrCreateAudioPlaylist = (config: Config): LocalPlaylist => {
+  let audioPlaylist = config.playlists.find((p) => p.id === AUDIO_PLAYLIST_ID)
+  if (!audioPlaylist) {
+    audioPlaylist = {
+      id: AUDIO_PLAYLIST_ID,
+      title: AUDIO_PLAYLIST_TITLE,
+      cover_path: null,
+      audios: [],
+      platform: "File",
+    }
+    config.playlists.push(audioPlaylist)
+  }
+  return audioPlaylist
+}
 
-  // Runtime data initial state
-  currentAudio: null,
+// Get or create FAVORITE playlist
+const getOrCreateFavoritePlaylist = (config: Config): LocalPlaylist => {
+  let favPlaylist = config.playlists.find((p) => p.id === FAVORITE_PLAYLIST_ID)
+  if (!favPlaylist) {
+    favPlaylist = {
+      id: FAVORITE_PLAYLIST_ID,
+      title: FAVORITE_PLAYLIST_TITLE,
+      cover_path: null,
+      audios: [],
+      platform: "File",
+    }
+    // Always insert at the beginning
+    config.playlists.unshift(favPlaylist)
+  }
+  return favPlaylist
+}
+
+// ============================================
+// Create Store
+// ============================================
+export const useAppStore = create<AppState>((set, get) => ({
+  // ============================================
+  // Initial State
+  // ============================================
+  config: get_default_config(),
+  currentAudio: storage.getCurrentAudio(),
+  currentPlaylistId: storage.getCurrentPlaylistId(),
   audioUrl: null,
   isPlaying: false,
   playbackRate: 1,
-  playMode: "sequence" as const,
-  playbackQueue: [],
-  playbackHistory: [], // Initialize empty history stack
+  playMode: storage.getPlayMode(),
+  theme: storage.getTheme(),
+  playbackHistory: [],
   isConfigLoading: false,
-  audioElement: null,
+  audioElement: new Audio(),
+  duration: 0,
+  currentTime: 0,
 
-  // Search page runtime state
+  // Search state
   searchText: "",
   searchPlaylist: null,
   searchSelectedIds: new Set(),
@@ -146,320 +201,103 @@ export const useAppStore = create<AppState>((set, get) => ({
   searchFailedIds: new Set(),
   searchSearching: false,
   searchDownloadingAll: false,
-  searchMessageToShow: null,
   searchCoverUrls: {},
   searchPlaylistCoverUrl: null,
-
-  // Load config from backend
+  listenersInitialized: false,
+  // ============================================
+  // Config Actions
+  // ============================================
   loadConfig: async () => {
     set({ isConfigLoading: true })
+    const { audioElement, setupAudioListeners, listenersInitialized } = get()
     try {
       const config = await get_config()
-      applyTheme(config.theme || "auto")
-      const playlists = config.playlists
+      applyTheme(storage.getTheme())
+
+      const currentAudio = storage.getCurrentAudio()
+      const currentPlaylistId = storage.getCurrentPlaylistId()
+      if (currentAudio && currentPlaylistId) {
+        audioElement.src = await get_web_url(currentAudio.path)
+      }
+      if (!listenersInitialized) {
+        setupAudioListeners()
+      }
       set({
         config,
-        currentAudio: config.last_audio || null,
         isConfigLoading: false,
+        currentAudio,
+        currentPlaylistId,
+        listenersInitialized: true,
       })
-
-      // Restore playback queue
-      if (config.last_audio) {
-        const lastAudioId = config.last_audio.audio.id
-        let queue: LocalAudio[] = []
-
-        // 1. Try to find in playlists
-        const foundPlaylist = playlists.find((p) =>
-          p.audios.some((a) => a.audio.id === lastAudioId),
-        )
-        if (foundPlaylist) {
-          queue = foundPlaylist.audios
-        } else {
-          // 2. Try to find in all audios (Music list)
-          const foundInAll = (config.audios || []).some(
-            (a) => a.audio.id === lastAudioId,
-          )
-          if (foundInAll) {
-            queue = config.audios || []
-          } else {
-            // 3. Fallback to just this audio
-            queue = [config.last_audio]
-          }
-        }
-        set({ playbackQueue: queue })
-
-        // Load metadata if audio element is already set
-        const { audioElement } = get()
-        if (audioElement) {
-          get().loadAudioMetadata(config.last_audio)
-        }
-      }
     } catch (error) {
       console.error("Failed to load config:", error)
       set({ isConfigLoading: false })
     }
   },
 
-  // Save config to backend
+  // Setup audio event listeners
+  setupAudioListeners: () => {
+    const { audioElement } = get()
+    // Time update
+    audioElement.addEventListener("timeupdate", () => {
+      set({
+        currentTime: audioElement.currentTime,
+        duration: audioElement.duration || 0,
+      })
+    })
+
+    // Metadata loaded
+    audioElement.addEventListener("loadedmetadata", () => {
+      set({
+        duration: audioElement.duration || 0,
+      })
+    })
+
+    // Audio ended - auto play next
+    audioElement.addEventListener("ended", () => {
+      get().playNext()
+    })
+
+    // Error handling
+    audioElement.addEventListener("error", (e) => {
+      console.error("Audio playback error:", e)
+      set({ isPlaying: false })
+    })
+  },
+
   saveConfig: async (config: Config) => {
     try {
       await save_config(config)
-      set({
-        config,
-      })
+      set({ config })
     } catch (error) {
       console.error("Failed to save config:", error)
       throw error
     }
   },
 
-  // Set theme mode
-  setThemeMode: (theme: ThemeMode) => {
-    localStorage.setItem("themeMode", theme)
-    const { config } = get()
-    config.theme = theme
-    applyTheme(theme)
-    set({ config })
-    if (config) {
-      const updatedConfig = { ...config, theme }
-      save_config(updatedConfig).catch((error) => {
-        console.error("Failed to save theme to config:", error)
-      })
-    }
-  },
-
-  // Set audio element
-  setAudioElement: (element: HTMLAudioElement | null) => {
-    set({ audioElement: element })
-    if (element) {
-      element.onended = () => {
-        get().playNext(true)
-      }
-
-      // Load metadata for current audio if it exists
-      const { currentAudio } = get()
-      if (currentAudio) {
-        get().loadAudioMetadata(currentAudio)
-      }
-    }
-  },
-
-  // Load audio metadata without playing (for preloading)
-  loadAudioMetadata: async (audio: LocalAudio) => {
-    const { audioElement } = get()
-    try {
-      const url = await get_web_url(audio.path)
-
-      set({
-        currentAudio: audio,
-        audioUrl: url,
-      })
-
-      if (audioElement) {
-        audioElement.src = url
-        audioElement.load() // Load metadata without playing
-      }
-    } catch (error) {
-      console.error("Failed to load audio metadata:", error)
-    }
-  },
-
-  // Play audio
-  playAudio: async (
-    audio: LocalAudio,
-    queue?: LocalAudio[],
-    addToHistory: boolean = true,
-  ) => {
-    const { audioElement, currentAudio, playbackHistory } = get()
-    try {
-      const url = await get_web_url(audio.path)
-
-      // Add current audio to history before switching (if not from history navigation)
-      if (addToHistory && currentAudio) {
-        const newHistory = [...playbackHistory, currentAudio]
-        // Limit history to last 50 tracks to prevent memory issues
-        if (newHistory.length > 50) {
-          newHistory.shift()
-        }
-        set({ playbackHistory: newHistory })
-      }
-
-      // Update queue if provided
-      if (queue) {
-        set({ playbackQueue: queue })
-      }
-
-      set({
-        currentAudio: audio,
-        audioUrl: url,
-        isPlaying: true,
-      })
-
-      if (audioElement) {
-        audioElement.src = url
-        audioElement.playbackRate = get().playbackRate // Ensure rate is preserved
-        await audioElement.play()
-      }
-
-      // Save as last played audio
-      get().setLastAudio(audio)
-    } catch (error) {
-      console.error("Failed to play audio:", error)
-      set({ isPlaying: false })
-    }
-  },
-
-  // Play Next - Choose next track based on play mode
-  playNext: async (auto: boolean = false) => {
-    const { currentAudio, playbackQueue, playMode } = get()
-    if (!currentAudio || playbackQueue.length === 0) return
-
-    const currentIndex = playbackQueue.findIndex(
-      (a) => a.audio.id === currentAudio.audio.id,
+  isDark() {
+    const { theme } = get()
+    return (
+      theme === "dark" || (theme === "auto" && get_system_theme() === "dark")
     )
-    if (currentIndex === -1) return
-
-    let nextIndex = -1
-
-    switch (playMode) {
-      case "single-loop":
-        // Auto: repeat same track, Manual: go to next
-        nextIndex = auto
-          ? currentIndex
-          : (currentIndex + 1) % playbackQueue.length
-        break
-
-      case "shuffle":
-        // Random track (avoid current track if possible)
-        if (playbackQueue.length > 1) {
-          do {
-            nextIndex = Math.floor(Math.random() * playbackQueue.length)
-          } while (nextIndex === currentIndex && playbackQueue.length > 1)
-        } else {
-          nextIndex = 0
-        }
-        break
-
-      case "list-loop":
-        // Loop to beginning after last track
-        nextIndex = (currentIndex + 1) % playbackQueue.length
-        break
-      default:
-        // Stop at end if auto, wrap if manual
-        if (currentIndex < playbackQueue.length - 1) {
-          nextIndex = currentIndex + 1
-        } else if (!auto) {
-          // Manual: wrap to beginning
-          nextIndex = 0
-        } else {
-          // Auto: stop playing
-          get().pauseAudio()
-          return
-        }
-        break
-    }
-
-    if (nextIndex >= 0 && nextIndex < playbackQueue.length) {
-      await get().playAudio(playbackQueue[nextIndex], undefined, true)
-    }
   },
-
-  // Play Previous - Pop from history stack
-  playPrev: async () => {
-    const { playbackHistory } = get()
-
-    // Check if history is empty
-    if (playbackHistory.length === 0) {
-      return
-    }
-
-    // Pop the last audio from history
-    const prevAudio = playbackHistory[playbackHistory.length - 1]
-    const newHistory = playbackHistory.slice(0, -1)
-
-    set({ playbackHistory: newHistory })
-
-    // Play without adding to history (addToHistory = false)
-    await get().playAudio(prevAudio, undefined, false)
-  },
-
-  // Check if previous button should be enabled
-  canPlayPrev: () => {
-    const { playbackHistory } = get()
-    return playbackHistory.length > 0
-  },
-
-  // Toggle Play Mode
-  togglePlayMode: () => {
-    const { playMode } = get()
-    const modes: PlayMode[] = [
-      "sequence",
-      "list-loop",
-      "single-loop",
-      "shuffle",
-    ]
-    const nextIndex = (modes.indexOf(playMode) + 1) % modes.length
-    set({ playMode: modes[nextIndex] })
-  },
-
-  // Pause audio
-  pauseAudio: () => {
-    const { audioElement } = get()
-    if (audioElement) {
-      audioElement.pause()
-    }
-    set({ isPlaying: false })
-  },
-
-  // Resume audio
-  resumeAudio: () => {
-    const { audioElement, audioUrl, currentAudio, playAudio } = get()
-
-    // If no URL but we have a current audio, try to play it (lazy load)
-    if (!audioUrl && currentAudio) {
-      playAudio(currentAudio)
-      return
-    }
-
-    if (audioElement && audioUrl) {
-      audioElement.play().catch((error) => {
-        console.error("Failed to resume audio:", error)
-      })
-      set({ isPlaying: true })
-    }
-  },
-
-  // Toggle play/pause
-  togglePlay: () => {
-    const { isPlaying } = get()
-    if (isPlaying) {
-      get().pauseAudio()
-    } else {
-      get().resumeAudio()
-    }
-  },
-
-  // Add audios to config
-  addAudiosToConfig: async (newAudios: LocalAudio[]) => {
+  getTotalAudios(): LocalAudio[] {
     const { config } = get()
-    if (!config) return
-
-    const existingIds = new Set(config.audios.map((a) => a.audio.id))
-    const uniqueNewAudios = newAudios.filter(
-      (a) => !existingIds.has(a.audio.id),
-    )
-
-    if (uniqueNewAudios.length === 0) return
-
-    const updatedConfig: Config = {
-      ...config,
-      audios: [...config.audios, ...uniqueNewAudios],
-    }
-
-    await get().saveConfig(updatedConfig)
+    return config.playlists.flatMap((i) => i.audios)
   },
 
-  // Add playlist to config (with smart merging)
+  setThemeMode: (mode: ThemeMode) => {
+    // Update store state
+    set({ theme: mode })
+    // Sync to localStorage for persistence
+    storage.setTheme(mode)
+    // Apply theme to document
+    applyTheme(mode)
+  },
+
+  // ============================================
+  // Playlist Actions
+  // ============================================
   addPlaylistToConfig: async (playlist: LocalPlaylist) => {
     const { config } = get()
     if (!config) return
@@ -480,7 +318,6 @@ export const useAppStore = create<AppState>((set, get) => ({
       // Merge audios: prefer new data, preserve order from new playlist
       const mergedAudios = playlist.audios
         .map((audio) => {
-          // Use new audio if available, otherwise use existing
           return (
             newAudioMap.get(audio.audio.id) ||
             existingAudioMap.get(audio.audio.id)
@@ -488,7 +325,7 @@ export const useAppStore = create<AppState>((set, get) => ({
         })
         .filter(Boolean) as LocalAudio[]
 
-      // Add any existing audios not in new playlist (append at end)
+      // Add any existing audios not in new playlist
       existing.audios.forEach((audio) => {
         if (!newAudioMap.has(audio.audio.id)) {
           mergedAudios.push(audio)
@@ -498,7 +335,6 @@ export const useAppStore = create<AppState>((set, get) => ({
       const mergedPlaylist: LocalPlaylist = {
         ...playlist,
         audios: mergedAudios,
-        // Use new cover_path if available, otherwise keep existing
         cover_path: playlist.cover_path || existing.cover_path,
       }
 
@@ -517,130 +353,17 @@ export const useAppStore = create<AppState>((set, get) => ({
     await get().saveConfig(updatedConfig)
   },
 
-  // Set last played audio
-  setLastAudio: async (audio: LocalAudio) => {
-    const { config } = get()
-    if (!config) return
-
-    const updatedConfig: Config = {
-      ...config,
-      last_audio: audio,
-    }
-
-    try {
-      await save_config(updatedConfig)
-      set({ config: updatedConfig })
-    } catch (error) {
-      console.error("Failed to save last audio:", error)
-    }
-  },
-
-  // Set playback rate
-  setPlaybackRate: (rate: number) => {
-    const { audioElement } = get()
-    set({ playbackRate: rate })
-    if (audioElement) {
-      audioElement.playbackRate = rate
-    }
-  },
-
-  isFavorited(id: string) {
-    const {
-      config: { playlists },
-    } = get()
-    const v = playlists.find((i) => i.id === FAVORITE_PLAYLIST_ID)
-    if (!v) {
-      return false
-    }
-    return !!v.audios.find((a) => a.audio.id === id)
-  },
-
-  // Toggle favorite
-  toggleFavorite: async (audio: LocalAudio) => {
-    const { config } = get()
-    if (!config) return
-
-    let playlists = config.playlists
-    let favPlaylist = playlists.find((p) => p.id === FAVORITE_PLAYLIST_ID)
-
-    if (!favPlaylist) {
-      favPlaylist = {
-        id: FAVORITE_PLAYLIST_ID,
-        title: FAVORITE_PLAYLIST_ID,
-        cover_path: null,
-        audios: [],
-        platform: "File",
-      }
-      playlists.unshift(favPlaylist)
-    }
-
-    // Check if audio exists
-    const exists = favPlaylist.audios.some((a) => a.audio.id === audio.audio.id)
-
-    const updatedFavPlaylist = { ...favPlaylist }
-    if (exists) {
-      updatedFavPlaylist.audios = favPlaylist.audios.filter(
-        (a) => a.audio.id !== audio.audio.id,
-      )
-    } else {
-      updatedFavPlaylist.audios = [audio, ...favPlaylist.audios] // Add to top
-    }
-
-    // Update playlists array
-    playlists = playlists.map((p) =>
-      p.id === FAVORITE_PLAYLIST_ID ? updatedFavPlaylist : p,
-    )
-    if (
-      playlists[0]?.id === FAVORITE_PLAYLIST_ID &&
-      playlists[0].audios.length === 0
-    ) {
-      playlists.shift()
-    }
-
-    const updatedConfig: Config = {
-      ...config,
-      playlists,
-    }
-
-    await get().saveConfig(updatedConfig)
-  },
-
-  // Delete audio
-  deleteAudio: async (id: string) => {
-    const { config, currentAudio, pauseAudio } = get()
-    if (!config) return
-
-    // Stop playback if it's the current audio
-    if (currentAudio?.audio.id === id) {
-      pauseAudio()
-      set({ currentAudio: null, audioUrl: null })
-    }
-
-    // Remove from main list
-    const updatedAudios = config.audios.filter((a) => a.audio.id !== id)
-
-    // Remove from all playlists
-    const updatedPlaylists = config.playlists.map((p) => ({
-      ...p,
-      audios: p.audios.filter((a) => a.audio.id !== id),
-    }))
-
-    const updatedConfig: Config = {
-      ...config,
-      audios: updatedAudios,
-      playlists: updatedPlaylists,
-    }
-
-    await get().saveConfig(updatedConfig)
-  },
-
-  // Delete playlist
   deletePlaylist: async (id: string) => {
     const { config } = get()
     if (!config) return
 
-    const updatedPlaylists = config.playlists.filter((p) => p.id !== id)
+    // Don't allow deleting special playlists
+    if (id === FAVORITE_PLAYLIST_ID || id === AUDIO_PLAYLIST_ID) {
+      console.warn("Cannot delete special playlist:", id)
+      return
+    }
 
+    const updatedPlaylists = config.playlists.filter((p) => p.id !== id)
     const updatedConfig: Config = {
       ...config,
       playlists: updatedPlaylists,
@@ -649,7 +372,314 @@ export const useAppStore = create<AppState>((set, get) => ({
     await get().saveConfig(updatedConfig)
   },
 
-  // Search page runtime actions
+  // ============================================
+  // Audio Actions (AUDIO_PLAYLIST)
+  // ============================================
+  addAudiosToConfig: async (audios: LocalAudio[]) => {
+    const { config } = get()
+    if (!config) return
+
+    const audioPlaylist = getOrCreateAudioPlaylist(config)
+
+    // Add new audios, avoiding duplicates
+    const existingIds = new Set(audioPlaylist.audios.map((a) => a.audio.id))
+    const newAudios = audios.filter((a) => !existingIds.has(a.audio.id))
+    audioPlaylist.audios.push(...newAudios)
+
+    await get().saveConfig(config)
+  },
+
+  deleteAudio: async (audioId: string, playlistId: string) => {
+    const { config } = get()
+    if (!config) return
+
+    // Helper function to remove audio from a playlist
+    const removeAudioFromPlaylist = (pId: string) => {
+      const playlist = config.playlists.find((p) => p.id === pId)
+      if (!playlist) return false
+
+      playlist.audios = playlist.audios.filter((a) => a.audio.id !== audioId)
+      return playlist.audios.length === 0
+    }
+
+    // Helper function to remove empty playlist
+    const removeEmptyPlaylist = (pId: string) => {
+      config.playlists = config.playlists.filter((p) => p.id !== pId)
+    }
+
+    // Remove from target playlist
+    const targetIsEmpty = removeAudioFromPlaylist(playlistId)
+
+    // Remove target playlist if empty (except AUDIO_PLAYLIST)
+    if (targetIsEmpty && playlistId !== AUDIO_PLAYLIST_ID) {
+      removeEmptyPlaylist(playlistId)
+    }
+
+    // Also remove from FAVORITE if not deleting from FAVORITE
+    if (playlistId !== FAVORITE_PLAYLIST_ID) {
+      const favIsEmpty = removeAudioFromPlaylist(FAVORITE_PLAYLIST_ID)
+      if (favIsEmpty) {
+        removeEmptyPlaylist(FAVORITE_PLAYLIST_ID)
+      }
+    }
+
+    await get().saveConfig(config)
+  },
+
+  // ============================================
+  // Favorite Actions
+  // ============================================
+  toggleFavorite: async (audio: LocalAudio) => {
+    const { config } = get()
+    if (!config) return
+
+    const favPlaylist = getOrCreateFavoritePlaylist(config)
+    const index = favPlaylist.audios.findIndex(
+      (a) => a.audio.id === audio.audio.id,
+    )
+
+    if (index >= 0) {
+      // Remove from favorites
+      favPlaylist.audios.splice(index, 1)
+      // Remove playlist if empty
+      if (favPlaylist.audios.length === 0) {
+        config.playlists = config.playlists.filter(
+          (p) => p.id !== FAVORITE_PLAYLIST_ID,
+        )
+      }
+    } else {
+      // Add to favorites
+      favPlaylist.audios.push(audio)
+    }
+    await get().saveConfig(config)
+  },
+
+  isFavoritedAudio: (id: string) => {
+    const { config } = get()
+    const favPlaylist = config.playlists.find(
+      (p) => p.id === FAVORITE_PLAYLIST_ID,
+    )
+    if (!favPlaylist) return false
+    return favPlaylist.audios.some((a) => a.audio.id === id)
+  },
+
+  // ============================================
+  // Playback Actions
+  // ============================================
+  playAudio: async (
+    audio: LocalAudio,
+    playlistId: string,
+    addToHistory: boolean = true,
+  ) => {
+    const { currentAudio, audioElement, playbackHistory } = get()
+
+    // Add current audio to history if different
+    if (
+      addToHistory &&
+      currentAudio &&
+      currentAudio.audio.id !== audio.audio.id
+    ) {
+      const newHistory = [...playbackHistory, currentAudio]
+      // Limit history to 50 items
+      if (newHistory.length > MAX_HISTORY_SIZE) {
+        newHistory.shift()
+      }
+      set({ playbackHistory: newHistory })
+    }
+
+    try {
+      const url = await get_web_url(audio.path)
+      set({
+        currentAudio: audio,
+        currentPlaylistId: playlistId,
+        audioUrl: url,
+        duration: audio.audio.duration || 0,
+        isPlaying: false,
+      })
+
+      // Save to localStorage
+      storage.setCurrentAudio(audio)
+      storage.setCurrentPlaylistId(playlistId)
+
+      if (audioElement) {
+        // Pause current playback to avoid conflicts
+        audioElement.pause()
+
+        // Set new source and load
+        audioElement.src = url
+        audioElement.load()
+
+        try {
+          // Wait for loadedmetadata before playing
+          await new Promise<void>((resolve, reject) => {
+            const onLoadedMetadata = () => {
+              audioElement.removeEventListener(
+                "loadedmetadata",
+                onLoadedMetadata,
+              )
+              audioElement.removeEventListener("error", onError)
+              resolve()
+            }
+            const onError = (e: Event) => {
+              audioElement.removeEventListener(
+                "loadedmetadata",
+                onLoadedMetadata,
+              )
+              audioElement.removeEventListener("error", onError)
+              reject(e)
+            }
+            audioElement.addEventListener("loadedmetadata", onLoadedMetadata, {
+              once: true,
+            })
+            audioElement.addEventListener("error", onError, { once: true })
+          })
+
+          // Now play
+          await audioElement.play()
+          set({ isPlaying: true })
+        } catch (error) {
+          // Ignore AbortError when switching tracks quickly
+          if (error instanceof Error && error.name === "AbortError") {
+            console.log("Play interrupted by new load request")
+          } else {
+            console.error("Failed to play audio:", error)
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Failed to load audio:", error)
+    }
+  },
+
+  loadAudioMetadata: async (audio: LocalAudio) => {
+    const { audioElement } = get()
+    if (!audioElement) return
+
+    try {
+      const url = await get_web_url(audio.path)
+      audioElement.src = url
+      audioElement.load()
+    } catch (error) {
+      console.error("Failed to load audio metadata:", error)
+    }
+  },
+
+  pauseAudio: () => {
+    const { audioElement } = get()
+    if (audioElement) {
+      audioElement.pause()
+      set({ isPlaying: false })
+    }
+  },
+
+  resumeAudio: () => {
+    const { audioElement } = get()
+    audioElement.play()
+    set({ isPlaying: true })
+  },
+
+  togglePlay: () => {
+    const { isPlaying } = get()
+    if (isPlaying) {
+      get().pauseAudio()
+    } else {
+      get().resumeAudio()
+    }
+  },
+
+  playNext: async () => {
+    const { currentAudio, playMode, config, currentPlaylistId } = get()
+    if (!currentAudio || !currentPlaylistId) return
+
+    // Get current playlist
+    const playlist = config.playlists.find((p) => p.id === currentPlaylistId)
+    if (!playlist || playlist.audios.length === 0) return
+
+    const currentIndex = playlist.audios.findIndex(
+      (a) => a.audio.id === currentAudio.audio.id,
+    )
+
+    let nextAudio: LocalAudio | null = null
+
+    switch (playMode) {
+      case "sequence":
+        // Play next in sequence, stop at end
+        if (currentIndex < playlist.audios.length - 1) {
+          nextAudio = playlist.audios[currentIndex + 1]
+        }
+        break
+
+      case "list-loop":
+        // Loop to beginning when reaching end
+        nextAudio = playlist.audios[(currentIndex + 1) % playlist.audios.length]
+        break
+
+      case "single-loop":
+        // Repeat current audio
+        nextAudio = currentAudio
+        break
+
+      case "shuffle": {
+        // Random audio from playlist
+        const randomIndex = Math.floor(Math.random() * playlist.audios.length)
+        nextAudio = playlist.audios[randomIndex]
+        break
+      }
+    }
+
+    if (nextAudio) {
+      await get().playAudio(nextAudio, currentPlaylistId, true)
+    }
+  },
+
+  playPrev: async () => {
+    const { playbackHistory, currentPlaylistId } = get()
+    if (playbackHistory.length === 0 || !currentPlaylistId) return
+
+    const prevAudio = playbackHistory[playbackHistory.length - 1]
+    const newHistory = playbackHistory.slice(0, -1)
+
+    set({ playbackHistory: newHistory })
+    await get().playAudio(prevAudio, currentPlaylistId, false)
+  },
+
+  canPlayPrev: () => {
+    return get().playbackHistory.length > 0
+  },
+
+  togglePlayMode: () => {
+    const { playMode } = get()
+    const modes: PlayMode[] = [
+      "sequence",
+      "list-loop",
+      "single-loop",
+      "shuffle",
+    ]
+    const currentIndex = modes.indexOf(playMode)
+    const nextMode = modes[(currentIndex + 1) % modes.length]
+    set({ playMode: nextMode })
+    storage.setPlayMode(nextMode)
+  },
+
+  seekTo: (time: number) => {
+    const { audioElement } = get()
+    if (audioElement && Number.isFinite(time)) {
+      audioElement.currentTime = time
+      set({ currentTime: time })
+    }
+  },
+
+  // setPlaybackRate: (rate: number) => {
+  //   const { audioElement } = get()
+  //   if (audioElement) {
+  //     audioElement.playbackRate = rate
+  //   }
+  //   set({ playbackRate: rate })
+  // },
+
+  // ============================================
+  // Search Actions
+  // ============================================
   setSearchText: (text: string) => {
     set({ searchText: text })
   },
@@ -658,56 +688,37 @@ export const useAppStore = create<AppState>((set, get) => ({
     set({ searchPlaylist: playlist })
   },
 
-  addSearchSelectedId: (id: string) => {
-    set((state) => ({
-      searchSelectedIds: new Set(state.searchSelectedIds).add(id),
-    }))
-  },
-
-  removeSearchSelectedId: (id: string) => {
-    set((state) => {
-      const newSet = new Set(state.searchSelectedIds)
-      newSet.delete(id)
-      return { searchSelectedIds: newSet }
-    })
-  },
-
   setSearchSelectedIds: (ids: Set<string>) => {
     set({ searchSelectedIds: ids })
   },
 
   addSearchDownloadingId: (id: string) => {
-    set((state) => ({
-      searchDownloadingIds: new Set(state.searchDownloadingIds).add(id),
-    }))
+    const { searchDownloadingIds } = get()
+    set({ searchDownloadingIds: new Set([...searchDownloadingIds, id]) })
   },
 
   removeSearchDownloadingId: (id: string) => {
-    set((state) => {
-      const newSet = new Set(state.searchDownloadingIds)
-      newSet.delete(id)
-      return { searchDownloadingIds: newSet }
-    })
+    const { searchDownloadingIds } = get()
+    const newSet = new Set(searchDownloadingIds)
+    newSet.delete(id)
+    set({ searchDownloadingIds: newSet })
   },
 
   addSearchDownloadedId: (id: string) => {
-    set((state) => ({
-      searchDownloadedIds: new Set(state.searchDownloadedIds).add(id),
-    }))
+    const { searchDownloadedIds } = get()
+    set({ searchDownloadedIds: new Set([...searchDownloadedIds, id]) })
   },
 
   addSearchFailedId: (id: string) => {
-    set((state) => ({
-      searchFailedIds: new Set(state.searchFailedIds).add(id),
-    }))
+    const { searchFailedIds } = get()
+    set({ searchFailedIds: new Set([...searchFailedIds, id]) })
   },
 
   removeSearchFailedId: (id: string) => {
-    set((state) => {
-      const newSet = new Set(state.searchFailedIds)
-      newSet.delete(id)
-      return { searchFailedIds: newSet }
-    })
+    const { searchFailedIds } = get()
+    const newSet = new Set(searchFailedIds)
+    newSet.delete(id)
+    set({ searchFailedIds: newSet })
   },
 
   setSearchSearching: (searching: boolean) => {
@@ -718,20 +729,9 @@ export const useAppStore = create<AppState>((set, get) => ({
     set({ searchDownloadingAll: downloadingAll })
   },
 
-  setSearchMessageToShow: (
-    message: { type: "success" | "error" | "warning"; text: string } | null,
-  ) => {
-    set({ searchMessageToShow: message })
-  },
-
-  setSearchCoverUrls: (urls: Record<string, string>) => {
-    set({ searchCoverUrls: urls })
-  },
-
   addSearchCoverUrl: (audioId: string, url: string) => {
-    set((state) => ({
-      searchCoverUrls: { ...state.searchCoverUrls, [audioId]: url },
-    }))
+    const { searchCoverUrls } = get()
+    set({ searchCoverUrls: { ...searchCoverUrls, [audioId]: url } })
   },
 
   setSearchPlaylistCoverUrl: (url: string | null) => {
@@ -748,7 +748,6 @@ export const useAppStore = create<AppState>((set, get) => ({
       searchFailedIds: new Set(),
       searchSearching: false,
       searchDownloadingAll: false,
-      searchMessageToShow: null,
       searchCoverUrls: {},
       searchPlaylistCoverUrl: null,
     })
@@ -763,64 +762,61 @@ export const useAppStore = create<AppState>((set, get) => ({
       searchFailedIds: new Set(),
       searchSearching: false,
       searchDownloadingAll: false,
-      searchMessageToShow: null,
       searchCoverUrls: {},
       searchPlaylistCoverUrl: null,
     })
   },
 }))
 
-// Export convenience hooks
+// ============================================
+// Convenience Hooks
+// ============================================
 export const useConfig = () => useAppStore((state) => state.config)
 export const usePlaylists = () => useAppStore((state) => state.config.playlists)
-export const useAudios = () => useAppStore((state) => state.config.audios)
+
+// Get AUDIO playlist audios
+export const useAudios = (): LocalAudio[] => {
+  const playlists = useAppStore((state) => state.config.playlists)
+  const audioPlaylist = playlists.find((p) => p.id === AUDIO_PLAYLIST_ID)
+  return audioPlaylist?.audios || []
+}
+
+// Get FAVORITE playlist
+export const useFavorite = (): LocalPlaylist | null => {
+  const playlists = useAppStore((state) => state.config.playlists)
+  const favPlaylist = playlists.find((p) => p.id === FAVORITE_PLAYLIST_ID)
+  return favPlaylist || null
+}
+
+// Get FAVORITE audios
+export const useFavoriteAudios = (): LocalAudio[] => {
+  const playlists = useAppStore((state) => state.config.playlists)
+  const favPlaylist = playlists.find((p) => p.id === FAVORITE_PLAYLIST_ID)
+  return favPlaylist?.audios || []
+}
+
+// Get user playlists (excluding special playlists)
+export const useUserPlaylists = (): LocalPlaylist[] => {
+  const playlists = useAppStore((state) => state.config.playlists)
+  return playlists.filter(
+    (p) => p.id !== AUDIO_PLAYLIST_ID && p.id !== FAVORITE_PLAYLIST_ID,
+  )
+}
+
+// Get playlists for PlaylistsPage (FAVORITE + user playlists)
+export const usePlaylistsPageData = (): LocalPlaylist[] => {
+  const playlists = useAppStore((state) => state.config.playlists)
+  const filtered = playlists.filter((p) => p.id !== AUDIO_PLAYLIST_ID)
+  // Filter out empty FAVORITE playlist
+  return filtered.filter(
+    (p) => p.id !== FAVORITE_PLAYLIST_ID || p.audios.length > 0,
+  )
+}
+
 export const useCurrentAudio = () => useAppStore((state) => state.currentAudio)
 export const useIsPlaying = () => useAppStore((state) => state.isPlaying)
 export const usePlaybackRate = () => useAppStore((state) => state.playbackRate)
 export const usePlayMode = () => useAppStore((state) => state.playMode)
-export const useThemeMode = () =>
-  useAppStore((state) => state.config?.theme || get_system_theme())
-
-// Search page runtime hooks
-export const useSearchText = () => useAppStore((state) => state.searchText)
-export const useSearchPlaylist = () =>
-  useAppStore((state) => state.searchPlaylist)
-export const useSearchSelectedIds = () =>
-  useAppStore((state) => state.searchSelectedIds)
-export const useSearchDownloadingIds = () =>
-  useAppStore((state) => state.searchDownloadingIds)
-export const useSearchDownloadedIds = () =>
-  useAppStore((state) => state.searchDownloadedIds)
-export const useSearchFailedIds = () =>
-  useAppStore((state) => state.searchFailedIds)
-export const useSearchSearching = () =>
-  useAppStore((state) => state.searchSearching)
-export const useSearchDownloadingAll = () =>
-  useAppStore((state) => state.searchDownloadingAll)
-export const useSearchMessageToShow = () =>
-  useAppStore((state) => state.searchMessageToShow)
-export const useSearchCoverUrls = () =>
-  useAppStore((state) => state.searchCoverUrls)
-export const useSearchPlaylistCoverUrl = () =>
-  useAppStore((state) => state.searchPlaylistCoverUrl)
-
-// Search page runtime actions
-export const {
-  setSearchText,
-  setSearchPlaylist,
-  addSearchSelectedId,
-  removeSearchSelectedId,
-  setSearchSelectedIds,
-  addSearchDownloadingId,
-  removeSearchDownloadingId,
-  addSearchDownloadedId,
-  addSearchFailedId,
-  removeSearchFailedId,
-  setSearchSearching,
-  setSearchDownloadingAll,
-  setSearchMessageToShow,
-  setSearchCoverUrls,
-  addSearchCoverUrl,
-  setSearchPlaylistCoverUrl,
-  clearSearchRuntimeData,
-} = useAppStore.getState()
+export const useThemeMode = () => useAppStore((state) => state.theme)
+export const useCurrentTime = () => useAppStore((state) => state.currentTime)
+export const useDuration = () => useAppStore((state) => state.duration)

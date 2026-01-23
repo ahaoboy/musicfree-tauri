@@ -1,29 +1,42 @@
+use std::path::PathBuf;
+
 use musicfree::{Audio, Platform};
 use serde::{Deserialize, Serialize};
+
+pub const ASSETS_DIR: &str = "assets";
+pub const AUDIOS_DIR: &str = "audios";
+pub const COVERS_DIR: &str = "covers";
+pub const CONFIG_FILE: &str = "musicfree.json";
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LocalAudio {
     pub path: String,
+    #[serde(default,skip_serializing_if = "Option::is_none")]
     pub cover_path: Option<String>,
     pub audio: Audio,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LocalPlaylist {
+    #[serde(default,skip_serializing_if = "Option::is_none")]
     pub id: Option<String>,
+    #[serde(default,skip_serializing_if = "Option::is_none")]
     pub title: Option<String>,
+    #[serde(default,skip_serializing_if = "Option::is_none")]
     pub cover_path: Option<String>,
+    #[serde(default,skip_serializing_if = "Option::is_none")]
     pub cover: Option<String>,
+    #[serde(default,skip_serializing_if = "Vec::is_empty") ]
     pub audios: Vec<LocalAudio>,
     pub platform: Platform,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct Config {
-    // Add fields as needed, inferred from usage in lib.rs
+    #[serde(default)]
+    pub playlists: Vec<LocalPlaylist>,
 }
 
-// Assuming Config was in api.rs or defined implicitly, but lib.rs imported it from `crate::api::Config`.
-// Actually, looking at imports in lib.rs: `use crate::api::{Config, get_config_path};`
-// The structs LocalAudio and LocalPlaylist were in lib.rs.
-// So I will only put those here for now.
+pub fn get_config_path(app_dir: PathBuf) -> PathBuf {
+    app_dir.join(CONFIG_FILE)
+}

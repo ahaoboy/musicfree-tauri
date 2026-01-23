@@ -19,6 +19,7 @@ import {
   get_web_url,
   LocalAudio,
   LocalPlaylist,
+  AUDIO_PLAYLIST_ID,
 } from "../../api"
 import { useAppStore } from "../../store"
 import "./index.less"
@@ -250,8 +251,15 @@ export const SearchPage: FC = () => {
   const downloadingAll = useAppStore((state) => state.searchDownloadingAll)
   const coverUrls = useAppStore((state) => state.searchCoverUrls)
   const playlistCoverUrl = useAppStore((state) => state.searchPlaylistCoverUrl)
-  const configAudios = useAppStore((state) => state.config.audios)
   const configPlaylists = useAppStore((state) => state.config.playlists)
+
+  // Get audios from AUDIO_PLAYLIST for checking existing audios
+  const configAudios = useMemo(() => {
+    const audioPlaylist = configPlaylists.find(
+      (p) => p.id === AUDIO_PLAYLIST_ID,
+    )
+    return audioPlaylist?.audios || []
+  }, [configPlaylists])
 
   // Track if all operations are complete (all selected audios are downloaded/added)
   const allOperationsComplete = useMemo(() => {
@@ -401,7 +409,10 @@ export const SearchPage: FC = () => {
         // If playlist has no cover, use first audio's cover
         const firstAudioWithCover = playlist.audios.find((audio) => audio.cover)
         if (firstAudioWithCover?.cover) {
-          downloadCoverToWeb(firstAudioWithCover.cover, firstAudioWithCover.platform).then((webUrl) => {
+          downloadCoverToWeb(
+            firstAudioWithCover.cover,
+            firstAudioWithCover.platform,
+          ).then((webUrl) => {
             if (webUrl) setSearchPlaylistCoverUrl(webUrl)
           })
         }
@@ -722,10 +733,15 @@ export const SearchPage: FC = () => {
           }
         } else {
           // If playlist has no cover, use first audio's cover
-          const firstAudioWithCover = playlist.audios.find((audio) => audio.cover)
+          const firstAudioWithCover = playlist.audios.find(
+            (audio) => audio.cover,
+          )
           if (firstAudioWithCover?.cover) {
             try {
-              console.log("Downloading fallback cover from first audio:", firstAudioWithCover.cover)
+              console.log(
+                "Downloading fallback cover from first audio:",
+                firstAudioWithCover.cover,
+              )
               coverPath = await download_cover(
                 firstAudioWithCover.cover,
                 firstAudioWithCover.platform,

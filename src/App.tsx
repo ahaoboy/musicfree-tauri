@@ -1,12 +1,11 @@
 import {
   FC,
-  useEffect,
-  useRef,
   useCallback,
   useState,
   Suspense,
   lazy,
   memo,
+  useEffect,
 } from "react"
 import {
   BrowserRouter,
@@ -39,7 +38,7 @@ import {
   Flex,
 } from "antd"
 import { useAppStore } from "./store"
-import { useSwipe, SwipeDirection, useIsDarkMode } from "./hooks"
+import { useSwipe, SwipeDirection } from "./hooks"
 import "./styles/index.less"
 
 const PlaylistsPage = lazy(() => import("./pages/PlaylistsPage"))
@@ -90,7 +89,6 @@ const TAB_ITEMS = [
 const AppLayout: FC = memo(() => {
   const navigate = useNavigate()
   const location = useLocation()
-  const audioRef = useRef<HTMLAudioElement>(null)
 
   // Navigation state
   const [isInDetailView, setIsInDetailView] = useState(false)
@@ -102,28 +100,12 @@ const AppLayout: FC = memo(() => {
   const currentAudio = useAppStore((state) => state.currentAudio)
   const isConfigLoading = useAppStore((state) => state.isConfigLoading)
   const loadConfig = useAppStore((state) => state.loadConfig)
-  const setAudioElement = useAppStore((state) => state.setAudioElement)
 
   // Get dark mode state (handles null/undefined theme)
-  const isDark = useIsDarkMode()
+  const isDark = useAppStore((state) => state.isDark())
 
   // Get current tab
   const currentTab = ROUTE_TO_TAB[location.pathname] || "playlists"
-
-  // Initialize app
-  useEffect(() => {
-    loadConfig()
-  }, [loadConfig])
-
-  // Set audio element
-  useEffect(() => {
-    if (audioRef.current) {
-      setAudioElement(audioRef.current)
-    }
-    return () => {
-      setAudioElement(null)
-    }
-  }, [setAudioElement])
 
   // Handle tab change
   const handleTabChange = useCallback(
@@ -132,6 +114,10 @@ const AppLayout: FC = memo(() => {
     },
     [navigate],
   )
+
+  useEffect(() => {
+    loadConfig()
+  }, [])
 
   // Handle swipe gesture
   const handleSwipe = useCallback(
@@ -239,8 +225,6 @@ const AppLayout: FC = memo(() => {
                 {!["search", "settings"].includes(currentTab) && (
                   <PlayerCard audio={currentAudio} />
                 )}
-                {/* biome-ignore lint/a11y/useMediaCaption: Music player does not need captions */}
-                <audio ref={audioRef} />
               </Flex>
             )}
           </NavigationContext.Provider>

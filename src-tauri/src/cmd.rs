@@ -2,8 +2,8 @@ use musicfree::{Audio, Platform, Playlist};
 use std::path::PathBuf;
 use tauri::Manager;
 
-use crate::api::{self, Config, get_config_path};
-use crate::core::LocalAudio;
+use crate::api::{self};
+use crate::core::{ASSETS_DIR, Config, LocalAudio, get_config_path};
 use crate::error::{AppError, AppResult};
 
 #[tauri::command]
@@ -109,7 +109,7 @@ pub async fn clear_all_data(app_handle: tauri::AppHandle) -> AppResult<()> {
     let dir = app_dir(app_handle).await?;
 
     // Delete ASSETS_DIR
-    let assets_dir = dir.join(api::ASSETS_DIR);
+    let assets_dir = dir.join(ASSETS_DIR);
     if tokio::fs::try_exists(&assets_dir).await.unwrap_or(false) {
         tokio::fs::remove_dir_all(&assets_dir)
             .await
@@ -117,7 +117,7 @@ pub async fn clear_all_data(app_handle: tauri::AppHandle) -> AppResult<()> {
     }
 
     // Delete musicfree.json
-    let config_path = api::get_config_path(dir);
+    let config_path = get_config_path(dir);
     if tokio::fs::try_exists(&config_path).await.unwrap_or(false) {
         tokio::fs::remove_file(&config_path)
             .await

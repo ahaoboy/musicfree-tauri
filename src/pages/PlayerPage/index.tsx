@@ -1,4 +1,4 @@
-import { FC, useState, useEffect, useCallback, useMemo } from "react"
+import { FC, useCallback, useMemo } from "react"
 import { useNavigate } from "react-router-dom"
 import {
   LeftOutlined,
@@ -15,7 +15,7 @@ import {
   AudioOutlined,
 } from "@ant-design/icons"
 import { Slider, message, Button, Typography, Avatar, Flex } from "antd"
-import { useAppStore } from "../../store"
+import { useAppStore, useCurrentTime, useDuration } from "../../store"
 import { DEFAULT_COVER_URL } from "../../api"
 import { useCoverUrl } from "../../hooks"
 import "./index.less"
@@ -38,43 +38,22 @@ export const PlayerPage: FC = () => {
   const isPlaying = useAppStore((state) => state.isPlaying)
   const playMode = useAppStore((state) => state.playMode)
   const audioElement = useAppStore((state) => state.audioElement)
-  const playlists = useAppStore((state) => state.config.playlists)
+  const _playlists = useAppStore((state) => state.config.playlists)
   const togglePlay = useAppStore((state) => state.togglePlay)
   const playNext = useAppStore((state) => state.playNext)
   const playPrev = useAppStore((state) => state.playPrev)
   const canPlayPrev = useAppStore((state) => state.canPlayPrev)
   const togglePlayMode = useAppStore((state) => state.togglePlayMode)
   const toggleFavorite = useAppStore((state) => state.toggleFavorite)
-  const isFavorited = useAppStore((state) => state.isFavorited)
+  const _isFavorited = useAppStore((state) => state.isFavoritedAudio)
 
   const coverUrl = useCoverUrl(
     currentAudio?.cover_path,
     currentAudio?.audio.cover,
   )
 
-  const [currentTime, setCurrentTime] = useState(0)
-  const [duration, setDuration] = useState(0)
-
-  // Handle time updates
-  useEffect(() => {
-    if (!audioElement) return
-
-    const handleTimeUpdate = () => {
-      setCurrentTime(audioElement.currentTime)
-      setDuration(audioElement.duration || 0)
-    }
-
-    audioElement.addEventListener("timeupdate", handleTimeUpdate)
-    audioElement.addEventListener("loadedmetadata", handleTimeUpdate)
-
-    setCurrentTime(audioElement.currentTime)
-    setDuration(audioElement.duration || 0)
-
-    return () => {
-      audioElement.removeEventListener("timeupdate", handleTimeUpdate)
-      audioElement.removeEventListener("loadedmetadata", handleTimeUpdate)
-    }
-  }, [audioElement])
+  const currentTime = useCurrentTime()
+  const duration = useDuration()
 
   // Handle slider click to seek (click-only, no drag support)
   const handleSliderChange = useCallback(
@@ -82,7 +61,6 @@ export const PlayerPage: FC = () => {
       const seekValue = Array.isArray(value) ? value[0] : value
       if (audioElement && Number.isFinite(seekValue)) {
         audioElement.currentTime = seekValue
-        setCurrentTime(seekValue)
 
         // If audio is not playing, start playback after seeking
         if (!isPlaying && currentAudio) {
@@ -153,9 +131,8 @@ export const PlayerPage: FC = () => {
   }, [playMode])
 
   // Memoize favorite status - recalculates when playlists or currentAudio changes
-  const isFav = useMemo(
-    () => (currentAudio ? isFavorited(currentAudio.audio.id) : false),
-    [currentAudio, isFavorited, playlists],
+  const isFav = useAppStore(
+    (state) => currentAudio && state.isFavoritedAudio(currentAudio.audio.id),
   )
 
   if (!currentAudio) {

@@ -1,75 +1,37 @@
-import { FC, useState, useEffect, useCallback } from "react"
+import { FC, useCallback, useEffect } from "react"
+import { Routes, Route, useNavigate } from "react-router-dom"
 import { Flex, Avatar } from "antd"
 import { DeleteOutlined } from "@ant-design/icons"
-import { useAppStore } from "../../store"
+import { useAppStore, usePlaylistsPageData } from "../../store"
 import {
   LocalPlaylist,
-  LocalAudio,
   FAVORITE_PLAYLIST_ID,
   DEFAULT_COVER_URL,
 } from "../../api"
-import { PlaylistCard, AudioCard } from "../../components"
+import { PlaylistCard } from "../../components"
 import { useNavigation } from "../../contexts"
 import { useConfirm } from "../../hooks"
+import { PlaylistDetail } from "./PlaylistDetail"
 
-// Playlists page - displays all downloaded playlists
-export const PlaylistsPage: FC = () => {
-  const playlists = useAppStore((state) => state.config.playlists)
-  const playAudio = useAppStore((state) => state.playAudio)
-  const deleteAudio = useAppStore((state) => state.deleteAudio)
+// Playlists list view
+const PlaylistsList: FC = () => {
+  const navigate = useNavigate()
+  const playlists = usePlaylistsPageData()
   const deletePlaylist = useAppStore((state) => state.deletePlaylist)
-
-  const [selectedPlaylist, setSelectedPlaylist] =
-    useState<LocalPlaylist | null>(null)
-  const { setIsInDetailView, setOnBackFromDetail } = useNavigation()
+  const { setIsInDetailView } = useNavigation()
   const { showConfirm } = useConfirm()
 
-  // Handle back navigation
-  const handleBack = useCallback(() => {
-    setSelectedPlaylist(null)
-  }, [])
-
-  // Register detail view state
+  // Clear detail view state when on list view
   useEffect(() => {
-    const isDetail = selectedPlaylist !== null
-    setIsInDetailView(isDetail)
+    setIsInDetailView(false)
+    return () => setIsInDetailView(false)
+  }, [setIsInDetailView])
 
-    if (isDetail) {
-      setOnBackFromDetail(() => handleBack)
-    } else {
-      setOnBackFromDetail(null)
-    }
-
-    return () => {
-      setIsInDetailView(false)
-      setOnBackFromDetail(null)
-    }
-  }, [selectedPlaylist, setIsInDetailView, setOnBackFromDetail, handleBack])
-
-  const handlePlaylistClick = useCallback((playlist: LocalPlaylist) => {
-    setSelectedPlaylist(playlist)
-  }, [])
-
-  const handleAudioClick = useCallback(
-    (audio: LocalAudio) => {
-      if (selectedPlaylist) {
-        playAudio(audio, selectedPlaylist.audios)
-      } else {
-        playAudio(audio)
-      }
+  const handlePlaylistClick = useCallback(
+    (playlist: LocalPlaylist) => {
+      navigate(`/playlists/${encodeURIComponent(playlist.id)}`)
     },
-    [selectedPlaylist, playAudio],
-  )
-
-  const handleDeleteAudio = useCallback(
-    (audioId: string, title: string) => {
-      showConfirm({
-        title: "Delete Audio",
-        content: `Are you sure you want to delete "${title}"?`,
-        onOk: () => deleteAudio(audioId),
-      })
-    },
-    [showConfirm, deleteAudio],
+    [navigate],
   )
 
   const handleDeletePlaylist = useCallback(
@@ -84,43 +46,6 @@ export const PlaylistsPage: FC = () => {
     [showConfirm, deletePlaylist],
   )
 
-  // Render playlist detail view
-  if (selectedPlaylist) {
-    if (selectedPlaylist.audios.length === 0) {
-      return (
-        <Flex vertical className="page" flex={1}>
-          <Flex flex={1} align="center" justify="center">
-            <Avatar
-              src={DEFAULT_COVER_URL}
-              size={256}
-              shape="square"
-              style={{ opacity: 0.5 }}
-              alt="No Audio"
-            />
-          </Flex>
-        </Flex>
-      )
-    }
-
-    return (
-      <Flex vertical className="page audio-list" gap="small">
-        {selectedPlaylist.audios.map((audio, index) => (
-          <AudioCard
-            key={`${audio.audio.id}-${index}`}
-            audio={audio}
-            onClick={() => handleAudioClick(audio)}
-            showAction
-            actionIcon={<DeleteOutlined />}
-            onAction={() =>
-              handleDeleteAudio(audio.audio.id, audio.audio.title)
-            }
-          />
-        ))}
-      </Flex>
-    )
-  }
-
-  // Render playlists list
   if (playlists.length === 0) {
     return (
       <Flex vertical className="page" flex={1}>
@@ -150,6 +75,16 @@ export const PlaylistsPage: FC = () => {
         />
       ))}
     </Flex>
+  )
+}
+
+// Main playlists page with nested routes
+export const PlaylistsPage: FC = () => {
+  return (
+    <Routes>
+      <Route index element={<PlaylistsList />} />
+      <Route path=":playlistId" element={<PlaylistDetail />} />
+    </Routes>
   )
 }
 
