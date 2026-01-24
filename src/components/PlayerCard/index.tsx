@@ -1,14 +1,10 @@
 import { FC, memo, useCallback } from "react"
 import { useNavigate } from "react-router-dom"
-import HeartFilled from "@ant-design/icons/HeartFilled"
-import HeartOutlined from "@ant-design/icons/HeartOutlined"
-import PauseCircleFilled from "@ant-design/icons/PauseCircleFilled"
-import PlayCircleFilled from "@ant-design/icons/PlayCircleFilled"
 import AudioOutlined from "@ant-design/icons/AudioOutlined"
-import { Button, Flex, Typography, Avatar } from "antd"
+import { Flex, Typography, Avatar } from "antd"
 import { DEFAULT_COVER_URL, LocalAudio } from "../../api"
-import { useAppStore } from "../../store"
 import { useCoverUrl } from "../../hooks"
+import { PlayerControls } from "../PlayerControls"
 
 const { Text } = Typography
 
@@ -21,37 +17,9 @@ export const PlayerCard: FC<PlayerCardProps> = memo(({ audio }) => {
   const navigate = useNavigate()
   const coverUrl = useCoverUrl(audio?.cover_path, audio?.audio.cover)
 
-  // Selective store subscriptions to avoid unnecessary re-renders
-  const isPlaying = useAppStore((state) => state.isPlaying)
-  const togglePlay = useAppStore((state) => state.togglePlay)
-  const toggleFavorite = useAppStore((state) => state.toggleFavorite)
-
-  // Memoize favorite check
-  const isFavorited = useAppStore(
-    (state) => audio && state.isFavoritedAudio(audio.audio.id),
-  )
-
   const handleCardClick = useCallback(() => {
     navigate("/player")
   }, [navigate])
-
-  const handlePlayClick = useCallback(
-    (e: React.MouseEvent) => {
-      e.stopPropagation()
-      togglePlay()
-    },
-    [togglePlay],
-  )
-
-  const handleFavoriteClick = useCallback(
-    (e: React.MouseEvent) => {
-      e.stopPropagation()
-      if (audio) {
-        toggleFavorite(audio)
-      }
-    },
-    [audio, toggleFavorite],
-  )
 
   if (!audio) {
     return null
@@ -87,26 +55,12 @@ export const PlayerCard: FC<PlayerCardProps> = memo(({ audio }) => {
           {audio.audio.platform}
         </Text>
       </Flex>
-      <Flex align="center" gap="small">
-        <Button
-          type="text"
-          icon={
-            isFavorited ? (
-              <HeartFilled style={{ color: "#ff4d4f" }} />
-            ) : (
-              <HeartOutlined />
-            )
-          }
-          onClick={handleFavoriteClick}
-          className="mini-player-btn"
-        />
-        <Button
-          type="text"
-          icon={isPlaying ? <PauseCircleFilled /> : <PlayCircleFilled />}
-          onClick={handlePlayClick}
-          className="mini-player-btn play"
-        />
-      </Flex>
+      <PlayerControls
+        audio={audio}
+        layout="mini"
+        buttonClassName="mini-player-btn"
+        gap="small"
+      />
     </Flex>
   )
 })

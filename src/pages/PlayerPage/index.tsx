@@ -1,22 +1,13 @@
-import { FC, useCallback, useMemo } from "react"
+import { FC, useCallback } from "react"
 import { useNavigate } from "react-router-dom"
 import LeftOutlined from "@ant-design/icons/LeftOutlined"
 import ShareAltOutlined from "@ant-design/icons/ShareAltOutlined"
-import HeartOutlined from "@ant-design/icons/HeartOutlined"
-import HeartFilled from "@ant-design/icons/HeartFilled"
-import StepBackwardOutlined from "@ant-design/icons/StepBackwardOutlined"
-import StepForwardOutlined from "@ant-design/icons/StepForwardOutlined"
-import PlayCircleFilled from "@ant-design/icons/PlayCircleFilled"
-import PauseCircleFilled from "@ant-design/icons/PauseCircleFilled"
-import RetweetOutlined from "@ant-design/icons/RetweetOutlined"
-import SwapOutlined from "@ant-design/icons/SwapOutlined"
-import BarsOutlined from "@ant-design/icons/BarsOutlined"
 import AudioOutlined from "@ant-design/icons/AudioOutlined"
 import { Slider, Button, Typography, Avatar, Flex } from "antd"
 import { useAppStore, useCurrentTime, useDuration } from "../../store"
 import { DEFAULT_COVER_URL } from "../../api"
 import { useCoverUrl } from "../../hooks"
-import { CopyButton } from "../../components"
+import { CopyButton, PlayerControls } from "../../components"
 import "./index.less"
 
 const { Title, Text } = Typography
@@ -35,15 +26,7 @@ export const PlayerPage: FC = () => {
   // Selective store subscriptions
   const currentAudio = useAppStore((state) => state.currentAudio)
   const isPlaying = useAppStore((state) => state.isPlaying)
-  const playMode = useAppStore((state) => state.playMode)
   const audioElement = useAppStore((state) => state.audioElement)
-  const togglePlay = useAppStore((state) => state.togglePlay)
-  const playNext = useAppStore((state) => state.playNext)
-  const playPrev = useAppStore((state) => state.playPrev)
-  const canPlayPrev = useAppStore((state) => state.canPlayPrev)
-  const togglePlayMode = useAppStore((state) => state.togglePlayMode)
-  const toggleFavorite = useAppStore((state) => state.toggleFavorite)
-  const isFavoritedAudio = useAppStore((state) => state.isFavoritedAudio)
 
   const coverUrl = useCoverUrl(
     currentAudio?.cover_path,
@@ -74,54 +57,6 @@ export const PlayerPage: FC = () => {
       }
     },
     [audioElement, isPlaying, currentAudio],
-  )
-
-  const handleFavorite = useCallback(() => {
-    if (currentAudio) {
-      toggleFavorite(currentAudio)
-    }
-  }, [currentAudio, toggleFavorite])
-
-  // Memoize mode icon
-  const modeIcon = useMemo(() => {
-    switch (playMode) {
-      case "sequence":
-        return <BarsOutlined />
-      case "list-loop":
-        return <RetweetOutlined />
-      case "single-loop":
-        return (
-          <Flex
-            style={{ position: "relative" }}
-            align="center"
-            justify="center"
-          >
-            <RetweetOutlined />
-            <Text
-              style={{
-                position: "absolute",
-                fontSize: 10,
-                right: -6,
-                top: -4,
-                fontWeight: "bold",
-                color: "currentColor",
-              }}
-            >
-              1
-            </Text>
-          </Flex>
-        )
-      case "shuffle":
-        return <SwapOutlined />
-      default:
-        return <BarsOutlined />
-    }
-  }, [playMode])
-
-  // Memoize favorite status - recalculates when currentAudio changes
-  const isFav = useMemo(
-    () => currentAudio && isFavoritedAudio(currentAudio.audio.id),
-    [currentAudio, isFavoritedAudio],
   )
 
   if (!currentAudio) {
@@ -229,52 +164,13 @@ export const PlayerPage: FC = () => {
         </Flex>
 
         {/* Main Controls */}
-        <Flex align="center" justify="space-between" className="main-controls">
-          <Button
-            type="text"
-            icon={modeIcon}
-            onClick={togglePlayMode}
-            className="player-control-btn"
-          />
-
-          <Button
-            type="text"
-            icon={<StepBackwardOutlined />}
-            onClick={() => {
-              if (canPlayPrev()) {
-                playPrev()
-              }
-            }}
-            className="player-control-btn"
-          />
-
-          <Button
-            type="text"
-            icon={isPlaying ? <PauseCircleFilled /> : <PlayCircleFilled />}
-            onClick={togglePlay}
-            className="player-control-btn play"
-          />
-
-          <Button
-            type="text"
-            icon={<StepForwardOutlined />}
-            onClick={() => playNext()}
-            className="player-control-btn"
-          />
-
-          <Button
-            type="text"
-            icon={
-              isFav ? (
-                <HeartFilled style={{ color: "#ff4d4f" }} />
-              ) : (
-                <HeartOutlined />
-              )
-            }
-            onClick={handleFavorite}
-            className="player-control-btn"
-          />
-        </Flex>
+        <PlayerControls
+          audio={currentAudio}
+          layout="full"
+          className="main-controls"
+          buttonClassName="player-control-btn"
+          align="space-between"
+        />
       </Flex>
 
       {/* Background Blur */}
