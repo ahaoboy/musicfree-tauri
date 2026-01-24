@@ -9,6 +9,7 @@ import DeleteOutlined from "@ant-design/icons/DeleteOutlined"
 import StopOutlined from "@ant-design/icons/StopOutlined"
 import CheckOutlined from "@ant-design/icons/CheckOutlined"
 import ClearOutlined from "@ant-design/icons/ClearOutlined"
+import EnvironmentOutlined from "@ant-design/icons/EnvironmentOutlined"
 import {
   DEFAULT_COVER_URL,
   LocalPlaylist,
@@ -72,6 +73,34 @@ export const SearchPage: FC = () => {
     return audioPlaylist?.audios || []
   }, [configPlaylists])
 
+  // Check if audio exists in AUDIO_PLAYLIST
+  const checkAudioExists = useCallback(
+    (audioId: string): boolean => {
+      return configAudios.some((a) => a.audio.id === audioId)
+    },
+    [configAudios],
+  )
+
+  // Check if playlist exists and all selected audios are downloaded
+  const checkPlaylistExists = useCallback(
+    (playlistId: string): boolean => {
+      if (!playlist) return false
+
+      const existingPlaylist = configPlaylists.find((p) => p.id === playlistId)
+      if (!existingPlaylist) return false
+
+      // Check if all selected audios exist in the playlist
+      const selectedArray = Array.from(selectedIds)
+      if (selectedArray.length === 0) return false
+
+      const existingAudioIds = new Set(
+        existingPlaylist.audios.map((a) => a.audio.id),
+      )
+      return selectedArray.every((id) => existingAudioIds.has(id))
+    },
+    [playlist, configPlaylists, selectedIds],
+  )
+
   // Check if all operations are complete
   const allOperationsComplete = useMemo(() => {
     if (!playlist || selectedIds.size === 0) return false
@@ -100,6 +129,25 @@ export const SearchPage: FC = () => {
 
     return true
   }, [playlist, selectedIds, downloadedIds, failedIds, configPlaylists])
+
+  // Check if should show navigate button (exists in config)
+  const shouldShowNavigateButton = useMemo(() => {
+    if (!playlist || selectedIds.size === 0) return false
+
+    const isPlaylist = playlist.audios.length > 1
+    const selectedArray = Array.from(selectedIds)
+
+    if (isPlaylist) {
+      // For playlist: check if playlist exists and all selected audios are in it
+      const playlistId =
+        playlist.id || playlist.title || new Date().toISOString()
+      return checkPlaylistExists(playlistId)
+    } else {
+      // For single audio: check if exists in AUDIO_PLAYLIST
+      if (selectedArray.length !== 1) return false
+      return checkAudioExists(selectedArray[0])
+    }
+  }, [playlist, selectedIds, checkAudioExists, checkPlaylistExists])
 
   // Clear search when text is empty
   useEffect(() => {
@@ -157,6 +205,38 @@ export const SearchPage: FC = () => {
     addAudiosToConfig,
     toggleSelect,
   ])
+
+  /**
+   * Handle navigate to existing audio/playlist
+   */
+  const handleNavigateToExisting = useCallback(() => {
+    if (!playlist || selectedIds.size === 0) return
+
+    const isPlaylist = playlist.audios.length > 1
+    const selectedArray = Array.from(selectedIds)
+
+    if (isPlaylist) {
+      // Navigate to playlist
+      const playlistId =
+        playlist.id || playlist.title || new Date().toISOString()
+      navigate(`/playlists?highlight=${encodeURIComponent(playlistId)}`)
+    } else {
+      // Navigate to single audio in music page
+      if (selectedArray.length === 1) {
+        navigate(`/music?highlight=${encodeURIComponent(selectedArray[0])}`)
+      }
+    }
+  }, [playlist, selectedIds, navigate])
+
+  /**
+   * Handle navigate to single audio
+   */
+  const handleNavigateToAudio = useCallback(
+    (audioId: string) => {
+      navigate(`/music?highlight=${encodeURIComponent(audioId)}`)
+    },
+    [navigate],
+  )
 
   /**
    * Handle download single audio
@@ -414,7 +494,11 @@ export const SearchPage: FC = () => {
     let text = "Download"
     let icon = <DownloadOutlined />
 
-    if (pendingCount === 0 && failedCount > 0) {
+    // Check if should show navigate button
+    if (shouldShowNavigateButton) {
+      text = "Go to"
+      icon = <EnvironmentOutlined />
+    } else if (pendingCount === 0 && failedCount > 0) {
       text = failedCount === 1 ? "Retry" : `Retry ${failedCount}`
       icon = <ReloadOutlined />
     } else if (
@@ -437,7 +521,7 @@ export const SearchPage: FC = () => {
     }
 
     return { downloadButtonText: text, downloadButtonIcon: icon }
-  }, [selectedIds, downloadedIds, failedIds])
+  }, [selectedIds, downloadedIds, failedIds, shouldShowNavigateButton])
 
   // Render
   return (
@@ -555,17 +639,34 @@ export const SearchPage: FC = () => {
                       <>
                         <Button
                           type="text"
-                          icon={<DownloadOutlined />}
+                          icon={
+                            checkAudioExists(audio.id) ? (
+                              <EnvironmentOutlined />
+                            ) : (
+                              <DownloadOutlined />
+                            )
+                          }
                           loading={downloading}
                           disabled={
-                            downloaded ||
-                            downloadingAll ||
-                            allOperationsComplete
+                            checkAudioExists(audio.id)
+                              ? false
+                              : downloaded ||
+                                downloadingAll ||
+                                allOperationsComplete
                           }
                           onClick={(e) => {
                             e.stopPropagation()
-                            handleDownloadSingle(audio.id)
+                            if (checkAudioExists(audio.id)) {
+                              handleNavigateToAudio(audio.id)
+                            } else {
+                              handleDownloadSingle(audio.id)
+                            }
                           }}
+                          title={
+                            checkAudioExists(audio.id)
+                              ? "Go to audio"
+                              : "Download"
+                          }
                         />
                         {downloading ? (
                           <Button
@@ -626,9 +727,16 @@ export const SearchPage: FC = () => {
               <Button
                 type="primary"
                 icon={downloadButtonIcon}
-                onClick={handleDownloadAll}
+                onClick={
+                  shouldShowNavigateButton
+                    ? handleNavigateToExisting
+                    : handleDownloadAll
+                }
                 loading={downloadingAll}
-                disabled={selectedIds.size === 0 || allOperationsComplete}
+                disabled={
+                  selectedIds.size === 0 ||
+                  (!shouldShowNavigateButton && allOperationsComplete)
+                }
               >
                 {downloadButtonText}
               </Button>
