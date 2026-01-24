@@ -454,20 +454,39 @@ export const useAppStore = create<AppState>((set, get) => ({
       (a) => a.audio.id === audio.audio.id,
     )
 
+    let updatedPlaylists: LocalPlaylist[]
+
     if (index >= 0) {
-      // Remove from favorites
-      favPlaylist.audios.splice(index, 1)
-      // Remove playlist if empty
-      if (favPlaylist.audios.length === 0) {
-        config.playlists = config.playlists.filter(
+      // Remove from favorites - create new array without the audio
+      const updatedAudios = favPlaylist.audios.filter(
+        (a) => a.audio.id !== audio.audio.id,
+      )
+
+      if (updatedAudios.length === 0) {
+        // Remove playlist if empty
+        updatedPlaylists = config.playlists.filter(
           (p) => p.id !== FAVORITE_PLAYLIST_ID,
+        )
+      } else {
+        // Update playlist with new audios array
+        updatedPlaylists = config.playlists.map((p) =>
+          p.id === FAVORITE_PLAYLIST_ID ? { ...p, audios: updatedAudios } : p,
         )
       }
     } else {
-      // Add to favorites
-      favPlaylist.audios.push(audio)
+      // Add to favorites - create new array with the audio
+      const updatedAudios = [...favPlaylist.audios, audio]
+      updatedPlaylists = config.playlists.map((p) =>
+        p.id === FAVORITE_PLAYLIST_ID ? { ...p, audios: updatedAudios } : p,
+      )
     }
-    await get().saveConfig(config)
+
+    const updatedConfig: Config = {
+      ...config,
+      playlists: updatedPlaylists,
+    }
+
+    await get().saveConfig(updatedConfig)
   },
 
   isFavoritedAudio: (id: string) => {
