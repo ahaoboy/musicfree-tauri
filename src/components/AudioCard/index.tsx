@@ -96,7 +96,8 @@ export const AudioCard: FC<AudioCardProps> = memo(
             />
           )
         }
-        offset={badge.offset ?? [8, 48]}
+        // FIXME: Displayed in the bottom left corner of the image, perhaps a responsive layout should be used.
+        offset={badge.offset ?? [-48, 48]}
       >
         {avatarElement}
       </Badge>

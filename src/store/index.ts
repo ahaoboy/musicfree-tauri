@@ -329,24 +329,43 @@ export const useAppStore = create<AppState>((set, get) => ({
       const existingAudioMap = new Map(
         existing.audios.map((a) => [a.audio.id, a]),
       )
-      const newAudioMap = new Map(playlist.audios.map((a) => [a.audio.id, a]))
 
-      // Merge audios: prefer new data, preserve order from new playlist
-      const mergedAudios = playlist.audios
-        .map((audio) => {
-          return (
-            newAudioMap.get(audio.audio.id) ||
-            existingAudioMap.get(audio.audio.id)
-          )
-        })
-        .filter(Boolean) as LocalAudio[]
+      // Build merged audios following this priority:
+      // 1. Items in new playlist: follow new playlist order (prefer existing local data)
+      // 2. Items only in old playlist: append at the end (keep old data)
 
-      // Add any existing audios not in new playlist
-      existing.audios.forEach((audio) => {
-        if (!newAudioMap.has(audio.audio.id)) {
-          mergedAudios.push(audio)
+      const mergedAudios: LocalAudio[] = []
+      const processedIds = new Set<string>()
+
+      // First pass: add all items from new playlist in order
+      for (const newLocalAudio of playlist.audios) {
+        const audioId = newLocalAudio.audio.id
+        processedIds.add(audioId)
+
+        const existingLocalAudio = existingAudioMap.get(audioId)
+        if (existingLocalAudio) {
+          // Audio exists in both: use existing local data (already downloaded)
+          // but update metadata from new playlist
+          mergedAudios.push({
+            ...existingLocalAudio,
+            audio: {
+              ...existingLocalAudio.audio,
+              ...newLocalAudio.audio, // Update metadata from new playlist
+            },
+          })
+        } else {
+          // Audio only in new playlist: use new data
+          mergedAudios.push(newLocalAudio)
         }
-      })
+      }
+
+      // Second pass: add items that only exist in old playlist
+      for (const existingAudio of existing.audios) {
+        const audioId = existingAudio.audio.id
+        if (!processedIds.has(audioId)) {
+          mergedAudios.push(existingAudio)
+        }
+      }
 
       const mergedPlaylist: LocalPlaylist = {
         ...playlist,
@@ -354,11 +373,20 @@ export const useAppStore = create<AppState>((set, get) => ({
         cover_path: playlist.cover_path || existing.cover_path,
       }
 
-      updatedPlaylists = [...config.playlists]
-      updatedPlaylists[existingIndex] = mergedPlaylist
+      // Move updated playlist to the front
+      updatedPlaylists = [
+        mergedPlaylist,
+        ...config.playlists.filter((_p, i) => i !== existingIndex),
+      ]
     } else {
-      // Add new playlist
-      updatedPlaylists = [...config.playlists, playlist]
+      // Add new playlist to the front (but after special playlists)
+      const specialPlaylists = config.playlists.filter(
+        (p) => p.id === FAVORITE_PLAYLIST_ID || p.id === AUDIO_PLAYLIST_ID,
+      )
+      const regularPlaylists = config.playlists.filter(
+        (p) => p.id !== FAVORITE_PLAYLIST_ID && p.id !== AUDIO_PLAYLIST_ID,
+      )
+      updatedPlaylists = [...specialPlaylists, playlist, ...regularPlaylists]
     }
 
     const updatedConfig: Config = {
@@ -397,10 +425,10 @@ export const useAppStore = create<AppState>((set, get) => ({
 
     const audioPlaylist = getOrCreateAudioPlaylist(config)
 
-    // Add new audios, avoiding duplicates
+    // Add new audios to the front, avoiding duplicates
     const existingIds = new Set(audioPlaylist.audios.map((a) => a.audio.id))
     const newAudios = audios.filter((a) => !existingIds.has(a.audio.id))
-    audioPlaylist.audios.push(...newAudios)
+    audioPlaylist.audios.unshift(...newAudios)
 
     await get().saveConfig(config)
   },
@@ -474,8 +502,8 @@ export const useAppStore = create<AppState>((set, get) => ({
         )
       }
     } else {
-      // Add to favorites - create new array with the audio
-      const updatedAudios = [...favPlaylist.audios, audio]
+      // Add to favorites - create new array with the audio at the front
+      const updatedAudios = [audio, ...favPlaylist.audios]
       updatedPlaylists = config.playlists.map((p) =>
         p.id === FAVORITE_PLAYLIST_ID ? { ...p, audios: updatedAudios } : p,
       )

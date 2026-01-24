@@ -96,7 +96,7 @@ export const MusicPage: FC = () => {
         const isActive = highlightId
           ? highlightId === audio.audio.id
           : currentPlaylistId === AUDIO_PLAYLIST_ID &&
-          currentAudio?.audio.id === audio.audio.id
+            currentAudio?.audio.id === audio.audio.id
 
         return (
           <div

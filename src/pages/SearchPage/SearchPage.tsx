@@ -292,7 +292,9 @@ export const SearchPage: FC = () => {
 
       // Navigate to music page with highlight parameter
       const downloadedAudio = result.downloadedAudios[0]
-      navigate(`/music?highlight=${encodeURIComponent(downloadedAudio.audio.id)}`)
+      navigate(
+        `/music?highlight=${encodeURIComponent(downloadedAudio.audio.id)}`,
+      )
     } else if (!isPlaylist && isAddMode && result.existingAudios.length > 0) {
       clearSelection()
 
