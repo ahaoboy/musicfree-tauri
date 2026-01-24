@@ -1,6 +1,6 @@
 import { FC, useCallback, useEffect } from "react"
 import { useNavigate, useParams } from "react-router-dom"
-import { Flex, Avatar } from "antd"
+import { Flex, Avatar, Button } from "antd"
 import DeleteOutlined from "@ant-design/icons/DeleteOutlined"
 import { useAppStore } from "../../store"
 import { LocalAudio, DEFAULT_COVER_URL } from "../../api"
@@ -102,9 +102,16 @@ export const PlaylistDetail: FC = () => {
           key={`${audio.audio.id}-${index}-${playlist.id}`}
           audio={audio}
           onClick={() => handleAudioClick(audio)}
-          showAction
-          actionIcon={<DeleteOutlined />}
-          onAction={() => handleDeleteAudio(audio.audio.id, audio.audio.title)}
+          actions={
+            <Button
+              type="text"
+              icon={<DeleteOutlined />}
+              onClick={(e) => {
+                e.stopPropagation()
+                handleDeleteAudio(audio.audio.id, audio.audio.title)
+              }}
+            />
+          }
         />
       ))}
     </Flex>

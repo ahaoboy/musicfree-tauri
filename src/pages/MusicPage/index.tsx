@@ -1,5 +1,5 @@
 import { FC, useCallback } from "react"
-import { Spin, Flex, Avatar } from "antd"
+import { Spin, Flex, Avatar, Button } from "antd"
 import DeleteOutlined from "@ant-design/icons/DeleteOutlined"
 import { useAppStore, useAudios } from "../../store"
 import { AudioCard } from "../../components"
@@ -64,9 +64,16 @@ export const MusicPage: FC = () => {
           key={audio.audio.id}
           audio={audio}
           onClick={() => handleAudioClick(audio)}
-          showAction
-          actionIcon={<DeleteOutlined />}
-          onAction={() => handleDelete(audio.audio.id, audio.audio.title)}
+          actions={
+            <Button
+              type="text"
+              icon={<DeleteOutlined />}
+              onClick={(e) => {
+                e.stopPropagation()
+                handleDelete(audio.audio.id, audio.audio.title)
+              }}
+            />
+          }
         />
       ))}
     </Flex>

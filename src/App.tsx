@@ -3,7 +3,6 @@ import {
   useCallback,
   useState,
   Suspense,
-  lazy,
   memo,
   useEffect,
   useMemo,
@@ -40,11 +39,11 @@ import { useAppStore } from "./store"
 import { useSwipe, SwipeDirection } from "./hooks"
 import "./styles/index.less"
 
-const PlaylistsPage = lazy(() => import("./pages/PlaylistsPage"))
-const MusicPage = lazy(() => import("./pages/MusicPage"))
-const SearchPage = lazy(() => import("./pages/SearchPage"))
-const SettingsPage = lazy(() => import("./pages/SettingsPage"))
-const PlayerPage = lazy(() => import("./pages/PlayerPage"))
+import PlaylistsPage from "./pages/PlaylistsPage"
+import MusicPage from "./pages/MusicPage"
+import SearchPage from "./pages/SearchPage"
+import SettingsPage from "./pages/SettingsPage"
+import PlayerPage from "./pages/PlayerPage"
 
 // Route to Tab mapping
 const ROUTE_TO_TAB: Record<string, Tab> = {
