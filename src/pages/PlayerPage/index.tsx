@@ -27,8 +27,8 @@ export const PlayerPage: FC = () => {
   const coverUrl = useCoverUrl(
     currentAudio?.cover_path,
     currentAudio?.audio.cover,
+    currentAudio?.audio.platform,
   )
-
   const currentTime = useCurrentTime()
   const duration = useDuration()
 

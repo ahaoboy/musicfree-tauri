@@ -1,14 +1,15 @@
 import { FC, useCallback, useEffect } from "react"
 import { Routes, Route, useNavigate } from "react-router-dom"
-import { Flex, Avatar } from "antd"
+import { Flex, Avatar, Button } from "antd"
 import DeleteOutlined from "@ant-design/icons/DeleteOutlined"
+import FolderOutlined from "@ant-design/icons/FolderOutlined"
 import { useAppStore, usePlaylistsPageData } from "../../store"
 import {
   LocalPlaylist,
   FAVORITE_PLAYLIST_ID,
   DEFAULT_COVER_URL,
 } from "../../api"
-import { PlaylistCard } from "../../components"
+import { AudioCard } from "../../components"
 import { useNavigation } from "../../contexts"
 import { useConfirm } from "../../hooks"
 import { PlaylistDetail } from "./PlaylistDetail"
@@ -64,16 +65,36 @@ const PlaylistsList: FC = () => {
 
   return (
     <Flex vertical className="page audio-list" gap="small">
-      {playlists.map((playlist, index) => (
-        <PlaylistCard
-          key={`${playlist.id}-${index}`}
-          playlist={playlist}
-          onClick={() => handlePlaylistClick(playlist)}
-          showAction={playlist.id !== FAVORITE_PLAYLIST_ID}
-          actionIcon={<DeleteOutlined />}
-          onAction={() => handleDeletePlaylist(playlist.id, playlist.title)}
-        />
-      ))}
+      {playlists.map((playlist, index) => {
+        const audioCount = playlist.audios?.length || 0
+        const displayName = playlist.title || playlist.id
+        const canDelete = playlist.id !== FAVORITE_PLAYLIST_ID
+
+        return (
+          <AudioCard
+            key={`${playlist.id}-${index}`}
+            coverPath={playlist.cover_path}
+            coverUrl={playlist.cover}
+            platform={playlist.platform}
+            title={displayName}
+            subtitle={`${audioCount} tracks · ${playlist.platform}`}
+            icon={<FolderOutlined />}
+            onClick={() => handlePlaylistClick(playlist)}
+            actions={
+              canDelete ? (
+                <Button
+                  type="text"
+                  icon={<DeleteOutlined />}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handleDeletePlaylist(playlist.id, playlist.title)
+                  }}
+                />
+              ) : undefined
+            }
+          />
+        )
+      })}
     </Flex>
   )
 }

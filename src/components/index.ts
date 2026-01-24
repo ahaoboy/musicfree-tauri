@@ -1,6 +1,5 @@
 export { AudioCard } from "./AudioCard"
 export { PlayerCard } from "./PlayerCard"
-export { PlaylistCard } from "./PlaylistCard"
 export { ErrorBoundary } from "./ErrorBoundary"
 export { PageErrorBoundary } from "./PageErrorBoundary"
 export { LoadingFallback } from "./LoadingFallback"

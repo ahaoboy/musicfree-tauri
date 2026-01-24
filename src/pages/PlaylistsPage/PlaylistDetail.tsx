@@ -100,7 +100,11 @@ export const PlaylistDetail: FC = () => {
       {playlist.audios.map((audio, index) => (
         <AudioCard
           key={`${audio.audio.id}-${index}-${playlist.id}`}
-          audio={audio}
+          coverPath={audio.cover_path}
+          coverUrl={audio.audio.cover}
+          platform={audio.audio.platform}
+          title={audio.audio.title}
+          subtitle={audio.audio.platform}
           onClick={() => handleAudioClick(audio)}
           actions={
             <Button

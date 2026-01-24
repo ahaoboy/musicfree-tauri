@@ -2,17 +2,21 @@ import { FC, memo, useCallback, ReactNode } from "react"
 import { Flex, Typography, Avatar, Badge } from "antd"
 import AudioOutlined from "@ant-design/icons/AudioOutlined"
 import CheckOutlined from "@ant-design/icons/CheckOutlined"
-import { DEFAULT_COVER_URL, LocalAudio, Audio } from "../../api"
+import { DEFAULT_COVER_URL } from "../../api"
 import { useCoverUrl } from "../../hooks"
 
 const { Text } = Typography
 
 interface AudioCardProps {
-  // Audio data
-  audio: LocalAudio | Audio
-
   // Cover
-  coverUrl?: string | null // External cover URL (overrides internal hook)
+  coverPath?: string | null // Local cover path
+  coverUrl?: string // Remote cover URL
+  platform: string // Platform name (required)
+
+  // Display info
+  title: string
+  subtitle?: string // Secondary info (e.g., "Platform · Extra info")
+  icon?: ReactNode // Avatar icon (default: AudioOutlined)
 
   // Click behavior
   onClick?: () => void
@@ -24,36 +28,33 @@ interface AudioCardProps {
     offset?: [number, number] // Badge position offset
   }
 
-  // Info section (second row)
-  extraInfo?: ReactNode // Extra info after platform (e.g., status text)
+  // Extra info section (after subtitle)
+  extraInfo?: ReactNode
 
   // Actions section (right side)
-  actions?: ReactNode // Custom action buttons
+  actions?: ReactNode
 }
 
-// Helper to check if audio is LocalAudio
-const isLocalAudio = (audio: LocalAudio | Audio): audio is LocalAudio => {
-  return "path" in audio
-}
-
-// Audio info display card - Highly customizable and reusable
+/**
+ * Generic card component for displaying audio/playlist items
+ * Highly customizable and reusable across different contexts
+ */
 export const AudioCard: FC<AudioCardProps> = memo(
   ({
-    audio,
-    coverUrl: externalCoverUrl,
+    coverPath,
+    coverUrl,
+    platform,
+    title,
+    subtitle,
+    icon = <AudioOutlined />,
     onClick,
     badge,
     extraInfo,
     actions,
   }) => {
-    // Use external coverUrl if provided, otherwise use hook for LocalAudio
-    const hookCoverUrl = useCoverUrl(
-      isLocalAudio(audio) ? audio.cover_path : null,
-      isLocalAudio(audio) ? audio.audio.cover : audio.cover,
-    )
-    const finalCoverUrl = externalCoverUrl ?? hookCoverUrl
-
-    const audioData = isLocalAudio(audio) ? audio.audio : audio
+    // Auto-download and cache cover
+    const autoCoverUrl = useCoverUrl(coverPath, coverUrl, platform)
+    const finalCoverUrl = autoCoverUrl || DEFAULT_COVER_URL
 
     const handleCardClick = useCallback(
       (e: React.MouseEvent | React.KeyboardEvent) => {
@@ -66,11 +67,11 @@ export const AudioCard: FC<AudioCardProps> = memo(
     // Avatar element
     const avatarElement = (
       <Avatar
-        src={finalCoverUrl || DEFAULT_COVER_URL}
-        icon={<AudioOutlined />}
+        src={finalCoverUrl}
+        icon={icon}
         size={56}
         shape="square"
-        alt={audioData.title}
+        alt={title}
         className="card-avatar"
       />
     )
@@ -91,7 +92,7 @@ export const AudioCard: FC<AudioCardProps> = memo(
             />
           )
         }
-        offset={badge.offset ?? [-48, 48]}
+        offset={badge.offset ?? [8, 48]}
       >
         {avatarElement}
       </Badge>
@@ -117,16 +118,20 @@ export const AudioCard: FC<AudioCardProps> = memo(
         <Flex vertical flex={1} style={{ minWidth: 0 }}>
           {/* First row: Title */}
           <Text strong ellipsis>
-            {audioData.title}
+            {title}
           </Text>
 
-          {/* Second row: Platform + Extra info */}
-          <Flex align="center" gap="small">
-            <Text type="secondary" style={{ fontSize: 12 }}>
-              {audioData.platform}
-            </Text>
-            {extraInfo}
-          </Flex>
+          {/* Second row: Subtitle + Extra info */}
+          {(subtitle || extraInfo) && (
+            <Flex align="center" gap="small">
+              {subtitle && (
+                <Text type="secondary" style={{ fontSize: 12 }}>
+                  {subtitle}
+                </Text>
+              )}
+              {extraInfo}
+            </Flex>
+          )}
         </Flex>
 
         {/* Right: Actions */}

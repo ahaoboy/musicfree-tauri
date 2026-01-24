@@ -13,7 +13,6 @@ import {
 interface SearchState {
   playlist: Playlist | null
   searching: boolean
-  coverUrls: Record<string, string>
   playlistCoverUrl: string | null
 }
 
@@ -24,7 +23,6 @@ export const useSearchAudio = () => {
   const [state, setState] = useState<SearchState>({
     playlist: null,
     searching: false,
-    coverUrls: {},
     playlistCoverUrl: null,
   })
 
@@ -73,9 +71,9 @@ export const useSearchAudio = () => {
   )
 
   /**
-   * Download covers for playlist and audios in background
+   * Download playlist cover in background
    */
-  const downloadCovers = useCallback(
+  const downloadPlaylistCover = useCallback(
     async (playlist: Playlist) => {
       // Download playlist cover
       if (playlist.cover) {
@@ -93,19 +91,6 @@ export const useSearchAudio = () => {
           )
           if (webUrl) {
             setState((prev) => ({ ...prev, playlistCoverUrl: webUrl }))
-          }
-        }
-      }
-
-      // Download audio covers
-      for (const audio of playlist.audios) {
-        if (audio.cover) {
-          const webUrl = await downloadCoverUrl(audio.cover, audio.platform)
-          if (webUrl) {
-            setState((prev) => ({
-              ...prev,
-              coverUrls: { ...prev.coverUrls, [audio.id]: webUrl },
-            }))
           }
         }
       }
@@ -137,22 +122,13 @@ export const useSearchAudio = () => {
           const existing = await checkExistingAudio(audio)
           if (existing) {
             existingAudios.push(existing)
-
-            // Cache existing cover URL
-            if (existing.cover_path) {
-              const webUrl = await get_web_url(existing.cover_path)
-              setState((prev) => ({
-                ...prev,
-                coverUrls: { ...prev.coverUrls, [audio.id]: webUrl },
-              }))
-            }
           }
         }
 
         setState((prev) => ({ ...prev, playlist, searching: false }))
 
-        // Download covers in background
-        downloadCovers(playlist)
+        // Download playlist cover in background
+        downloadPlaylistCover(playlist)
 
         return { playlist, defaultAudioIndex, existingAudios }
       } catch (error) {
@@ -161,7 +137,7 @@ export const useSearchAudio = () => {
         return null
       }
     },
-    [checkExistingAudio, downloadCovers],
+    [checkExistingAudio, downloadPlaylistCover],
   )
 
   /**
@@ -171,7 +147,6 @@ export const useSearchAudio = () => {
     setState({
       playlist: null,
       searching: false,
-      coverUrls: {},
       playlistCoverUrl: null,
     })
   }, [])
@@ -180,6 +155,5 @@ export const useSearchAudio = () => {
     ...state,
     searchAudios,
     clearSearch,
-    downloadCoverUrl,
   }
 }

@@ -15,7 +15,11 @@ interface PlayerCardProps {
 // Mini player card - Optimized with memo and selective subscriptions
 export const PlayerCard: FC<PlayerCardProps> = memo(({ audio }) => {
   const navigate = useNavigate()
-  const coverUrl = useCoverUrl(audio?.cover_path, audio?.audio.cover)
+  const coverUrl = useCoverUrl(
+    audio?.cover_path,
+    audio?.audio.cover,
+    audio?.audio.platform,
+  )
 
   const handleCardClick = useCallback(() => {
     navigate("/player")

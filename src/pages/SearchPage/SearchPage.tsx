@@ -27,14 +27,8 @@ export const SearchPage: FC = () => {
   const [searchText, setSearchText] = useState("")
 
   // Custom hooks
-  const {
-    playlist,
-    searching,
-    coverUrls,
-    playlistCoverUrl,
-    searchAudios,
-    clearSearch,
-  } = useSearchAudio()
+  const { playlist, searching, playlistCoverUrl, searchAudios, clearSearch } =
+    useSearchAudio()
 
   const {
     downloadingIds,
@@ -402,8 +396,11 @@ export const SearchPage: FC = () => {
               return (
                 <AudioCard
                   key={audio.id}
-                  audio={audio}
-                  coverUrl={coverUrls[audio.id] || null}
+                  coverPath={null}
+                  coverUrl={audio.cover}
+                  platform={audio.platform}
+                  title={audio.title}
+                  subtitle={audio.platform}
                   onClick={() => {
                     if (
                       !downloading &&

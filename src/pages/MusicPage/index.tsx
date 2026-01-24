@@ -62,7 +62,11 @@ export const MusicPage: FC = () => {
       {audios.map((audio) => (
         <AudioCard
           key={audio.audio.id}
-          audio={audio}
+          coverPath={audio.cover_path}
+          coverUrl={audio.audio.cover}
+          platform={audio.audio.platform}
+          title={audio.audio.title}
+          subtitle={audio.audio.platform}
           onClick={() => handleAudioClick(audio)}
           actions={
             <Button
