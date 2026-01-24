@@ -6,10 +6,12 @@ interface DownloadState {
   downloadedIds: Set<string>
   failedIds: Set<string>
   downloadingAll: boolean
+  downloadedAudios: Map<string, LocalAudio> // Store downloaded LocalAudio objects
 }
 
 interface DownloadResult {
   successCount: number
+  failedCount: number
   skippedCount: number
   downloadedAudios: LocalAudio[]
   existingAudios: LocalAudio[]
@@ -24,6 +26,7 @@ export const useDownloadManager = () => {
     downloadedIds: new Set(),
     failedIds: new Set(),
     downloadingAll: false,
+    downloadedAudios: new Map(),
   })
 
   // Abort controllers for canceling downloads
@@ -81,10 +84,15 @@ export const useDownloadManager = () => {
         ])
 
         if (localAudio) {
-          setState((prev) => ({
-            ...prev,
-            downloadedIds: new Set([...prev.downloadedIds, audio.id]),
-          }))
+          setState((prev) => {
+            const newDownloadedAudios = new Map(prev.downloadedAudios)
+            newDownloadedAudios.set(audio.id, localAudio)
+            return {
+              ...prev,
+              downloadedIds: new Set([...prev.downloadedIds, audio.id]),
+              downloadedAudios: newDownloadedAudios,
+            }
+          })
           return localAudio
         } else {
           setState((prev) => ({
@@ -141,6 +149,7 @@ export const useDownloadManager = () => {
       setState((prev) => ({ ...prev, downloadingAll: true }))
 
       let successCount = 0
+      let failedCount = 0
       let skippedCount = 0
       const downloadedAudios: LocalAudio[] = []
 
@@ -163,6 +172,8 @@ export const useDownloadManager = () => {
         if (localAudio) {
           downloadedAudios.push(localAudio)
           successCount++
+        } else {
+          failedCount++
         }
       }
 
@@ -170,6 +181,7 @@ export const useDownloadManager = () => {
 
       return {
         successCount,
+        failedCount,
         skippedCount,
         downloadedAudios,
         existingAudios,
@@ -181,10 +193,32 @@ export const useDownloadManager = () => {
   /**
    * Mark audio as downloaded
    */
-  const markAsDownloaded = useCallback((audioId: string) => {
+  const markAsDownloaded = useCallback(
+    (audioId: string, localAudio?: LocalAudio) => {
+      setState((prev) => {
+        const updates: Partial<DownloadState> = {
+          downloadedIds: new Set([...prev.downloadedIds, audioId]),
+        }
+
+        if (localAudio) {
+          const newDownloadedAudios = new Map(prev.downloadedAudios)
+          newDownloadedAudios.set(audioId, localAudio)
+          updates.downloadedAudios = newDownloadedAudios
+        }
+
+        return { ...prev, ...updates }
+      })
+    },
+    [],
+  )
+
+  /**
+   * Remove audio from failed state
+   */
+  const removeFromFailed = useCallback((audioId: string) => {
     setState((prev) => ({
       ...prev,
-      downloadedIds: new Set([...prev.downloadedIds, audioId]),
+      failedIds: new Set([...prev.failedIds].filter((id) => id !== audioId)),
     }))
   }, [])
 
@@ -201,6 +235,7 @@ export const useDownloadManager = () => {
       downloadedIds: new Set(),
       failedIds: new Set(),
       downloadingAll: false,
+      downloadedAudios: new Map(),
     })
   }, [])
 
@@ -210,6 +245,7 @@ export const useDownloadManager = () => {
     abortDownload,
     downloadMultiple,
     markAsDownloaded,
+    removeFromFailed,
     clearDownloadState,
   }
 }

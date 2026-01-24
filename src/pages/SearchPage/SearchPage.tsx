@@ -8,11 +8,13 @@ import PlusOutlined from "@ant-design/icons/PlusOutlined"
 import DeleteOutlined from "@ant-design/icons/DeleteOutlined"
 import StopOutlined from "@ant-design/icons/StopOutlined"
 import CheckOutlined from "@ant-design/icons/CheckOutlined"
+import ClearOutlined from "@ant-design/icons/ClearOutlined"
 import {
   DEFAULT_COVER_URL,
   LocalPlaylist,
   AUDIO_PLAYLIST_ID,
   download_cover,
+  LocalAudio,
 } from "../../api"
 import { useAppStore } from "../../store"
 import { AudioCard, AudioList } from "../../components"
@@ -38,10 +40,12 @@ export const SearchPage: FC = () => {
     downloadedIds,
     failedIds,
     downloadingAll,
+    downloadedAudios,
     startDownload,
     abortDownload,
     downloadMultiple,
     markAsDownloaded,
+    removeFromFailed,
     clearDownloadState,
   } = useDownloadManager()
 
@@ -124,7 +128,7 @@ export const SearchPage: FC = () => {
 
     // Mark existing audios as downloaded
     existingAudios.forEach((audio) => {
-      markAsDownloaded(audio.audio.id)
+      markAsDownloaded(audio.audio.id, audio)
     })
 
     // Add single existing audio to config
@@ -187,6 +191,20 @@ export const SearchPage: FC = () => {
   )
 
   /**
+   * Handle clear all failed audios
+   */
+  const handleClearFailed = useCallback(() => {
+    if (!playlist) return
+
+    // Remove all failed audios from selection and failed state
+    const failedArray = Array.from(failedIds)
+    failedArray.forEach((id) => {
+      removeFromSelection(id)
+      removeFromFailed(id)
+    })
+  }, [playlist, failedIds, removeFromSelection, removeFromFailed])
+
+  /**
    * Handle download/add all selected
    */
   const handleDownloadAll = useCallback(async () => {
@@ -205,6 +223,15 @@ export const SearchPage: FC = () => {
       (id) => !downloadedIds.has(id) && !failedIds.has(id),
     )
 
+    console.log("handleDownloadAll debug:", {
+      selectedIds: Array.from(selectedIds),
+      selectedFailedIds,
+      selectedDownloadedIds,
+      selectedPendingIds,
+      failedIds: Array.from(failedIds),
+      downloadedIds: Array.from(downloadedIds),
+    })
+
     const isRetryMode =
       selectedFailedIds.length > 0 && selectedPendingIds.length === 0
     const isAddMode =
@@ -212,19 +239,41 @@ export const SearchPage: FC = () => {
       selectedPendingIds.length === 0 &&
       selectedFailedIds.length === 0
 
+    console.log("Mode:", { isRetryMode, isAddMode })
+
     let result
 
     if (isAddMode) {
-      // Collect already downloaded audios
-      const existingAudios = configAudios.filter((a) =>
-        selectedDownloadedIds.includes(a.audio.id),
-      )
+      // In add mode, collect LocalAudio objects from downloadedAudios Map
+      const existingAudios: LocalAudio[] = []
+
+      for (const audioId of selectedDownloadedIds) {
+        const localAudio = downloadedAudios.get(audioId)
+        if (localAudio) {
+          existingAudios.push(localAudio)
+        } else {
+          // Also check configAudios as fallback
+          const configAudio = configAudios.find((a) => a.audio.id === audioId)
+          if (configAudio) {
+            existingAudios.push(configAudio)
+          }
+        }
+      }
+
+      console.log("Add mode - checking existingAudios:", {
+        selectedDownloadedIds,
+        downloadedAudiosMapSize: downloadedAudios.size,
+        existingAudiosCount: existingAudios.length,
+      })
+
       result = {
         successCount: 0,
+        failedCount: 0,
         skippedCount: existingAudios.length,
         downloadedAudios: [],
         existingAudios,
       }
+      console.log("Add mode result:", result)
     } else {
       // Download or retry
       const existingAudios = configAudios.filter((a) =>
@@ -235,10 +284,24 @@ export const SearchPage: FC = () => {
         existingAudios,
         isRetryMode,
       )
+
+      console.log("Download result:", result)
+
+      // If there are any failed downloads, don't auto-add to config
+      // Let user decide to clear failed or retry
+      if (result.failedCount > 0) {
+        console.log("Has failed downloads, not auto-adding")
+        return
+      }
     }
 
     const allAudios = [...result.downloadedAudios, ...result.existingAudios]
     const isPlaylist = playlist.audios.length > 1
+
+    console.log("Processing result:", {
+      allAudios: allAudios.length,
+      isPlaylist,
+    })
 
     if (isPlaylist && allAudios.length > 0) {
       // Download playlist cover
@@ -281,26 +344,32 @@ export const SearchPage: FC = () => {
         platform: playlist.platform,
       }
 
+      console.log("Adding playlist to config:", localPlaylist)
       await addPlaylistToConfig(localPlaylist)
       clearSelection()
 
       // Navigate to playlists page with highlight parameter
+      console.log("Navigating to playlists page")
       navigate(`/playlists?highlight=${encodeURIComponent(playlistId)}`)
     } else if (!isPlaylist && result.downloadedAudios.length > 0) {
       // Single audio - add to AUDIO_PLAYLIST
+      console.log("Adding single audio to config")
       await addAudiosToConfig(result.downloadedAudios)
       clearSelection()
 
       // Navigate to music page with highlight parameter
       const downloadedAudio = result.downloadedAudios[0]
+      console.log("Navigating to music page")
       navigate(
         `/music?highlight=${encodeURIComponent(downloadedAudio.audio.id)}`,
       )
     } else if (!isPlaylist && isAddMode && result.existingAudios.length > 0) {
+      console.log("Adding existing single audio")
       clearSelection()
 
       // Navigate to music page with highlight parameter
       const existingAudio = result.existingAudios[0]
+      console.log("Navigating to music page (existing)")
       navigate(`/music?highlight=${encodeURIComponent(existingAudio.audio.id)}`)
     }
   }, [
@@ -315,6 +384,20 @@ export const SearchPage: FC = () => {
     clearSelection,
     navigate,
   ])
+
+  // Check if should show clear failed button
+  const showClearFailedButton = useMemo(() => {
+    if (!playlist || downloadingAll) return false
+
+    // Show button if:
+    // 1. There are failed audios
+    // 2. Not currently downloading
+    // 3. Some audios are selected and failed
+    const selectedArray = Array.from(selectedIds)
+    const hasFailedInSelection = selectedArray.some((id) => failedIds.has(id))
+
+    return failedIds.size > 0 && hasFailedInSelection
+  }, [playlist, downloadingAll, selectedIds, failedIds])
 
   // Compute button state
   const { downloadButtonText, downloadButtonIcon } = useMemo(() => {
@@ -527,18 +610,27 @@ export const SearchPage: FC = () => {
                 toggleSelectAll(playlist.audios, e.target.checked)
               }
               disabled={downloadingAll || allOperationsComplete}
-            >
-              Select All
-            </Checkbox>
-            <Button
-              type="primary"
-              icon={downloadButtonIcon}
-              onClick={handleDownloadAll}
-              loading={downloadingAll}
-              disabled={selectedIds.size === 0 || allOperationsComplete}
-            >
-              {downloadButtonText}
-            </Button>
+            ></Checkbox>
+
+            <Flex gap="small">
+              {showClearFailedButton && (
+                <Button
+                  icon={<ClearOutlined />}
+                  onClick={handleClearFailed}
+                  disabled={downloadingAll || allOperationsComplete}
+                  title="Clear all failed audios from selection"
+                ></Button>
+              )}
+              <Button
+                type="primary"
+                icon={downloadButtonIcon}
+                onClick={handleDownloadAll}
+                loading={downloadingAll}
+                disabled={selectedIds.size === 0 || allOperationsComplete}
+              >
+                {downloadButtonText}
+              </Button>
+            </Flex>
           </Flex>
         </>
       )}
