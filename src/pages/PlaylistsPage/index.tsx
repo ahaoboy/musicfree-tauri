@@ -1,4 +1,4 @@
-import { FC, useCallback, useEffect, useRef } from "react"
+import { FC, useCallback, useEffect } from "react"
 import { Routes, Route, useNavigate, useSearchParams } from "react-router-dom"
 import { Flex, Avatar, Button } from "antd"
 import DeleteOutlined from "@ant-design/icons/DeleteOutlined"
@@ -9,7 +9,7 @@ import {
   FAVORITE_PLAYLIST_ID,
   DEFAULT_COVER_URL,
 } from "../../api"
-import { AudioCard } from "../../components"
+import { AudioCard, AudioList } from "../../components"
 import { useNavigation } from "../../contexts"
 import { useConfirm } from "../../hooks"
 import { PlaylistDetail } from "./PlaylistDetail"
@@ -26,25 +26,6 @@ const PlaylistsList: FC = () => {
 
   // Get highlight ID from URL params
   const highlightId = searchParams.get("highlight")
-
-  // Ref to store playlist card elements
-  const playlistRefs = useRef<Map<string, HTMLDivElement>>(new Map())
-
-  // Scroll to highlighted playlist when highlight param changes
-  useEffect(() => {
-    if (highlightId && playlistRefs.current.has(highlightId)) {
-      const element = playlistRefs.current.get(highlightId)
-      if (element) {
-        // Small delay to ensure DOM is ready
-        setTimeout(() => {
-          element?.scrollIntoView({
-            behavior: "smooth",
-            block: "center",
-          })
-        }, 100)
-      }
-    }
-  }, [highlightId])
 
   // Clear detail view state when on list view
   useEffect(() => {
@@ -94,55 +75,49 @@ const PlaylistsList: FC = () => {
   }
 
   return (
-    <Flex vertical className="page audio-list" gap="small">
-      {playlists.map((playlist, index) => {
-        const audioCount = playlist.audios?.length || 0
-        const displayName = playlist.title || playlist.id
-        const canDelete = playlist.id !== FAVORITE_PLAYLIST_ID
+    <Flex vertical className="page" style={{ flex: 1, overflow: "hidden" }}>
+      <AudioList highlightId={highlightId}>
+        {playlists.map((playlist, index) => {
+          const audioCount = playlist.audios?.length || 0
+          const displayName = playlist.title || playlist.id
+          const canDelete = playlist.id !== FAVORITE_PLAYLIST_ID
 
-        // Priority: highlightId > currentPlaylistId
-        // When highlightId exists, only highlight that item
-        // Otherwise, highlight the currently playing playlist
-        const isActive = highlightId
-          ? highlightId === playlist.id
-          : currentPlaylistId === playlist.id
+          // Priority: highlightId > currentPlaylistId
+          const isActive = highlightId
+            ? highlightId === playlist.id
+            : currentPlaylistId === playlist.id
 
-        return (
-          <div
-            key={`${playlist.id}-${index}`}
-            ref={(el) => {
-              if (el) {
-                playlistRefs.current.set(playlist.id, el)
-              } else {
-                playlistRefs.current.delete(playlist.id)
-              }
-            }}
-          >
-            <AudioCard
-              coverPath={playlist.cover_path}
-              coverUrl={playlist.cover}
-              platform={playlist.platform}
-              title={displayName}
-              subtitle={`${audioCount} tracks · ${playlist.platform}`}
-              icon={<FolderOutlined />}
-              onClick={() => handlePlaylistClick(playlist)}
-              active={isActive}
-              actions={
-                canDelete ? (
-                  <Button
-                    type="text"
-                    icon={<DeleteOutlined />}
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      handleDeletePlaylist(playlist.id, playlist.title)
-                    }}
-                  />
-                ) : undefined
-              }
-            />
-          </div>
-        )
-      })}
+          return (
+            <div
+              key={`${playlist.id}-${playlist.platform}-${index}`}
+              data-item-id={playlist.id}
+            >
+              <AudioCard
+                coverPath={playlist.cover_path}
+                coverUrl={playlist.cover}
+                platform={playlist.platform}
+                title={displayName}
+                subtitle={`${audioCount} tracks · ${playlist.platform}`}
+                icon={<FolderOutlined />}
+                onClick={() => handlePlaylistClick(playlist)}
+                active={isActive}
+                actions={
+                  canDelete ? (
+                    <Button
+                      type="text"
+                      icon={<DeleteOutlined />}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleDeletePlaylist(playlist.id, playlist.title)
+                      }}
+                    />
+                  ) : undefined
+                }
+              />
+            </div>
+          )
+        })}
+      </AudioList>
     </Flex>
   )
 }

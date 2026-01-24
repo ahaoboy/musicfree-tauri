@@ -15,7 +15,7 @@ import {
   download_cover,
 } from "../../api"
 import { useAppStore } from "../../store"
-import { AudioCard } from "../../components"
+import { AudioCard, AudioList } from "../../components"
 import { useSearchAudio } from "./useSearchAudio"
 import { useDownloadManager } from "./useDownloadManager"
 import { useSelectionManager } from "./useSelectionManager"
@@ -27,6 +27,7 @@ const { Text } = Typography
 export const SearchPage: FC = () => {
   const navigate = useNavigate()
   const [searchText, setSearchText] = useState("")
+  const [defaultAudioId, setDefaultAudioId] = useState<string | null>(null)
 
   // Custom hooks
   const { playlist, searching, playlistCoverUrl, searchAudios, clearSearch } =
@@ -102,6 +103,7 @@ export const SearchPage: FC = () => {
       clearSearch()
       clearDownloadState()
       clearSelection()
+      setDefaultAudioId(null)
     }
   }, [searchText, clearSearch, clearDownloadState, clearSelection])
 
@@ -113,6 +115,7 @@ export const SearchPage: FC = () => {
 
     clearDownloadState()
     clearSelection()
+    setDefaultAudioId(null)
 
     const result = await searchAudios(searchText)
     if (!result) return
@@ -129,7 +132,7 @@ export const SearchPage: FC = () => {
       await addAudiosToConfig(existingAudios)
     }
 
-    // Auto-select default audio
+    // Set default audio ID for highlighting and scrolling
     if (
       defaultAudioIndex !== null &&
       defaultAudioIndex >= 0 &&
@@ -137,6 +140,7 @@ export const SearchPage: FC = () => {
     ) {
       const defaultAudio = playlist.audios[defaultAudioIndex]
       if (defaultAudio) {
+        setDefaultAudioId(defaultAudio.id)
         toggleSelect(defaultAudio.id)
       }
     }
@@ -374,129 +378,142 @@ export const SearchPage: FC = () => {
 
       {playlist && !searching && (
         <>
-          <Flex vertical className="audio-list" gap="small">
-            <Text type="secondary" style={{ fontSize: 14 }}>
-              Found {playlist.audios.length} tracks
-            </Text>
+          <Text type="secondary" style={{ fontSize: 14, paddingLeft: 16 }}>
+            Found {playlist.audios.length} tracks
+          </Text>
 
-            {playlist.title && playlist.audios.length > 1 && (
-              <Flex align="center" gap="middle" className="audio-card">
-                <Avatar
-                  src={playlistCoverUrl || DEFAULT_COVER_URL}
-                  icon={<AudioOutlined />}
-                  size={56}
-                  shape="square"
-                  alt={playlist.title}
-                />
-                <Flex vertical flex={1} style={{ minWidth: 0 }}>
-                  <Text strong ellipsis>
-                    {playlist.title}
-                  </Text>
-                  <Text type="secondary" style={{ fontSize: 12 }}>
-                    {playlist.platform}
-                  </Text>
-                </Flex>
+          {playlist.title && playlist.audios.length > 1 && (
+            <Flex
+              align="center"
+              gap="middle"
+              className="audio-card"
+              style={{ paddingLeft: 16, paddingRight: 16 }}
+            >
+              <Avatar
+                src={playlistCoverUrl || DEFAULT_COVER_URL}
+                icon={<AudioOutlined />}
+                size={56}
+                shape="square"
+                alt={playlist.title}
+              />
+              <Flex vertical flex={1} style={{ minWidth: 0 }}>
+                <Text strong ellipsis>
+                  {playlist.title}
+                </Text>
+                <Text type="secondary" style={{ fontSize: 12 }}>
+                  {playlist.platform}
+                </Text>
               </Flex>
-            )}
+            </Flex>
+          )}
 
+          <AudioList highlightId={defaultAudioId}>
             {playlist.audios.map((audio) => {
               const downloading = downloadingIds.has(audio.id)
               const downloaded = downloadedIds.has(audio.id)
               const failed = failedIds.has(audio.id)
               const selected = selectedIds.has(audio.id)
+              const isHighlighted = defaultAudioId === audio.id
 
               return (
-                <AudioCard
-                  key={audio.id}
-                  coverPath={null}
-                  coverUrl={audio.cover}
-                  platform={audio.platform}
-                  title={audio.title}
-                  subtitle={audio.platform}
-                  onClick={() => {
-                    if (
-                      !downloading &&
-                      !downloadingAll &&
-                      !allOperationsComplete
-                    ) {
-                      toggleSelect(audio.id)
-                    }
-                  }}
-                  badge={{
-                    show: true,
-                    icon: selected ? (
-                      <CheckOutlined
-                        style={{
-                          color: "#fff",
-                          backgroundColor: "#52c41a",
-                          borderRadius: "50%",
-                          padding: "4px",
-                          fontSize: "12px",
-                        }}
-                      />
-                    ) : (
-                      0
-                    ),
-                  }}
-                  extraInfo={
-                    <>
-                      {downloaded && (
-                        <Text type="success" style={{ fontSize: 12 }}>
-                          · Downloaded
-                        </Text>
-                      )}
-                      {failed && (
-                        <Text type="danger" style={{ fontSize: 12 }}>
-                          · Failed
-                        </Text>
-                      )}
-                    </>
-                  }
-                  actions={
-                    <>
-                      <Button
-                        type="text"
-                        icon={<DownloadOutlined />}
-                        loading={downloading}
-                        disabled={
-                          downloaded || downloadingAll || allOperationsComplete
-                        }
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          handleDownloadSingle(audio.id)
-                        }}
-                      />
-                      {downloading ? (
-                        <Button
-                          type="text"
-                          danger
-                          icon={<StopOutlined />}
-                          disabled={allOperationsComplete}
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            abortDownload(audio.id)
+                <div
+                  key={`${playlist.id || "search"}-${audio.id}-${audio.platform}`}
+                  data-item-id={audio.id}
+                >
+                  <AudioCard
+                    coverPath={null}
+                    coverUrl={audio.cover}
+                    platform={audio.platform}
+                    title={audio.title}
+                    subtitle={audio.platform}
+                    onClick={() => {
+                      if (
+                        !downloading &&
+                        !downloadingAll &&
+                        !allOperationsComplete
+                      ) {
+                        toggleSelect(audio.id)
+                      }
+                    }}
+                    active={isHighlighted}
+                    badge={{
+                      show: true,
+                      icon: selected ? (
+                        <CheckOutlined
+                          style={{
+                            color: "#fff",
+                            backgroundColor: "#52c41a",
+                            borderRadius: "50%",
+                            padding: "4px",
+                            fontSize: "12px",
                           }}
-                          title="Abort download"
                         />
                       ) : (
+                        0
+                      ),
+                    }}
+                    extraInfo={
+                      <>
+                        {downloaded && (
+                          <Text type="success" style={{ fontSize: 12 }}>
+                            · Downloaded
+                          </Text>
+                        )}
+                        {failed && (
+                          <Text type="danger" style={{ fontSize: 12 }}>
+                            · Failed
+                          </Text>
+                        )}
+                      </>
+                    }
+                    actions={
+                      <>
                         <Button
                           type="text"
-                          danger
-                          icon={<DeleteOutlined />}
-                          disabled={allOperationsComplete}
+                          icon={<DownloadOutlined />}
+                          loading={downloading}
+                          disabled={
+                            downloaded ||
+                            downloadingAll ||
+                            allOperationsComplete
+                          }
                           onClick={(e) => {
                             e.stopPropagation()
-                            handleDeleteAudio(audio.id)
+                            handleDownloadSingle(audio.id)
                           }}
-                          title="Remove from list"
                         />
-                      )}
-                    </>
-                  }
-                />
+                        {downloading ? (
+                          <Button
+                            type="text"
+                            danger
+                            icon={<StopOutlined />}
+                            disabled={allOperationsComplete}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              abortDownload(audio.id)
+                            }}
+                            title="Abort download"
+                          />
+                        ) : (
+                          <Button
+                            type="text"
+                            danger
+                            icon={<DeleteOutlined />}
+                            disabled={allOperationsComplete}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleDeleteAudio(audio.id)
+                            }}
+                            title="Remove from list"
+                          />
+                        )}
+                      </>
+                    }
+                  />
+                </div>
               )
             })}
-          </Flex>
+          </AudioList>
 
           <Flex
             align="center"

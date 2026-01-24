@@ -1,4 +1,5 @@
 export { AudioCard } from "./AudioCard"
+export { AudioList } from "./AudioList"
 export { PlayerCard } from "./PlayerCard"
 export { ErrorBoundary } from "./ErrorBoundary"
 export { PageErrorBoundary } from "./PageErrorBoundary"

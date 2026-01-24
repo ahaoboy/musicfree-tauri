@@ -4,7 +4,7 @@ import { Flex, Avatar, Button } from "antd"
 import DeleteOutlined from "@ant-design/icons/DeleteOutlined"
 import { useAppStore } from "../../store"
 import { LocalAudio, DEFAULT_COVER_URL } from "../../api"
-import { AudioCard } from "../../components"
+import { AudioCard, AudioList } from "../../components"
 import { useNavigation } from "../../contexts"
 import { useConfirm } from "../../hooks"
 
@@ -98,35 +98,41 @@ export const PlaylistDetail: FC = () => {
   }
 
   return (
-    <Flex vertical className="page audio-list" gap="small">
-      {playlist.audios.map((audio, index) => {
-        const isActive =
-          currentAudio?.audio.id === audio.audio.id &&
-          currentPlaylistId === playlist.id
+    <Flex vertical className="page" style={{ flex: 1, overflow: "hidden" }}>
+      <AudioList>
+        {playlist.audios.map((audio, index) => {
+          const isActive =
+            currentAudio?.audio.id === audio.audio.id &&
+            currentPlaylistId === playlist.id
 
-        return (
-          <AudioCard
-            key={`${audio.audio.id}-${index}-${playlist.id}`}
-            coverPath={audio.cover_path}
-            coverUrl={audio.audio.cover}
-            platform={audio.audio.platform}
-            title={audio.audio.title}
-            subtitle={audio.audio.platform}
-            onClick={() => handleAudioClick(audio)}
-            active={isActive}
-            actions={
-              <Button
-                type="text"
-                icon={<DeleteOutlined />}
-                onClick={(e) => {
-                  e.stopPropagation()
-                  handleDeleteAudio(audio.audio.id, audio.audio.title)
-                }}
+          return (
+            <div
+              key={`${playlist.id}-${audio.audio.id}-${audio.audio.platform}-${index}`}
+              data-item-id={audio.audio.id}
+            >
+              <AudioCard
+                coverPath={audio.cover_path}
+                coverUrl={audio.audio.cover}
+                platform={audio.audio.platform}
+                title={audio.audio.title}
+                subtitle={audio.audio.platform}
+                onClick={() => handleAudioClick(audio)}
+                active={isActive}
+                actions={
+                  <Button
+                    type="text"
+                    icon={<DeleteOutlined />}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleDeleteAudio(audio.audio.id, audio.audio.title)
+                    }}
+                  />
+                }
               />
-            }
-          />
-        )
-      })}
+            </div>
+          )
+        })}
+      </AudioList>
     </Flex>
   )
 }
