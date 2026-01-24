@@ -16,6 +16,8 @@ import {
   AUDIO_PLAYLIST_TITLE,
   Playlist,
   storage,
+  app_version,
+  app_dir,
 } from "../api"
 
 const MAX_HISTORY_SIZE = 64
@@ -60,6 +62,10 @@ interface RuntimeData {
   searchDownloadingAll: boolean
   searchCoverUrls: Record<string, string>
   searchPlaylistCoverUrl: string | null
+
+  // App info
+  app_dir: string | null
+  app_version: string | null
 }
 
 // ============================================
@@ -204,6 +210,11 @@ export const useAppStore = create<AppState>((set, get) => ({
   searchCoverUrls: {},
   searchPlaylistCoverUrl: null,
   listenersInitialized: false,
+
+  // App info
+  app_dir: null,
+  app_version: null,
+
   // ============================================
   // Config Actions
   // ============================================
@@ -222,12 +233,17 @@ export const useAppStore = create<AppState>((set, get) => ({
       if (!listenersInitialized) {
         setupAudioListeners()
       }
+
+      const [dir, version] = await Promise.all([app_dir(), app_version()])
+
       set({
         config,
         isConfigLoading: false,
         currentAudio,
         currentPlaylistId,
         listenersInitialized: true,
+        app_dir: dir,
+        app_version: version,
       })
     } catch (error) {
       console.error("Failed to load config:", error)

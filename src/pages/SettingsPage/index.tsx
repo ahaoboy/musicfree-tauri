@@ -1,4 +1,4 @@
-import { FC, useEffect, useState, useCallback, useMemo } from "react"
+import { FC, useState, useCallback, useMemo } from "react"
 import { Button, App, Typography, Flex, Space } from "antd"
 import BulbOutlined from "@ant-design/icons/BulbOutlined"
 import MoonOutlined from "@ant-design/icons/MoonOutlined"
@@ -7,13 +7,7 @@ import CopyOutlined from "@ant-design/icons/CopyOutlined"
 import CheckOutlined from "@ant-design/icons/CheckOutlined"
 import { writeText } from "@tauri-apps/plugin-clipboard-manager"
 import { useAppStore } from "../../store"
-import {
-  clear_all_data,
-  app_dir,
-  app_version,
-  ThemeMode,
-  is_builtin,
-} from "../../api"
+import { clear_all_data, ThemeMode, is_builtin } from "../../api"
 import { useConfirm } from "../../hooks"
 
 const { Title, Text } = Typography
@@ -66,22 +60,16 @@ export const SettingsPage: FC = () => {
       state.config.playlists.filter(({ id }) => !is_builtin(id)).length,
   )
 
-  const [appDirPath, setAppDirPath] = useState<string>("")
-  const [version, setVersion] = useState<string>("")
+  const appDir = useAppStore((state) => state.app_dir)
+  const version = useAppStore((state) => state.app_version)
   const [copied, setCopied] = useState(false)
 
   const { message } = App.useApp()
   const { showConfirm } = useConfirm()
-
-  useEffect(() => {
-    app_dir().then(setAppDirPath).catch(console.error)
-    app_version().then(setVersion).catch(console.error)
-  }, [])
-
   const handleCopyPath = useCallback(async () => {
-    if (appDirPath) {
+    if (appDir) {
       try {
-        await writeText(appDirPath)
+        await writeText(appDir)
         setCopied(true)
         message.success("Path copied to clipboard")
         setTimeout(() => setCopied(false), 2000)
@@ -90,7 +78,7 @@ export const SettingsPage: FC = () => {
         message.error("Failed to copy path")
       }
     }
-  }, [appDirPath, message])
+  }, [appDir, message])
 
   const handleClearData = useCallback(() => {
     showConfirm({
