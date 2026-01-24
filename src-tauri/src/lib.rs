@@ -9,7 +9,7 @@ pub fn run() {
         .plugin(tauri_plugin_clipboard_manager::init())
         .plugin(tauri_plugin_fs::init());
 
-    #[cfg(not(target_os = "android"))]
+    #[cfg(target_os = "windows")]
     let builder = builder
         .plugin(tauri_plugin_media::init())
         .plugin(tauri_plugin_updater::Builder::new().build())

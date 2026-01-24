@@ -33,7 +33,7 @@
         }
       },
       "capabilities": [
-        "desktop"
+        "default"
       ]
     }
   },
