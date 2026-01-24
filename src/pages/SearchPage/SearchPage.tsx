@@ -1,4 +1,5 @@
 import { FC, useState, useCallback, useMemo, useEffect } from "react"
+import { useNavigate } from "react-router-dom"
 import { Button, Checkbox, Input, Flex, Typography, Avatar, Spin } from "antd"
 import DownloadOutlined from "@ant-design/icons/DownloadOutlined"
 import AudioOutlined from "@ant-design/icons/AudioOutlined"
@@ -24,6 +25,7 @@ const { Search } = Input
 const { Text } = Typography
 
 export const SearchPage: FC = () => {
+  const navigate = useNavigate()
   const [searchText, setSearchText] = useState("")
 
   // Custom hooks
@@ -279,13 +281,24 @@ export const SearchPage: FC = () => {
       await addPlaylistToConfig(localPlaylist)
       await loadConfig()
       clearSelection()
+
+      // Navigate to playlists page with highlight parameter
+      navigate(`/playlists?highlight=${encodeURIComponent(playlistId)}`)
     } else if (!isPlaylist && result.downloadedAudios.length > 0) {
-      // Single audio
+      // Single audio - add to AUDIO_PLAYLIST
       await addAudiosToConfig(result.downloadedAudios)
       await loadConfig()
       clearSelection()
+
+      // Navigate to music page with highlight parameter
+      const downloadedAudio = result.downloadedAudios[0]
+      navigate(`/music?highlight=${encodeURIComponent(downloadedAudio.audio.id)}`)
     } else if (!isPlaylist && isAddMode && result.existingAudios.length > 0) {
       clearSelection()
+
+      // Navigate to music page with highlight parameter
+      const existingAudio = result.existingAudios[0]
+      navigate(`/music?highlight=${encodeURIComponent(existingAudio.audio.id)}`)
     }
   }, [
     playlist,
@@ -298,6 +311,7 @@ export const SearchPage: FC = () => {
     addAudiosToConfig,
     loadConfig,
     clearSelection,
+    navigate,
   ])
 
   // Compute button state

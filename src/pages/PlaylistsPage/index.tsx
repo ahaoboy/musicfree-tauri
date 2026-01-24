@@ -1,5 +1,5 @@
-import { FC, useCallback, useEffect } from "react"
-import { Routes, Route, useNavigate } from "react-router-dom"
+import { FC, useCallback, useEffect, useRef } from "react"
+import { Routes, Route, useNavigate, useSearchParams } from "react-router-dom"
 import { Flex, Avatar, Button } from "antd"
 import DeleteOutlined from "@ant-design/icons/DeleteOutlined"
 import FolderOutlined from "@ant-design/icons/FolderOutlined"
@@ -17,23 +17,52 @@ import { PlaylistDetail } from "./PlaylistDetail"
 // Playlists list view
 const PlaylistsList: FC = () => {
   const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
   const playlists = usePlaylistsPageData()
   const currentPlaylistId = useAppStore((state) => state.currentPlaylistId)
   const deletePlaylist = useAppStore((state) => state.deletePlaylist)
   const { setIsInDetailView } = useNavigation()
   const { showConfirm } = useConfirm()
 
+  // Get highlight ID from URL params
+  const highlightId = searchParams.get("highlight")
+
+  // Ref to store playlist card elements
+  const playlistRefs = useRef<Map<string, HTMLDivElement>>(new Map())
+
+  // Scroll to highlighted playlist when highlight param changes
+  useEffect(() => {
+    if (highlightId && playlistRefs.current.has(highlightId)) {
+      const element = playlistRefs.current.get(highlightId)
+      if (element) {
+        // Small delay to ensure DOM is ready
+        setTimeout(() => {
+          element?.scrollIntoView({
+            behavior: "smooth",
+            block: "center",
+          })
+        }, 100)
+      }
+    }
+  }, [highlightId])
+
   // Clear detail view state when on list view
   useEffect(() => {
     setIsInDetailView(false)
-    return () => setIsInDetailView(false)
+    return () => {
+      setIsInDetailView(false)
+    }
   }, [setIsInDetailView])
 
   const handlePlaylistClick = useCallback(
     (playlist: LocalPlaylist) => {
+      // Clear highlight param when user clicks to navigate
+      if (highlightId) {
+        setSearchParams({}, { replace: true })
+      }
       navigate(`/playlists/${encodeURIComponent(playlist.id)}`)
     },
-    [navigate],
+    [navigate, highlightId, setSearchParams],
   )
 
   const handleDeletePlaylist = useCallback(
@@ -71,30 +100,47 @@ const PlaylistsList: FC = () => {
         const displayName = playlist.title || playlist.id
         const canDelete = playlist.id !== FAVORITE_PLAYLIST_ID
 
+        // Priority: highlightId > currentPlaylistId
+        // When highlightId exists, only highlight that item
+        // Otherwise, highlight the currently playing playlist
+        const isActive = highlightId
+          ? highlightId === playlist.id
+          : currentPlaylistId === playlist.id
+
         return (
-          <AudioCard
+          <div
             key={`${playlist.id}-${index}`}
-            coverPath={playlist.cover_path}
-            coverUrl={playlist.cover}
-            platform={playlist.platform}
-            title={displayName}
-            subtitle={`${audioCount} tracks · ${playlist.platform}`}
-            icon={<FolderOutlined />}
-            onClick={() => handlePlaylistClick(playlist)}
-            active={currentPlaylistId === playlist.id}
-            actions={
-              canDelete ? (
-                <Button
-                  type="text"
-                  icon={<DeleteOutlined />}
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    handleDeletePlaylist(playlist.id, playlist.title)
-                  }}
-                />
-              ) : undefined
-            }
-          />
+            ref={(el) => {
+              if (el) {
+                playlistRefs.current.set(playlist.id, el)
+              } else {
+                playlistRefs.current.delete(playlist.id)
+              }
+            }}
+          >
+            <AudioCard
+              coverPath={playlist.cover_path}
+              coverUrl={playlist.cover}
+              platform={playlist.platform}
+              title={displayName}
+              subtitle={`${audioCount} tracks · ${playlist.platform}`}
+              icon={<FolderOutlined />}
+              onClick={() => handlePlaylistClick(playlist)}
+              active={isActive}
+              actions={
+                canDelete ? (
+                  <Button
+                    type="text"
+                    icon={<DeleteOutlined />}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleDeletePlaylist(playlist.id, playlist.title)
+                    }}
+                  />
+                ) : undefined
+              }
+            />
+          </div>
         )
       })}
     </Flex>
