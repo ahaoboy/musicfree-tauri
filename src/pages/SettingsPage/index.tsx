@@ -1,5 +1,5 @@
 import { FC, useCallback, useMemo } from "react"
-import { Button, App, Typography, Flex, Space } from "antd"
+import { Button, App, Typography, Flex, Space, Divider } from "antd"
 import BulbOutlined from "@ant-design/icons/BulbOutlined"
 import MoonOutlined from "@ant-design/icons/MoonOutlined"
 import DesktopOutlined from "@ant-design/icons/DesktopOutlined"
@@ -9,6 +9,8 @@ import { useConfirm } from "../../hooks"
 import { CopyButton } from "../../components"
 
 const { Title, Text } = Typography
+
+const REPO_URL = "https://github.com/ahaoboy/musicfree-tauri"
 
 interface ThemeOptionProps {
   mode: ThemeMode
@@ -124,21 +126,15 @@ export const SettingsPage: FC = () => {
             background: "var(--bg-card)",
             borderRadius: 12,
             border: "1px solid var(--border-color)",
-            overflow: "hidden",
+            padding: 16,
           }}
         >
-          <Flex
-            align="center"
-            justify="space-between"
-            style={{
-              padding: 16,
-              borderBottom: "1px solid var(--border-color)",
-            }}
-          >
+          <Flex align="center" justify="space-between">
             <Text>Downloaded Tracks</Text>
             <Text type="secondary">{totalAudios}</Text>
           </Flex>
-          <Flex align="center" justify="space-between" style={{ padding: 16 }}>
+          <Divider style={{ margin: "16px 0" }} />
+          <Flex align="center" justify="space-between">
             <Text>Playlists</Text>
             <Text type="secondary">{userPlaylistsCount}</Text>
           </Flex>
@@ -156,21 +152,24 @@ export const SettingsPage: FC = () => {
             background: "var(--bg-card)",
             borderRadius: 12,
             border: "1px solid var(--border-color)",
-            overflow: "hidden",
+            padding: 16,
           }}
         >
-          <Flex
-            align="center"
-            justify="space-between"
-            style={{
-              padding: 16,
-              borderBottom: "1px solid var(--border-color)",
-            }}
-          >
+          <Flex align="center" justify="space-between">
             <Text>Version</Text>
             <Text type="secondary">{version || "Loading..."}</Text>
           </Flex>
-          <Flex align="center" justify="space-between" style={{ padding: 16 }}>
+          <Divider style={{ margin: "16px 0" }} />
+          <Flex align="center" justify="space-between">
+            <Text>Repository</Text>
+            <CopyButton
+              text={REPO_URL}
+              successMessage="Repository URL copied to clipboard"
+              errorMessage="Failed to copy URL"
+            />
+          </Flex>
+          <Divider style={{ margin: "16px 0" }} />
+          <Flex align="center" justify="space-between">
             <Text>App Directory</Text>
             <CopyButton
               text={appDir || ""}
@@ -193,10 +192,10 @@ export const SettingsPage: FC = () => {
             background: "var(--bg-card)",
             borderRadius: 12,
             border: "1px solid var(--border-color)",
-            overflow: "hidden",
+            padding: 16,
           }}
         >
-          <Flex align="center" justify="space-between" style={{ padding: 16 }}>
+          <Flex align="center" justify="space-between">
             <Text>Clear All Data</Text>
             <Button danger type="primary" onClick={handleClearData}>
               Clear
