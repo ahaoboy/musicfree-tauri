@@ -2,6 +2,11 @@
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "desktop",
   "description": "Desktop capabilities for the main window",
+  "platforms": [
+    "linux",
+    "macOS",
+    "windows"
+  ],
   "windows": [
     "main"
   ],
@@ -11,6 +16,9 @@
     "fs:write-all",
     "clipboard-manager:default",
     "clipboard-manager:allow-write-text",
-    "core:window:default"
+    "core:window:default",
+    "updater:default",
+    "updater:allow-check",
+    "updater:allow-download-and-install"
   ]
 }

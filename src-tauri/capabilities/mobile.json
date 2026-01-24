@@ -1,0 +1,18 @@
+{
+  "$schema": "../gen/schemas/mobile-schema.json",
+  "identifier": "mobile",
+  "description": "Mobile capabilities for the main window",
+  "platforms": [
+    "android"
+  ],
+  "windows": [
+    "main"
+  ],
+  "permissions": [
+    "core:default",
+    "fs:read-all",
+    "fs:write-all",
+    "clipboard-manager:default",
+    "clipboard-manager:allow-write-text"
+  ]
+}

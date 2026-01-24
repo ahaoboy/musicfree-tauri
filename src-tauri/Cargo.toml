@@ -1,7 +1,7 @@
 [package]
 name = "musicfree-tauri"
 version = "0.1.0"
-description = "A Tauri App"
+description = "This is a desktop music player application that provides a seamless music listening experience"
 authors = ["you"]
 edition = "2024"
 
@@ -72,7 +72,7 @@ lto = false
 strip = false
 inherits = 'release'
 
-[target.'cfg(target_os = "windows")'.dependencies]
-tauri-plugin-media = "0.1"
-tauri-plugin-updater = "2"
-tauri-plugin-single-instance = "2"
+[target.'cfg(not(target_os = "android"))'.dependencies]
+tauri-plugin-media = { version = "0.1" }
+tauri-plugin-updater = { version = "2" }
+tauri-plugin-single-instance = { version = "2" }
