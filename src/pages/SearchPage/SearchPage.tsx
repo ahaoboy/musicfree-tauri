@@ -57,7 +57,6 @@ export const SearchPage: FC = () => {
   // Store actions
   const addAudiosToConfig = useAppStore((state) => state.addAudiosToConfig)
   const addPlaylistToConfig = useAppStore((state) => state.addPlaylistToConfig)
-  const loadConfig = useAppStore((state) => state.loadConfig)
   const configPlaylists = useAppStore((state) => state.config.playlists)
 
   // Get existing audios from config
@@ -279,7 +278,6 @@ export const SearchPage: FC = () => {
       }
 
       await addPlaylistToConfig(localPlaylist)
-      await loadConfig()
       clearSelection()
 
       // Navigate to playlists page with highlight parameter
@@ -287,7 +285,6 @@ export const SearchPage: FC = () => {
     } else if (!isPlaylist && result.downloadedAudios.length > 0) {
       // Single audio - add to AUDIO_PLAYLIST
       await addAudiosToConfig(result.downloadedAudios)
-      await loadConfig()
       clearSelection()
 
       // Navigate to music page with highlight parameter
@@ -311,7 +308,6 @@ export const SearchPage: FC = () => {
     downloadMultiple,
     addPlaylistToConfig,
     addAudiosToConfig,
-    loadConfig,
     clearSelection,
     navigate,
   ])
