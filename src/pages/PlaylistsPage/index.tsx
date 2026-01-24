@@ -18,6 +18,7 @@ import { PlaylistDetail } from "./PlaylistDetail"
 const PlaylistsList: FC = () => {
   const navigate = useNavigate()
   const playlists = usePlaylistsPageData()
+  const currentPlaylistId = useAppStore((state) => state.currentPlaylistId)
   const deletePlaylist = useAppStore((state) => state.deletePlaylist)
   const { setIsInDetailView } = useNavigation()
   const { showConfirm } = useConfirm()
@@ -80,6 +81,7 @@ const PlaylistsList: FC = () => {
             subtitle={`${audioCount} tracks · ${playlist.platform}`}
             icon={<FolderOutlined />}
             onClick={() => handlePlaylistClick(playlist)}
+            active={currentPlaylistId === playlist.id}
             actions={
               canDelete ? (
                 <Button

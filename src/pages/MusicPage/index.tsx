@@ -13,6 +13,8 @@ export const MusicPage: FC = () => {
   const playAudio = useAppStore((state) => state.playAudio)
   const deleteAudio = useAppStore((state) => state.deleteAudio)
   const isConfigLoading = useAppStore((state) => state.isConfigLoading)
+  const currentAudio = useAppStore((state) => state.currentAudio)
+  const currentPlaylistId = useAppStore((state) => state.currentPlaylistId)
   const { showConfirm } = useConfirm()
 
   const handleAudioClick = useCallback(
@@ -59,27 +61,34 @@ export const MusicPage: FC = () => {
 
   return (
     <Flex vertical className="page audio-list" gap="small">
-      {audios.map((audio) => (
-        <AudioCard
-          key={audio.audio.id}
-          coverPath={audio.cover_path}
-          coverUrl={audio.audio.cover}
-          platform={audio.audio.platform}
-          title={audio.audio.title}
-          subtitle={audio.audio.platform}
-          onClick={() => handleAudioClick(audio)}
-          actions={
-            <Button
-              type="text"
-              icon={<DeleteOutlined />}
-              onClick={(e) => {
-                e.stopPropagation()
-                handleDelete(audio.audio.id, audio.audio.title)
-              }}
-            />
-          }
-        />
-      ))}
+      {audios.map((audio) => {
+        const isActive =
+          currentPlaylistId === AUDIO_PLAYLIST_ID &&
+          currentAudio?.audio.id === audio.audio.id
+
+        return (
+          <AudioCard
+            key={audio.audio.id}
+            coverPath={audio.cover_path}
+            coverUrl={audio.audio.cover}
+            platform={audio.audio.platform}
+            title={audio.audio.title}
+            subtitle={audio.audio.platform}
+            onClick={() => handleAudioClick(audio)}
+            active={isActive}
+            actions={
+              <Button
+                type="text"
+                icon={<DeleteOutlined />}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  handleDelete(audio.audio.id, audio.audio.title)
+                }}
+              />
+            }
+          />
+        )
+      })}
     </Flex>
   )
 }

@@ -21,6 +21,9 @@ interface AudioCardProps {
   // Click behavior
   onClick?: () => void
 
+  // State
+  active?: boolean // Whether the card is active/selected/highlighted
+
   // Badge configuration
   badge?: {
     show: boolean // Whether to show badge
@@ -48,6 +51,7 @@ export const AudioCard: FC<AudioCardProps> = memo(
     subtitle,
     icon = <AudioOutlined />,
     onClick,
+    active = false,
     badge,
     extraInfo,
     actions,
@@ -109,7 +113,14 @@ export const AudioCard: FC<AudioCardProps> = memo(
         onKeyDown={onClick ? handleCardClick : undefined}
         align="center"
         gap="middle"
-        style={{ cursor: onClick ? "pointer" : "default" }}
+        style={{
+          cursor: onClick ? "pointer" : "default",
+          border: active ? "2px solid #1890ff" : "2px solid transparent",
+          borderRadius: "8px",
+          padding: "10px",
+          boxSizing: "border-box",
+          transition: "all 0.3s ease",
+        }}
       >
         {/* Left: Avatar with optional Badge */}
         {avatarWithBadge}
