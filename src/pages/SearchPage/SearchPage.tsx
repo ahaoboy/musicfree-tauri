@@ -509,6 +509,8 @@ export const SearchPage: FC = () => {
                     platform={audio.platform}
                     title={audio.title}
                     subtitle={audio.platform}
+                    duration={audio.duration}
+                    warnLongDuration={true}
                     onClick={() => {
                       if (
                         !downloading &&

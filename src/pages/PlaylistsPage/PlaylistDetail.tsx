@@ -116,6 +116,7 @@ export const PlaylistDetail: FC = () => {
                 platform={audio.audio.platform}
                 title={audio.audio.title}
                 subtitle={audio.audio.platform}
+                duration={audio.audio.duration}
                 onClick={() => handleAudioClick(audio)}
                 active={isActive}
                 actions={

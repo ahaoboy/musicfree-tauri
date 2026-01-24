@@ -7,6 +7,22 @@ import { useCoverUrl } from "../../hooks"
 
 const { Text } = Typography
 
+/**
+ * Format duration in seconds to MM:SS or HH:MM:SS
+ */
+const formatDuration = (seconds?: number): string | null => {
+  if (!seconds || seconds <= 0) return null
+
+  const hours = Math.floor(seconds / 3600)
+  const minutes = Math.floor((seconds % 3600) / 60)
+  const secs = Math.floor(seconds % 60)
+
+  if (hours > 0) {
+    return `${hours}:${minutes.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`
+  }
+  return `${minutes}:${secs.toString().padStart(2, "0")}`
+}
+
 interface AudioCardProps {
   // Cover
   coverPath?: string | null // Local cover path
@@ -17,6 +33,8 @@ interface AudioCardProps {
   title: string
   subtitle?: string // Secondary info (e.g., "Platform · Extra info")
   icon?: ReactNode // Avatar icon (default: AudioOutlined)
+  duration?: number // Audio duration in seconds (optional)
+  warnLongDuration?: boolean // Show warning color for long duration (>30min)
 
   // Click behavior
   onClick?: () => void
@@ -50,6 +68,8 @@ export const AudioCard: FC<AudioCardProps> = memo(
     title,
     subtitle,
     icon = <AudioOutlined />,
+    duration,
+    warnLongDuration = false,
     onClick,
     active = false,
     badge,
@@ -67,6 +87,12 @@ export const AudioCard: FC<AudioCardProps> = memo(
       },
       [onClick],
     )
+
+    // Format duration
+    const formattedDuration = formatDuration(duration)
+
+    // Check if duration is too long (>30 minutes = 1800 seconds)
+    const isLongDuration = warnLongDuration && duration && duration > 1800
 
     // Avatar element
     const avatarElement = (
@@ -133,13 +159,31 @@ export const AudioCard: FC<AudioCardProps> = memo(
             {title}
           </Text>
 
-          {/* Second row: Subtitle + Extra info */}
-          {(subtitle || extraInfo) && (
+          {/* Second row: Subtitle + Duration + Extra info */}
+          {(subtitle || formattedDuration || extraInfo) && (
             <Flex align="center" gap="small">
               {subtitle && (
                 <Text type="secondary" style={{ fontSize: 12 }}>
                   {subtitle}
                 </Text>
+              )}
+              {formattedDuration && (
+                <>
+                  {subtitle && (
+                    <Text type="secondary" style={{ fontSize: 12 }}>
+                      ·
+                    </Text>
+                  )}
+                  <Text
+                    type="secondary"
+                    style={{
+                      fontSize: 12,
+                      color: isLongDuration ? "#faad14" : undefined,
+                    }}
+                  >
+                    {formattedDuration}
+                  </Text>
+                </>
               )}
               {extraInfo}
             </Flex>
