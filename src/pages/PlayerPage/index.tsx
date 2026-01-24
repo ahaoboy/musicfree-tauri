@@ -12,10 +12,11 @@ import RetweetOutlined from "@ant-design/icons/RetweetOutlined"
 import SwapOutlined from "@ant-design/icons/SwapOutlined"
 import BarsOutlined from "@ant-design/icons/BarsOutlined"
 import AudioOutlined from "@ant-design/icons/AudioOutlined"
-import { Slider, Button, Typography, Avatar, Flex, App } from "antd"
+import { Slider, Button, Typography, Avatar, Flex } from "antd"
 import { useAppStore, useCurrentTime, useDuration } from "../../store"
 import { DEFAULT_COVER_URL } from "../../api"
 import { useCoverUrl } from "../../hooks"
+import { CopyButton } from "../../components"
 import "./index.less"
 
 const { Title, Text } = Typography
@@ -30,7 +31,6 @@ const formatTime = (seconds: number) => {
 // Player page - full-screen audio player
 export const PlayerPage: FC = () => {
   const navigate = useNavigate()
-  const { message } = App.useApp()
 
   // Selective store subscriptions
   const currentAudio = useAppStore((state) => state.currentAudio)
@@ -75,16 +75,6 @@ export const PlayerPage: FC = () => {
     },
     [audioElement, isPlaying, currentAudio],
   )
-
-  const handleShare = useCallback(async () => {
-    if (!currentAudio) return
-    try {
-      await navigator.clipboard.writeText(currentAudio.audio.download_url || "")
-      message.success("Download link copied!")
-    } catch {
-      message.error("Failed to copy link")
-    }
-  }, [currentAudio])
 
   const handleFavorite = useCallback(() => {
     if (currentAudio) {
@@ -183,11 +173,13 @@ export const PlayerPage: FC = () => {
             {currentAudio.audio.title}
           </Text>
         </Flex>
-        <Button
-          type="text"
+        <CopyButton
+          text={currentAudio.audio.download_url || ""}
           icon={<ShareAltOutlined />}
-          onClick={handleShare}
+          successMessage="Download link copied!"
+          errorMessage="Failed to copy link"
           className="icon-btn"
+          disabled={!currentAudio.audio.download_url}
         />
       </Flex>
 

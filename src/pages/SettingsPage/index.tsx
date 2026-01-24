@@ -1,14 +1,12 @@
-import { FC, useState, useCallback, useMemo } from "react"
+import { FC, useCallback, useMemo } from "react"
 import { Button, App, Typography, Flex, Space } from "antd"
 import BulbOutlined from "@ant-design/icons/BulbOutlined"
 import MoonOutlined from "@ant-design/icons/MoonOutlined"
 import DesktopOutlined from "@ant-design/icons/DesktopOutlined"
-import CopyOutlined from "@ant-design/icons/CopyOutlined"
-import CheckOutlined from "@ant-design/icons/CheckOutlined"
-import { writeText } from "@tauri-apps/plugin-clipboard-manager"
 import { useAppStore } from "../../store"
 import { clear_all_data, ThemeMode, is_builtin } from "../../api"
 import { useConfirm } from "../../hooks"
+import { CopyButton } from "../../components"
 
 const { Title, Text } = Typography
 
@@ -62,23 +60,9 @@ export const SettingsPage: FC = () => {
 
   const appDir = useAppStore((state) => state.app_dir)
   const version = useAppStore((state) => state.app_version)
-  const [copied, setCopied] = useState(false)
 
   const { message } = App.useApp()
   const { showConfirm } = useConfirm()
-  const handleCopyPath = useCallback(async () => {
-    if (appDir) {
-      try {
-        await writeText(appDir)
-        setCopied(true)
-        message.success("Path copied to clipboard")
-        setTimeout(() => setCopied(false), 2000)
-      } catch (e) {
-        console.error(e)
-        message.error("Failed to copy path")
-      }
-    }
-  }, [appDir, message])
 
   const handleClearData = useCallback(() => {
     showConfirm({
@@ -188,10 +172,11 @@ export const SettingsPage: FC = () => {
           </Flex>
           <Flex align="center" justify="space-between" style={{ padding: 16 }}>
             <Text>App Directory</Text>
-            <Button
-              type="text"
-              icon={copied ? <CheckOutlined /> : <CopyOutlined />}
-              onClick={handleCopyPath}
+            <CopyButton
+              text={appDir || ""}
+              successMessage="Path copied to clipboard"
+              errorMessage="Failed to copy path"
+              disabled={!appDir}
             />
           </Flex>
         </Flex>
