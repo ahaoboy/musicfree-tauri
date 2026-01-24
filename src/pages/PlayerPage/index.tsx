@@ -1,13 +1,11 @@
 import { FC, useCallback } from "react"
-import { useNavigate } from "react-router-dom"
-import LeftOutlined from "@ant-design/icons/LeftOutlined"
 import ShareAltOutlined from "@ant-design/icons/ShareAltOutlined"
 import AudioOutlined from "@ant-design/icons/AudioOutlined"
-import { Slider, Button, Typography, Avatar, Flex } from "antd"
+import { Slider, Typography, Avatar, Flex } from "antd"
 import { useAppStore, useCurrentTime, useDuration } from "../../store"
 import { DEFAULT_COVER_URL } from "../../api"
 import { useCoverUrl } from "../../hooks"
-import { CopyButton, PlayerControls } from "../../components"
+import { CopyButton, PlayerControls, BackButton } from "../../components"
 import "./index.less"
 
 const { Title, Text } = Typography
@@ -21,8 +19,6 @@ const formatTime = (seconds: number) => {
 
 // Player page - full-screen audio player
 export const PlayerPage: FC = () => {
-  const navigate = useNavigate()
-
   // Selective store subscriptions
   const currentAudio = useAppStore((state) => state.currentAudio)
   const isPlaying = useAppStore((state) => state.isPlaying)
@@ -70,12 +66,7 @@ export const PlayerPage: FC = () => {
         }}
       >
         <Flex className="player-header" align="center" justify="space-between">
-          <Button
-            type="text"
-            icon={<LeftOutlined />}
-            onClick={() => navigate(-1)}
-            className="icon-btn"
-          />
+          <BackButton className="icon-btn" />
         </Flex>
       </Flex>
     )
@@ -97,12 +88,7 @@ export const PlayerPage: FC = () => {
         justify="space-between"
         gap={"small"}
       >
-        <Button
-          type="text"
-          icon={<LeftOutlined />}
-          onClick={() => navigate(-1)}
-          className="icon-btn"
-        />
+        <BackButton className="icon-btn" />
         <Flex flex={1} justify="center" style={{ minWidth: 0 }}>
           <Text ellipsis className="header-title">
             {currentAudio.audio.title}
