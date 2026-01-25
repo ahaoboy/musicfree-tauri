@@ -1,24 +1,12 @@
-use musicfree::{Audio, Platform, Playlist};
-use std::path::PathBuf;
-use tauri::Manager;
-
 use crate::api::{self};
 use crate::core::{ASSETS_DIR, Config, LocalAudio, get_config_path};
 use crate::error::{AppError, AppResult};
+use musicfree::{Audio, Platform, Playlist};
+use std::path::PathBuf;
 
 #[tauri::command]
-pub async fn app_dir(app_handle: tauri::AppHandle) -> AppResult<PathBuf> {
-    let app_data_dir = app_handle
-        .path()
-        .app_data_dir()
-        .map_err(|e| AppError::Unknown(e.to_string()))?;
-
-    if !tokio::fs::try_exists(&app_data_dir).await.unwrap_or(false) {
-        tokio::fs::create_dir_all(&app_data_dir)
-            .await
-            .map_err(AppError::Io)?;
-    }
-    Ok(app_data_dir)
+pub fn app_dir(app_handle: tauri::AppHandle) -> AppResult<PathBuf> {
+    api::app_dir(&app_handle)
 }
 
 const CARGO_PKG_VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -39,7 +27,7 @@ pub async fn extract_audios(url: &str) -> AppResult<(Playlist, Option<usize>)> {
 
 #[tauri::command]
 pub async fn get_config(app_handle: tauri::AppHandle) -> AppResult<Config> {
-    let dir = app_dir(app_handle).await?;
+    let dir = app_dir(app_handle)?;
     let p = get_config_path(dir);
 
     if !tokio::fs::try_exists(&p).await.unwrap_or(false) {
@@ -53,7 +41,7 @@ pub async fn get_config(app_handle: tauri::AppHandle) -> AppResult<Config> {
 
 #[tauri::command]
 pub async fn save_config(config: Config, app_handle: tauri::AppHandle) -> AppResult<()> {
-    let dir = app_dir(app_handle).await?;
+    let dir = app_dir(app_handle)?;
     let s = serde_json::to_string_pretty(&config).map_err(AppError::Serde)?;
 
     let p = get_config_path(dir);
@@ -63,7 +51,7 @@ pub async fn save_config(config: Config, app_handle: tauri::AppHandle) -> AppRes
 
 #[tauri::command]
 pub async fn download_audio(audio: Audio, app_handle: tauri::AppHandle) -> AppResult<LocalAudio> {
-    let dir = app_dir(app_handle).await?;
+    let dir = app_dir(app_handle)?;
 
     api::download_audio(&audio, dir)
         .await
@@ -72,7 +60,7 @@ pub async fn download_audio(audio: Audio, app_handle: tauri::AppHandle) -> AppRe
 
 #[tauri::command]
 pub async fn exists_audio(audio: Audio, app_handle: tauri::AppHandle) -> AppResult<Option<String>> {
-    let dir = app_dir(app_handle).await?;
+    let dir = app_dir(app_handle)?;
     api::exists_audio(&audio, dir).await
 }
 
@@ -82,7 +70,7 @@ pub async fn exists_cover(
     platform: Platform,
     app_handle: tauri::AppHandle,
 ) -> AppResult<Option<String>> {
-    let dir = app_dir(app_handle).await?;
+    let dir = app_dir(app_handle)?;
     api::exists_cover(url, platform, dir).await
 }
 
@@ -92,21 +80,21 @@ pub async fn download_cover(
     platform: Platform,
     app_handle: tauri::AppHandle,
 ) -> AppResult<Option<String>> {
-    let dir = app_dir(app_handle).await?;
+    let dir = app_dir(app_handle)?;
 
     Ok(api::download_cover(url, platform, dir).await)
 }
 
 #[tauri::command]
 pub async fn read_file(path: &str, app_handle: tauri::AppHandle) -> AppResult<Vec<u8>> {
-    let dir = app_dir(app_handle).await?;
+    let dir = app_dir(app_handle)?;
     let path = dir.join(path);
     let bin = tokio::fs::read(path).await.map_err(AppError::Io)?;
     Ok(bin)
 }
 #[tauri::command]
 pub async fn clear_all_data(app_handle: tauri::AppHandle) -> AppResult<()> {
-    let dir = app_dir(app_handle).await?;
+    let dir = app_dir(app_handle)?;
 
     // Delete ASSETS_DIR
     let assets_dir = dir.join(ASSETS_DIR);

@@ -1,9 +1,22 @@
 use crate::{
     core::{ASSETS_DIR, AUDIOS_DIR, COVERS_DIR, LocalAudio},
-    error::AppResult,
+    error::{AppError, AppResult},
 };
 use musicfree::{Audio, Platform};
 use std::path::{Path, PathBuf};
+use tauri::Manager;
+
+pub fn app_dir(app_handle: &tauri::AppHandle) -> AppResult<PathBuf> {
+    let app_data_dir = app_handle
+        .path()
+        .app_data_dir()
+        .map_err(|e| AppError::Unknown(e.to_string()))?;
+
+    if !std::fs::exists(&app_data_dir).unwrap_or(false) {
+        std::fs::create_dir_all(&app_data_dir).map_err(AppError::Io)?;
+    }
+    Ok(app_data_dir)
+}
 
 fn write<P: AsRef<Path>, C: AsRef<[u8]>>(p: P, c: C) -> std::io::Result<()> {
     let p = p.as_ref();

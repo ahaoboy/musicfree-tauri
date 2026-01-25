@@ -1,5 +1,7 @@
 import { invoke, convertFileSrc } from "@tauri-apps/api/core"
 import { join } from "@tauri-apps/api/path"
+import { platform } from "@tauri-apps/plugin-os"
+export const CurrentPlatform = platform()
 
 export type Platform = `Bilibili` | `Youtube` | `File` | (string & {})
 export const FAVORITE_PLAYLIST_ID = "__FAVORITE__"
@@ -129,7 +131,7 @@ export async function get_convert_url(path: string): Promise<string> {
 }
 
 function is_android() {
-  return /Android/i.test(navigator.userAgent)
+  return CurrentPlatform === "android"
 }
 
 export async function get_web_blob(path: string): Promise<string> {
@@ -149,8 +151,21 @@ export async function get_web_blob(path: string): Promise<string> {
   return assetUrl
 }
 
-export async function get_web_url(path: string): Promise<string> {
-  return is_android() ? get_web_blob(path) : get_convert_url(path)
+export async function get_musicfree_url(path: string): Promise<string> {
+  // Remove leading slash if present
+  const cleanPath = path.startsWith("/") ? path.slice(1) : path
+
+  if (CurrentPlatform === "windows" || CurrentPlatform === "android") {
+    return `http://musicfree.localhost/${cleanPath}`
+  }
+
+  // macOS, iOS, Linux
+  return `musicfree://localhost/${cleanPath}`
+}
+
+export function get_web_url(path: string): Promise<string> {
+  // return is_android() ? get_musicfree_url(path) : get_convert_url(path)
+  return is_android() ? get_musicfree_url(path) : get_convert_url(path)
 }
 
 export const DEFAULT_COVER_URL = "/icon.png"
