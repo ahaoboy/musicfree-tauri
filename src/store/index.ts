@@ -154,6 +154,7 @@ const getOrCreateAudioPlaylist = (config: Config): LocalPlaylist => {
       cover_path: null,
       audios: [],
       platform: "File",
+      download_url: undefined,
     }
     config.playlists.push(audioPlaylist)
   }
@@ -170,6 +171,7 @@ const getOrCreateFavoritePlaylist = (config: Config): LocalPlaylist => {
       cover_path: null,
       audios: [],
       platform: "File",
+      download_url: undefined,
     }
     // Always insert at the beginning
     config.playlists.unshift(favPlaylist)

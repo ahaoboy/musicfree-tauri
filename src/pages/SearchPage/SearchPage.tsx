@@ -422,6 +422,7 @@ export const SearchPage: FC = () => {
         cover: playlist.cover,
         audios: finalAudios,
         platform: playlist.platform,
+        download_url: playlist.id,
       }
 
       console.log("Adding playlist to config:", localPlaylist)

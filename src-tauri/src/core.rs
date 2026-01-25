@@ -21,6 +21,8 @@ pub struct LocalPlaylist {
     #[serde(default,skip_serializing_if = "Option::is_none")]
     pub id: Option<String>,
     #[serde(default,skip_serializing_if = "Option::is_none")]
+    pub download_url: Option<String>,
+    #[serde(default,skip_serializing_if = "Option::is_none")]
     pub title: Option<String>,
     #[serde(default,skip_serializing_if = "Option::is_none")]
     pub cover_path: Option<String>,

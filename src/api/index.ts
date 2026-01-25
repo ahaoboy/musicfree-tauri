@@ -28,6 +28,7 @@ export type LocalAudio = {
 
 export type Playlist = {
   id?: string
+  download_url?: string
   title?: string
   cover?: string
   audios: Audio[]
@@ -36,6 +37,7 @@ export type Playlist = {
 
 export type LocalPlaylist = {
   id: string
+  download_url?: string
   title?: string
   cover_path: string | null
   cover?: string
