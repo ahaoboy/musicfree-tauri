@@ -1,5 +1,5 @@
 import { FC, useCallback, useMemo } from "react"
-import { Button, App, Typography, Flex, Space, Divider } from "antd"
+import { Button, App, Typography, Flex, Select, Divider } from "antd"
 import BulbOutlined from "@ant-design/icons/BulbOutlined"
 import MoonOutlined from "@ant-design/icons/MoonOutlined"
 import DesktopOutlined from "@ant-design/icons/DesktopOutlined"
@@ -11,40 +11,6 @@ import { CopyButton } from "../../components"
 const { Title, Text } = Typography
 
 const REPO_URL = "https://github.com/ahaoboy/musicfree-tauri"
-
-interface ThemeOptionProps {
-  mode: ThemeMode
-  icon: React.ReactNode
-  label: string
-  active: boolean
-  onClick: () => void
-}
-
-// Theme option button component
-const ThemeOption: FC<ThemeOptionProps> = ({
-  icon,
-  label,
-  active,
-  onClick,
-}) => {
-  return (
-    <Button
-      type={active ? "primary" : "default"}
-      size="large"
-      icon={icon}
-      onClick={onClick}
-      block
-      style={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        gap: 8,
-      }}
-    >
-      {label}
-    </Button>
-  )
-}
 
 // Settings page - app configuration
 export const SettingsPage: FC = () => {
@@ -87,9 +53,33 @@ export const SettingsPage: FC = () => {
 
   const themeOptions = useMemo(
     () => [
-      { mode: "light" as ThemeMode, icon: <BulbOutlined />, label: "Light" },
-      { mode: "dark" as ThemeMode, icon: <MoonOutlined />, label: "Dark" },
-      { mode: "auto" as ThemeMode, icon: <DesktopOutlined />, label: "System" },
+      {
+        value: "light" as ThemeMode,
+        label: (
+          <Flex align="center" gap={8}>
+            <BulbOutlined />
+            Light
+          </Flex>
+        ),
+      },
+      {
+        value: "dark" as ThemeMode,
+        label: (
+          <Flex align="center" gap={8}>
+            <MoonOutlined />
+            Dark
+          </Flex>
+        ),
+      },
+      {
+        value: "auto" as ThemeMode,
+        label: (
+          <Flex align="center" gap={8}>
+            <DesktopOutlined />
+            System
+          </Flex>
+        ),
+      },
     ],
     [],
   )
@@ -101,18 +91,13 @@ export const SettingsPage: FC = () => {
         <Title level={5} style={{ margin: 0, fontSize: 12, opacity: 0.6 }}>
           THEME
         </Title>
-        <Space orientation="vertical" size="small" style={{ width: "100%" }}>
-          {themeOptions.map((option) => (
-            <ThemeOption
-              key={option.mode}
-              mode={option.mode}
-              icon={option.icon}
-              label={option.label}
-              active={theme === option.mode}
-              onClick={() => setThemeMode(option.mode)}
-            />
-          ))}
-        </Space>
+        <Select
+          value={theme}
+          onChange={setThemeMode}
+          options={themeOptions}
+          style={{ width: "100%" }}
+          size="large"
+        />
       </Flex>
 
       {/* Library Section */}
