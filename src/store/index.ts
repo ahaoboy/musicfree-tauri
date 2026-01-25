@@ -439,37 +439,40 @@ export const useAppStore = create<AppState>((set, get) => ({
     const { config } = get()
     if (!config) return
 
-    // Helper function to remove audio from a playlist
-    const removeAudioFromPlaylist = (pId: string) => {
-      const playlist = config.playlists.find((p) => p.id === pId)
-      if (!playlist) return false
-
-      playlist.audios = playlist.audios.filter((a) => a.audio.id !== audioId)
-      return playlist.audios.length === 0
-    }
-
-    // Helper function to remove empty playlist
-    const removeEmptyPlaylist = (pId: string) => {
-      config.playlists = config.playlists.filter((p) => p.id !== pId)
-    }
-
-    // Remove from target playlist
-    const targetIsEmpty = removeAudioFromPlaylist(playlistId)
-
-    // Remove target playlist if empty (except AUDIO_PLAYLIST)
-    if (targetIsEmpty && playlistId !== AUDIO_PLAYLIST_ID) {
-      removeEmptyPlaylist(playlistId)
-    }
-
-    // Also remove from FAVORITE if not deleting from FAVORITE
-    if (playlistId !== FAVORITE_PLAYLIST_ID) {
-      const favIsEmpty = removeAudioFromPlaylist(FAVORITE_PLAYLIST_ID)
-      if (favIsEmpty) {
-        removeEmptyPlaylist(FAVORITE_PLAYLIST_ID)
+    // Create a new config object with updated playlists
+    let updatedPlaylists = config.playlists.map((playlist) => {
+      // Remove audio from target playlist
+      if (playlist.id === playlistId) {
+        return {
+          ...playlist,
+          audios: playlist.audios.filter((a) => a.audio.id !== audioId),
+        }
       }
+      // Also remove from FAVORITE if not deleting from FAVORITE
+      if (
+        playlistId !== FAVORITE_PLAYLIST_ID &&
+        playlist.id === FAVORITE_PLAYLIST_ID
+      ) {
+        return {
+          ...playlist,
+          audios: playlist.audios.filter((a) => a.audio.id !== audioId),
+        }
+      }
+      return playlist
+    })
+
+    // Remove empty playlists (except AUDIO_PLAYLIST)
+    updatedPlaylists = updatedPlaylists.filter((playlist) => {
+      if (playlist.id === AUDIO_PLAYLIST_ID) return true
+      return playlist.audios.length > 0
+    })
+
+    const updatedConfig: Config = {
+      ...config,
+      playlists: updatedPlaylists,
     }
 
-    await get().saveConfig(config)
+    await get().saveConfig(updatedConfig)
   },
 
   // ============================================

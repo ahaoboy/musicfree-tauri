@@ -1,9 +1,8 @@
 import { FC, useCallback } from "react"
 import { useSearchParams } from "react-router-dom"
-import { Spin, Flex, Avatar, Button } from "antd"
-import DeleteOutlined from "@ant-design/icons/DeleteOutlined"
+import { Spin, Flex, Avatar } from "antd"
 import { useAppStore, useAudios } from "../../store"
-import { AudioCard, AudioList } from "../../components"
+import { AudioCard, AudioList, MoreActionsDropdown } from "../../components"
 import { useConfirm } from "../../hooks"
 import { DEFAULT_COVER_URL, LocalAudio, AUDIO_PLAYLIST_ID } from "../../api"
 
@@ -13,6 +12,7 @@ export const MusicPage: FC = () => {
   const [searchParams, setSearchParams] = useSearchParams()
   const audios = useAudios()
   const playAudio = useAppStore((state) => state.playAudio)
+  const togglePlay = useAppStore((state) => state.togglePlay)
   const deleteAudio = useAppStore((state) => state.deleteAudio)
   const isConfigLoading = useAppStore((state) => state.isConfigLoading)
   const currentAudio = useAppStore((state) => state.currentAudio)
@@ -28,9 +28,28 @@ export const MusicPage: FC = () => {
       if (highlightId) {
         setSearchParams({}, { replace: true })
       }
-      playAudio(audio, AUDIO_PLAYLIST_ID)
+
+      // Check if this audio is currently playing
+      const isCurrentAudio =
+        currentPlaylistId === AUDIO_PLAYLIST_ID &&
+        currentAudio?.audio.id === audio.audio.id
+
+      if (isCurrentAudio) {
+        // Toggle play/pause for current audio
+        togglePlay()
+      } else {
+        // Play new audio
+        playAudio(audio, AUDIO_PLAYLIST_ID)
+      }
     },
-    [playAudio, highlightId, setSearchParams],
+    [
+      playAudio,
+      togglePlay,
+      highlightId,
+      setSearchParams,
+      currentAudio,
+      currentPlaylistId,
+    ],
   )
 
   const handleDelete = useCallback(
@@ -92,13 +111,11 @@ export const MusicPage: FC = () => {
                 onClick={() => handleAudioClick(audio)}
                 active={isActive}
                 actions={
-                  <Button
-                    type="text"
-                    icon={<DeleteOutlined />}
-                    onClick={(e) => {
-                      e.stopPropagation()
+                  <MoreActionsDropdown
+                    url={audio.audio.download_url}
+                    onDelete={() =>
                       handleDelete(audio.audio.id, audio.audio.title)
-                    }}
+                    }
                   />
                 }
               />

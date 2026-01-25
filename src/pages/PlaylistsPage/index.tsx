@@ -1,7 +1,6 @@
 import { FC, useCallback, useEffect } from "react"
 import { Routes, Route, useNavigate, useSearchParams } from "react-router-dom"
-import { Flex, Avatar, Button } from "antd"
-import DeleteOutlined from "@ant-design/icons/DeleteOutlined"
+import { Flex, Avatar } from "antd"
 import FolderOutlined from "@ant-design/icons/FolderOutlined"
 import { useAppStore, usePlaylistsPageData } from "../../store"
 import {
@@ -9,7 +8,7 @@ import {
   FAVORITE_PLAYLIST_ID,
   DEFAULT_COVER_URL,
 } from "../../api"
-import { AudioCard, AudioList } from "../../components"
+import { AudioCard, AudioList, MoreActionsDropdown } from "../../components"
 import { useNavigation } from "../../contexts"
 import { useConfirm } from "../../hooks"
 import { PlaylistDetail } from "./PlaylistDetail"
@@ -103,13 +102,11 @@ const PlaylistsList: FC = () => {
                 active={isActive}
                 actions={
                   canDelete ? (
-                    <Button
-                      type="text"
-                      icon={<DeleteOutlined />}
-                      onClick={(e) => {
-                        e.stopPropagation()
+                    <MoreActionsDropdown
+                      url={playlist.download_url}
+                      onDelete={() =>
                         handleDeletePlaylist(playlist.id, playlist.title)
-                      }}
+                      }
                     />
                   ) : undefined
                 }

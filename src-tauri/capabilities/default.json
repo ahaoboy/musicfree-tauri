@@ -6,6 +6,8 @@
     "main"
   ],
   "permissions": [
+    "opener:default",
+    "opener:allow-default-urls",
     "core:default",
     "fs:read-all",
     "fs:write-all",
