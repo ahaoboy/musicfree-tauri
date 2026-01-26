@@ -120,6 +120,22 @@ const AppLayout: FC = memo(() => {
 
   useEffect(() => {
     loadConfig()
+
+    // Auto-pause on device change (e.g. bluetooth disconnect)
+    const handleDeviceChange = () => {
+      const { isPlaying, pauseAudio } = useAppStore.getState()
+      if (isPlaying) {
+        pauseAudio()
+      }
+    }
+
+    navigator.mediaDevices.addEventListener("devicechange", handleDeviceChange)
+    return () => {
+      navigator.mediaDevices.removeEventListener(
+        "devicechange",
+        handleDeviceChange,
+      )
+    }
   }, [])
 
   // Handle swipe gesture
