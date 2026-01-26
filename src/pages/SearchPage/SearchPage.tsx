@@ -9,6 +9,7 @@ import StopOutlined from "@ant-design/icons/StopOutlined"
 import CheckOutlined from "@ant-design/icons/CheckOutlined"
 import ClearOutlined from "@ant-design/icons/ClearOutlined"
 import EnvironmentOutlined from "@ant-design/icons/EnvironmentOutlined"
+import LoadingOutlined from "@ant-design/icons/LoadingOutlined"
 import {
   DEFAULT_COVER_URL,
   LocalPlaylist,
@@ -432,6 +433,15 @@ export const SearchPage: FC = () => {
               // Status badges
               const statusBadges = (
                 <Flex align="center" gap={4}>
+                  {downloading && (
+                    <LoadingOutlined
+                      style={{
+                        fontSize: 12,
+                        color: "#1890ff",
+                      }}
+                      title="Downloading"
+                    />
+                  )}
                   {downloaded && (
                     <div
                       style={{
