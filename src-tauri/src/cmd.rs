@@ -99,6 +99,22 @@ pub async fn read_file(path: &str, app_handle: tauri::AppHandle) -> AppResult<Ve
     let bin = tokio::fs::read(path).await.map_err(AppError::Io)?;
     Ok(bin)
 }
+
+#[tauri::command]
+pub async fn remove_file(path: &str, app_handle: tauri::AppHandle) -> AppResult<()> {
+    let dir = app_dir(app_handle)?;
+    let p = dir.join(path);
+
+    // Security check: ensure path is within app directory
+    if !p.starts_with(&dir) {
+        return Ok(());
+    }
+
+    if tokio::fs::try_exists(&p).await.unwrap_or(false) {
+        tokio::fs::remove_file(p).await.map_err(AppError::Io)?;
+    }
+    Ok(())
+}
 #[tauri::command]
 pub async fn clear_all_data(app_handle: tauri::AppHandle) -> AppResult<()> {
     let dir = app_dir(app_handle)?;

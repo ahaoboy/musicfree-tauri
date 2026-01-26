@@ -17,6 +17,7 @@ import {
   app_version,
   app_dir,
   get_web_url,
+  remove_file,
 } from "../api"
 
 // ============================================
@@ -293,7 +294,51 @@ export const createConfigSlice: StateCreator<AppState, [], [], ConfigSlice> = (
       storage.setCurrentPlaylistId(null)
     }
 
+    const playlistToRemove = config.playlists.find((p) => p.id === id)
     const updatedPlaylists = config.playlists.filter((p) => p.id !== id)
+
+    // File Cleanup Logic
+    if (playlistToRemove) {
+      // 1. Collect all used paths in REMAINING playlists
+      const usedAudioPaths = new Set<string>()
+      const usedCoverPaths = new Set<string>()
+
+      for (const p of updatedPlaylists) {
+        if (p.cover_path) usedCoverPaths.add(p.cover_path)
+        for (const a of p.audios) {
+          usedAudioPaths.add(a.path)
+          if (a.cover_path) usedCoverPaths.add(a.cover_path)
+        }
+      }
+
+      // 2. Check and delete files from removed playlist
+      for (const audio of playlistToRemove.audios) {
+        if (!usedAudioPaths.has(audio.path)) {
+          await remove_file(audio.path)
+        }
+        if (audio.cover_path && !usedCoverPaths.has(audio.cover_path)) {
+          // Double check if cover is used by other audios in the SAME removed playlist?
+          // No, we are deleting the whole playlist. If multiple items in deleted playlist shared a cover,
+          // and that cover is NOT in updatedPlaylists, we delete it.
+          // HOWEVER, we process item by item. If item A and B share cover C.
+          // Processing A: usedCoverPaths doesn't have C. We delete C.
+          // Processing B: usedCoverPaths doesn't have C. We try delete C again (ok, safe).
+          // BUT if we delete C when processing A, and B needed it?
+          // We are deleting B too. So it's fine.
+          // The files are removed from disk.
+          await remove_file(audio.cover_path)
+        }
+      }
+
+      // 3. Playlist cover
+      if (
+        playlistToRemove.cover_path &&
+        !usedCoverPaths.has(playlistToRemove.cover_path)
+      ) {
+        await remove_file(playlistToRemove.cover_path)
+      }
+    }
+
     const updatedConfig: Config = {
       ...config,
       playlists: updatedPlaylists,
@@ -386,6 +431,44 @@ export const createConfigSlice: StateCreator<AppState, [], [], ConfigSlice> = (
       if (playlist.id === AUDIO_PLAYLIST_ID) return true
       return playlist.audios.length > 0
     })
+
+    // File Cleanup Logic for Audio Delete
+    // Optimization: Deleting from FAVORITE is purely metadata removal.
+    // The audio should presumably exist in the main library or other lists.
+    // Even if it's an orphan, we skip file deletion to strictly follow "remove info only" for Favorites
+    // and avoid O(N) scan.
+    const shouldCheckCleanup = playlistId !== FAVORITE_PLAYLIST_ID
+
+    const deletedAudio = shouldCheckCleanup
+      ? config.playlists
+          .find((p) => p.id === playlistId)
+          ?.audios.find((a) => a.audio.id === audioId)
+      : null
+
+    if (deletedAudio) {
+      // Check if path is used in UPDATED playlists
+      const usedAudioPaths = new Set<string>()
+      const usedCoverPaths = new Set<string>()
+
+      for (const p of updatedPlaylists) {
+        if (p.cover_path) usedCoverPaths.add(p.cover_path)
+        for (const a of p.audios) {
+          usedAudioPaths.add(a.path)
+          if (a.cover_path) usedCoverPaths.add(a.cover_path)
+        }
+      }
+
+      if (!usedAudioPaths.has(deletedAudio.path)) {
+        await remove_file(deletedAudio.path)
+      }
+
+      if (
+        deletedAudio.cover_path &&
+        !usedCoverPaths.has(deletedAudio.cover_path)
+      ) {
+        await remove_file(deletedAudio.cover_path)
+      }
+    }
 
     const updatedConfig: Config = {
       ...config,

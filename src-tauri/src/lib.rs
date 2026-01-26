@@ -49,6 +49,7 @@ pub fn run() {
             cmd::exists_cover,
             cmd::export_data,
             cmd::import_data,
+            cmd::remove_file,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

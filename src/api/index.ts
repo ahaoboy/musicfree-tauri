@@ -218,6 +218,10 @@ export function import_data(): Promise<string> {
   return invoke("import_data")
 }
 
+export function remove_file(path: string): Promise<void> {
+  return invoke("remove_file", { path })
+}
+
 // ============================================
 // LocalStorage Keys
 // ============================================
