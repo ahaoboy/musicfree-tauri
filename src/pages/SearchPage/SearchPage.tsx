@@ -359,7 +359,7 @@ export const SearchPage: FC = () => {
     let icon = <DownloadOutlined />
 
     if (pendingCount === 0 && (failedCount > 0 || skippedCount > 0)) {
-      text = ` (${failedCount + skippedCount})`
+      text = ` ${failedCount + skippedCount}`
       icon = <ReloadOutlined />
     } else if (
       pendingCount === 0 &&
@@ -367,10 +367,10 @@ export const SearchPage: FC = () => {
       skippedCount === 0 &&
       alreadyDownloadedCount > 0
     ) {
-      text = ` (${alreadyDownloadedCount})`
+      text = ` ${alreadyDownloadedCount}`
       icon = <PlusOutlined />
     } else if (pendingCount > 0) {
-      text = ` (${pendingCount})`
+      text = ` ${pendingCount}`
     }
 
     return { downloadButtonText: text, downloadButtonIcon: icon }
