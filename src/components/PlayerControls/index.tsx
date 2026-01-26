@@ -29,12 +29,12 @@ interface PlayerControlsProps {
   gap?: "small" | "middle" | "large" | number
   /** Alignment */
   align?:
-    | "start"
-    | "center"
-    | "end"
-    | "space-between"
-    | "space-around"
-    | "space-evenly"
+  | "start"
+  | "center"
+  | "end"
+  | "space-between"
+  | "space-around"
+  | "space-evenly"
 }
 
 /**
@@ -83,6 +83,12 @@ export const PlayerControls: FC<PlayerControlsProps> = ({
   if (layout === "mini") {
     return (
       <Flex align="center" gap={gap} className={className}>
+        <PlayButton
+          stopPropagation
+          className={`${buttonClassName} play`}
+          size={buttonSize}
+          iconSize={iconSize}
+        />
         {showFavorite && (
           <FavoriteButton
             audio={audio}
@@ -92,12 +98,6 @@ export const PlayerControls: FC<PlayerControlsProps> = ({
             iconSize={iconSize}
           />
         )}
-        <PlayButton
-          stopPropagation
-          className={`${buttonClassName} play`}
-          size={buttonSize}
-          iconSize={iconSize}
-        />
       </Flex>
     )
   }

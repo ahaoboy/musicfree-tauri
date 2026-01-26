@@ -38,7 +38,7 @@ export const PlayerCard: FC<PlayerCardProps> = memo(({ audio }) => {
           layout="mini"
           buttonClassName="mini-player-btn"
           buttonSize="large"
-          iconSize={24}
+          iconSize={32}
           gap={4}
         />
       }
