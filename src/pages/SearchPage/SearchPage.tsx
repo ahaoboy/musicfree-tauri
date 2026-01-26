@@ -1,4 +1,4 @@
-import { FC, useCallback, useMemo, useEffect } from "react"
+import { FC, useCallback, useMemo, useEffect, useRef } from "react"
 import { useNavigate } from "react-router-dom"
 import { Button, Checkbox, Input, Flex, Typography, Avatar } from "antd"
 import DownloadOutlined from "@ant-design/icons/DownloadOutlined"
@@ -26,6 +26,9 @@ const { Text } = Typography
 
 export const SearchPage: FC = () => {
   const navigate = useNavigate()
+
+  // Ref to track previous downloading IDs for auto-scroll
+  const prevDownloadingIdsRef = useRef<Set<string>>(new Set())
 
   // Store State
   const searchText = useAppStore((state) => state.searchText)
@@ -75,6 +78,33 @@ export const SearchPage: FC = () => {
       clearSearchRuntimeData()
     }
   }, [searchText, playlist, clearSearchRuntimeData])
+
+  // Auto-scroll to downloading audio
+  useEffect(() => {
+    // Find newly added downloading IDs
+    const prevIds = prevDownloadingIdsRef.current
+    const newDownloadingIds = Array.from(downloadingIds).filter(
+      (id) => !prevIds.has(id),
+    )
+
+    // Update ref for next comparison
+    prevDownloadingIdsRef.current = new Set(downloadingIds)
+
+    // Scroll to the first newly downloading audio
+    if (newDownloadingIds.length > 0 && downloadingAll) {
+      const audioId = newDownloadingIds[0]
+      const element = document.querySelector(`[data-item-id="${audioId}"]`)
+
+      if (element) {
+        // Scroll into view with smooth behavior
+        element.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+          inline: "nearest",
+        })
+      }
+    }
+  }, [downloadingIds, downloadingAll])
 
   // Get existing audios from config
   const configAudios = useMemo(() => {
