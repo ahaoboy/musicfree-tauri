@@ -115,6 +115,10 @@
   .glass-effect(12px, var(--primary-alpha-10), var(--primary-alpha-15));
   padding: 0;
   -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  -webkit-touch-callout: none; // Disable context menu on long press
+  -webkit-user-drag: none;
+  touch-action: manipulation;
 
   // Desktop hover effects only
   @media (hover: hover) and (pointer: fine) {

@@ -1,4 +1,4 @@
-import { FC, useCallback } from "react"
+import { FC, useCallback, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import AudioOutlined from "@ant-design/icons/AudioOutlined"
 import { Slider, Typography, Avatar, Flex } from "antd"
@@ -42,14 +42,24 @@ export const PlayerPage: FC = () => {
   const currentTime = useCurrentTime()
   const duration = useDuration()
 
-  // Handle slider click to seek (click-only, no drag support)
-  const handleSliderChange = useCallback(
-    (value: number | number[]) => {
-      const seekValue = Array.isArray(value) ? value[0] : value
-      if (audioElement && Number.isFinite(seekValue)) {
-        audioElement.currentTime = seekValue
+  // Local state for smoother seeking feedback
+  const [isDragging, setIsDragging] = useState(false)
+  const [dragTime, setDragTime] = useState(0)
 
-        // If audio is not playing, start playback after seeking
+  // Handle slider interaction (UI only)
+  const handleSliderChange = useCallback((value: number) => {
+    setIsDragging(true)
+    setDragTime(value)
+  }, [])
+
+  // Commit seek operation when user releases slider
+  const handleAfterChange = useCallback(
+    (value: number) => {
+      if (audioElement && Number.isFinite(value)) {
+        audioElement.currentTime = value
+        setIsDragging(false)
+
+        // If audio is not playing (e.g. paused/ended), try to resume after seeking
         if (!isPlaying && currentAudio) {
           audioElement
             .play()
@@ -57,7 +67,10 @@ export const PlayerPage: FC = () => {
               useAppStore.setState({ isPlaying: true })
             })
             .catch((error) => {
-              console.error("Failed to play after seek:", error)
+              // AbortError is expected if user seeks again quickly
+              if (error.name !== "AbortError") {
+                console.error("Failed to play after seek:", error)
+              }
             })
         }
       }
@@ -176,8 +189,9 @@ export const PlayerPage: FC = () => {
             style={{ flex: 1 }}
             min={0}
             max={duration || 100}
-            value={currentTime}
+            value={isDragging ? dragTime : currentTime}
             onChange={handleSliderChange}
+            onChangeComplete={handleAfterChange}
             disabled={!duration || duration === 0}
             tooltip={{ open: false }}
           />

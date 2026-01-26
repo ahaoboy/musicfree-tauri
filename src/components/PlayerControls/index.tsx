@@ -29,12 +29,12 @@ interface PlayerControlsProps {
   gap?: "small" | "middle" | "large" | number
   /** Alignment */
   align?:
-  | "start"
-  | "center"
-  | "end"
-  | "space-between"
-  | "space-around"
-  | "space-evenly"
+    | "start"
+    | "center"
+    | "end"
+    | "space-between"
+    | "space-around"
+    | "space-evenly"
 }
 
 /**

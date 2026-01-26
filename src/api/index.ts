@@ -134,7 +134,7 @@ export async function get_convert_url(path: string): Promise<string> {
   return assetUrl
 }
 
-function is_android() {
+export function is_android() {
   return CurrentPlatform === "android"
 }
 

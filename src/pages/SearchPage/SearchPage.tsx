@@ -331,7 +331,7 @@ export const SearchPage: FC = () => {
               first.audio.cover,
               first.audio.platform,
             )
-          } catch (_e) { }
+          } catch (_e) {}
         }
       }
 

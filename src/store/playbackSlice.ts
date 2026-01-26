@@ -209,10 +209,18 @@ export const createPlaybackSlice: StateCreator<
     }
   },
 
-  resumeAudio: () => {
+  resumeAudio: async () => {
     const { audioElement } = get()
-    audioElement.play()
-    set({ isPlaying: true })
+    try {
+      await audioElement.play()
+      set({ isPlaying: true })
+    } catch (error) {
+      if (error instanceof Error && error.name === "AbortError") {
+        console.log("Resume interrupted")
+      } else {
+        console.error("Failed to resume audio:", error)
+      }
+    }
   },
 
   togglePlay: () => {

@@ -158,7 +158,9 @@ export const AudioCard: FC<AudioCardProps> = memo(
         style={{
           cursor: onClick ? "pointer" : "default",
           border: showBorder
-            ? (active ? "2px solid #1890ff" : "2px solid transparent")
+            ? active
+              ? "2px solid #1890ff"
+              : "2px solid transparent"
             : "none",
           borderRadius: "8px",
           padding: "4px",
