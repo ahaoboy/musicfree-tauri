@@ -30,6 +30,16 @@ export const useCoverUrl = (
         return
       }
 
+      // Special case: if coverUrl is already a processed asset URL or a remote HTTPS URL, return it directly
+      if (
+        coverUrl?.startsWith("http://musicfree.localhost") ||
+        coverUrl?.startsWith("musicfree://localhost") ||
+        coverUrl?.startsWith("http://asset.localhost")
+      ) {
+        setUrl(coverUrl)
+        return
+      }
+
       try {
         // Case 1: Local cover path exists (already downloaded)
         if (coverPath) {

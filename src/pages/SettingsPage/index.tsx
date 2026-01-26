@@ -288,7 +288,7 @@ export const SettingsPage: FC = () => {
               {loadingStorage ? (
                 <LoadingOutlined />
               ) : (
-                `${prettyBytes(storageSize)}`
+                ` ${prettyBytes(storageSize)}`
               )}
             </Button>
           </Flex>

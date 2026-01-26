@@ -5,6 +5,7 @@ import CheckOutlined from "@ant-design/icons/CheckOutlined"
 import { DEFAULT_COVER_URL } from "../../api"
 import { useCoverUrl } from "../../hooks"
 import { PlatformIcon } from "../PlatformIcon"
+import { isLongDuration } from "../../utils/audio"
 
 const { Text } = Typography
 
@@ -99,8 +100,8 @@ export const AudioCard: FC<AudioCardProps> = memo(
     // Format duration
     const formattedDuration = formatDuration(duration)
 
-    // Check if duration is too long (>30 minutes = 1800 seconds)
-    const isLongDuration = warnLongDuration && duration && duration > 1800
+    // Check if duration is too long using utility
+    const isLongDurationValue = warnLongDuration && isLongDuration(duration)
 
     // Avatar element
     const avatarElement = (
@@ -189,7 +190,7 @@ export const AudioCard: FC<AudioCardProps> = memo(
                 type="secondary"
                 style={{
                   fontSize: 12,
-                  color: isLongDuration ? "#faad14" : undefined,
+                  color: isLongDurationValue ? "#faad14" : undefined,
                   fontFamily: "monospace", // Use monospace for consistent spacing
                   whiteSpace: "pre", // Preserve spaces
                 }}

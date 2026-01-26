@@ -1,15 +1,14 @@
 import { FC, useCallback, useMemo, useEffect, useRef } from "react"
 import { useNavigate } from "react-router-dom"
-import { Button, Checkbox, Input, Flex, Typography, Avatar } from "antd"
+import { Button, Input, Flex, Avatar } from "antd"
 import DownloadOutlined from "@ant-design/icons/DownloadOutlined"
-import AudioOutlined from "@ant-design/icons/AudioOutlined"
 import ReloadOutlined from "@ant-design/icons/ReloadOutlined"
 import PlusOutlined from "@ant-design/icons/PlusOutlined"
 import StopOutlined from "@ant-design/icons/StopOutlined"
 import CheckOutlined from "@ant-design/icons/CheckOutlined"
-import ClearOutlined from "@ant-design/icons/ClearOutlined"
 import EnvironmentOutlined from "@ant-design/icons/EnvironmentOutlined"
 import LoadingOutlined from "@ant-design/icons/LoadingOutlined"
+import { SearchBottomBar } from "./SearchBottomBar"
 import {
   DEFAULT_COVER_URL,
   LocalPlaylist,
@@ -18,11 +17,11 @@ import {
   LocalAudio,
 } from "../../api"
 import { useAppStore } from "../../store"
-import { AudioCard, AudioList, PlatformIcon } from "../../components"
+import { AudioCard, AudioList } from "../../components"
+import { isLongDuration } from "../../utils/audio"
 import "./index.less"
 
 const { Search } = Input
-const { Text } = Typography
 
 export const SearchPage: FC = () => {
   const navigate = useNavigate()
@@ -148,16 +147,33 @@ export const SearchPage: FC = () => {
     [playlist, startDownload, addAudiosToConfig],
   )
 
-  const handleClearFailed = useCallback(() => {
-    // Unselect all failed/skipped items
+  // Get long pending audios among selected (duration > 30m and not in library/downloaded)
+  const longPendingSelectedIds = useMemo(() => {
+    if (!playlist) return new Set<string>()
+    return new Set(
+      playlist.audios
+        .filter((audio) => {
+          if (!selectedIds.has(audio.id)) return false
+          const isLong = isLongDuration(audio.duration)
+          if (!isLong) return false
+
+          const inLibrary = checkInLibrary(audio.id)
+          const isDownloaded = downloadedIds.has(audio.id)
+          const isDownloading = downloadingIds.has(audio.id)
+
+          return !inLibrary && !isDownloaded && !isDownloading
+        })
+        .map((a) => a.id),
+    )
+  }, [playlist, selectedIds, checkInLibrary, downloadedIds, downloadingIds])
+
+  const handleClearSpecial = useCallback(() => {
+    // Unselect all failed/skipped items OR long pending items
     const audiosToUnselect = new Set<string>()
     failedIds.forEach((id) => audiosToUnselect.add(id))
     skippedIds.forEach((id) => audiosToUnselect.add(id))
+    longPendingSelectedIds.forEach((id) => audiosToUnselect.add(id))
 
-    // We can't batch unselect easily with toggleSelect, but we can compute new selection
-    // Or just clear state and selection of those items
-    // Current slice toggleSelect is single.
-    // Let's iterate.
     audiosToUnselect.forEach((id) => {
       if (selectedIds.has(id)) toggleSelect(id)
     })
@@ -167,6 +183,7 @@ export const SearchPage: FC = () => {
     failedIds,
     skippedIds,
     selectedIds,
+    longPendingSelectedIds,
     toggleSelect,
     clearSearchFailedAndSkippedIds,
   ])
@@ -360,13 +377,22 @@ export const SearchPage: FC = () => {
   }, [playlist, selectedIds])
 
   // UI States
-  const showClearFailedButton = useMemo(() => {
+  const showClearButton = useMemo(() => {
     if (!playlist || downloadingAll) return false
-    // Show if we have failed OR skipped items in selection
-    return Array.from(selectedIds).some(
-      (id) => failedIds.has(id) || skippedIds.has(id),
+    // Show if we have failed OR skipped items in selection OR long pending items
+    return (
+      Array.from(selectedIds).some(
+        (id) => failedIds.has(id) || skippedIds.has(id),
+      ) || longPendingSelectedIds.size > 0
     )
-  }, [playlist, downloadingAll, selectedIds, failedIds, skippedIds])
+  }, [
+    playlist,
+    downloadingAll,
+    selectedIds,
+    failedIds,
+    skippedIds,
+    longPendingSelectedIds,
+  ])
 
   // Button logic
   const { downloadButtonText, downloadButtonIcon } = useMemo(() => {
@@ -390,7 +416,7 @@ export const SearchPage: FC = () => {
     let icon = <DownloadOutlined />
 
     if (pendingCount === 0 && (failedCount > 0 || skippedCount > 0)) {
-      text = ` ${failedCount + skippedCount}`
+      text = `${failedCount + skippedCount}`
       icon = <ReloadOutlined />
     } else if (
       pendingCount === 0 &&
@@ -398,10 +424,10 @@ export const SearchPage: FC = () => {
       skippedCount === 0 &&
       alreadyDownloadedCount > 0
     ) {
-      text = ` ${alreadyDownloadedCount}`
+      text = `${alreadyDownloadedCount}`
       icon = <PlusOutlined />
     } else if (pendingCount > 0) {
-      text = ` ${pendingCount}`
+      text = `${pendingCount}`
     }
 
     return { downloadButtonText: text, downloadButtonIcon: icon }
@@ -419,7 +445,7 @@ export const SearchPage: FC = () => {
 
       // Status badges
       const statusBadges = (
-        <Flex align="center" gap={4}>
+        <Flex align="center" gap={"small"}>
           {downloading && (
             <LoadingOutlined
               style={{
@@ -549,7 +575,7 @@ export const SearchPage: FC = () => {
   )
 
   return (
-    <Flex vertical className="page search-page" gap="middle">
+    <Flex vertical className="page search-page" gap="small">
       <Search
         placeholder="Paste audio/playlist URL here"
         allowClear
@@ -563,74 +589,30 @@ export const SearchPage: FC = () => {
 
       {playlist && !searching && (
         <>
-          <Text type="secondary" style={{ fontSize: 14, paddingLeft: 16 }}>
-            Found {playlist.audios.length} ♪
-          </Text>
-
-          {playlist.title && playlist.audios.length > 1 && (
-            <Flex
-              align="center"
-              gap="middle"
-              className="audio-card"
-              style={{ paddingLeft: 16, paddingRight: 16 }}
-            >
-              <Avatar
-                src={playlistCoverUrl || DEFAULT_COVER_URL}
-                icon={<AudioOutlined />}
-                size={56}
-                shape="square"
-                alt={playlist.title}
-              />
-              <Flex vertical flex={1} style={{ minWidth: 0 }}>
-                <Text strong ellipsis>
-                  {playlist.title}
-                </Text>
-                <Flex align="center" gap="small">
-                  <PlatformIcon platform={playlist.platform} size={12} />
-                </Flex>
-              </Flex>
-            </Flex>
-          )}
-
           <AudioList
             items={playlist.audios}
             getItemId={(audio) => audio.id}
             renderItem={renderSearchItem}
           />
 
-          <Flex
-            align="center"
-            justify="space-between"
-            className="search-bottom-bar"
-          >
-            <Checkbox
-              checked={isAllSelected}
-              indeterminate={isSomeSelected}
-              onChange={(e) =>
-                toggleSelectAll(playlist.audios, e.target.checked)
-              }
-              disabled={downloadingAll}
-            />
-            <Flex gap="small">
-              {showClearFailedButton && (
-                <Button
-                  icon={<ClearOutlined />}
-                  onClick={handleClearFailed}
-                  disabled={downloadingAll}
-                  title="Clear failed/skipped"
-                />
-              )}
-              <Button
-                type="primary"
-                icon={downloadButtonIcon}
-                onClick={handleDownloadAll}
-                loading={downloadingAll}
-                disabled={selectedIds.size === 0}
-              >
-                {downloadButtonText}
-              </Button>
-            </Flex>
-          </Flex>
+          {/* // ... (inside the component return, Replace the bottom bar Flex with:) */}
+          <SearchBottomBar
+            playlist={playlist}
+            playlistCoverUrl={playlistCoverUrl}
+            isAllSelected={isAllSelected}
+            isSomeSelected={isSomeSelected}
+            onToggleSelectAll={(checked: boolean) =>
+              toggleSelectAll(playlist.audios, checked)
+            }
+            showClearButton={showClearButton}
+            longPendingCount={longPendingSelectedIds.size}
+            onClear={handleClearSpecial}
+            downloadButtonIcon={downloadButtonIcon}
+            downloadButtonText={downloadButtonText}
+            isDownloadingAll={downloadingAll}
+            isSelectedEmpty={selectedIds.size === 0}
+            onDownloadAll={handleDownloadAll}
+          />
         </>
       )}
 
