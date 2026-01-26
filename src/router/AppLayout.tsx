@@ -9,11 +9,7 @@ import {
   useRef,
   Suspense,
 } from "react"
-import {
-  useNavigate,
-  useLocation,
-  useMatches,
-} from "react-router-dom"
+import { useNavigate, useLocation, useMatches } from "react-router-dom"
 import {
   ConfigProvider,
   theme as antdTheme,
@@ -260,33 +256,48 @@ export const AppLayout: FC = memo(() => {
                   vertical
                   flex={1}
                   component="main"
-                  className="main-content"
+                  className={`main-content ${showPlayerCard ? "has-player-card" : ""}`}
                   style={{ overflow: "hidden" }}
                 >
                   <Suspense fallback={<LoadingFallback />}>
                     <PageErrorBoundary>
                       {/* Persistent tab pages */}
-                      <Activity mode={currentTab === "playlists" && !routeHandle.isDetail ? "visible" : "hidden"}>
+                      <Activity
+                        mode={
+                          currentTab === "playlists" && !routeHandle.isDetail
+                            ? "visible"
+                            : "hidden"
+                        }
+                      >
                         <PlaylistsPage />
                       </Activity>
-                      <Activity mode={currentTab === "music" ? "visible" : "hidden"}>
+                      <Activity
+                        mode={currentTab === "music" ? "visible" : "hidden"}
+                      >
                         <MusicPage />
                       </Activity>
-                      <Activity mode={currentTab === "search" ? "visible" : "hidden"}>
+                      <Activity
+                        mode={currentTab === "search" ? "visible" : "hidden"}
+                      >
                         <SearchPage />
                       </Activity>
-                      <Activity mode={currentTab === "settings" ? "visible" : "hidden"}>
+                      <Activity
+                        mode={currentTab === "settings" ? "visible" : "hidden"}
+                      >
                         <SettingsPage />
                       </Activity>
 
-                      <Activity mode={routeHandle.isDetail ? "visible" : "hidden"}>
+                      <Activity
+                        mode={routeHandle.isDetail ? "visible" : "hidden"}
+                      >
                         <PlaylistDetail />
                       </Activity>
 
-                      <Activity mode={routeHandle.isSpecial ? "visible" : "hidden"}>
+                      <Activity
+                        mode={routeHandle.isSpecial ? "visible" : "hidden"}
+                      >
                         <PlayerPage />
                       </Activity>
-
                     </PageErrorBoundary>
                   </Suspense>
                 </Flex>

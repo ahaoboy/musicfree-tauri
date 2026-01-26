@@ -23,7 +23,9 @@ export const PlaylistsPage: FC = () => {
   // Get highlight ID from URL params
   const highlightId = searchParams.get("highlight")
 
-  const setViewingPlaylistId = useAppStore((state) => state.setViewingPlaylistId)
+  const setViewingPlaylistId = useAppStore(
+    (state) => state.setViewingPlaylistId,
+  )
 
   const handlePlaylistClick = useCallback(
     (playlist: LocalPlaylist) => {

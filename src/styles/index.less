@@ -119,8 +119,11 @@ body {
 // Main content area
 .main-content {
   -webkit-overflow-scrolling: touch;
-  .safe-area-padding(padding-bottom, @player-bar-height);
   .custom-scrollbar(4px);
+
+  &.has-player-card {
+    .safe-area-padding(padding-bottom, @player-bar-height);
+  }
 }
 
 // Page container

@@ -448,8 +448,8 @@ export const createConfigSlice: StateCreator<AppState, [], [], ConfigSlice> = (
 
     const deletedAudio = shouldCheckCleanup
       ? config.playlists
-        .find((p) => p.id === playlistId)
-        ?.audios.find((a) => a.audio.id === audioId)
+          .find((p) => p.id === playlistId)
+          ?.audios.find((a) => a.audio.id === audioId)
       : null
 
     if (deletedAudio) {

@@ -21,9 +21,7 @@ export const PlaylistDetail: FC = () => {
   const { showConfirm } = useConfirm()
 
   // Find the playlist
-  const playlist = playlists.find(
-    (p) => p.id === viewingPlaylistId,
-  )
+  const playlist = playlists.find((p) => p.id === viewingPlaylistId)
 
   // Handle back navigation
   const handleBack = useCallback(() => {
