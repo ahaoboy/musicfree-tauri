@@ -27,6 +27,11 @@ export const PlaylistsPage: FC = () => {
     (state) => state.setViewingPlaylistId,
   )
 
+  const getPlaylistId = useCallback(
+    (playlist: LocalPlaylist) => playlist.id,
+    [],
+  )
+
   const handlePlaylistClick = useCallback(
     (playlist: LocalPlaylist) => {
       // Clear highlight param when user clicks to navigate
@@ -118,7 +123,7 @@ export const PlaylistsPage: FC = () => {
     <Flex vertical className="page" style={{ flex: 1, overflow: "hidden" }}>
       <AudioList
         items={playlists}
-        getItemId={(playlist) => playlist.id}
+        getItemId={getPlaylistId}
         highlightId={highlightId}
         renderItem={renderPlaylistItem}
       />

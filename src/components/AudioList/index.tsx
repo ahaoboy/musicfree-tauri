@@ -84,9 +84,28 @@ export const AudioList: FC<AudioListProps> = ({
   useEffect(() => {
     if (highlightId && listRef.current) {
       const index = items.findIndex((item) => getItemId(item) === highlightId)
+
       if (index !== -1) {
-        // Scroll to the highlighted item
-        listRef.current.scrollToRow(index, "center")
+        // Use requestAnimationFrame to ensure the list component has processed rowCount changes
+        // and its internal layout before attempting to scroll.
+        const scrollFrame = requestAnimationFrame(() => {
+          if (
+            listRef.current &&
+            typeof listRef.current.scrollToRow === "function"
+          ) {
+            try {
+              // Correct API call according to component documentation:
+              // scrollToRow(config: { index: number; align?: string; behavior?: string })
+              listRef.current.scrollToRow({
+                index,
+                align: "center",
+              })
+            } catch (err) {
+              console.warn(`AudioList: Failed to scroll to row ${index}.`, err)
+            }
+          }
+        })
+        return () => cancelAnimationFrame(scrollFrame)
       }
     }
   }, [highlightId, items, getItemId])

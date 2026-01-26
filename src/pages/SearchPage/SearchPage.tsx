@@ -133,6 +133,8 @@ export const SearchPage: FC = () => {
     [navigate],
   )
 
+  const getAudioId = useCallback((audio: any) => audio.id, [])
+
   const handleDownloadSingle = useCallback(
     async (audioId: string) => {
       if (!playlist) return
@@ -329,7 +331,7 @@ export const SearchPage: FC = () => {
               first.audio.cover,
               first.audio.platform,
             )
-          } catch (_e) {}
+          } catch (_e) { }
         }
       }
 
@@ -577,7 +579,7 @@ export const SearchPage: FC = () => {
   return (
     <Flex vertical className="page search-page" gap="small">
       <Search
-        placeholder="Paste audio/playlist URL here"
+        placeholder="Input audio/playlist ID/URL"
         allowClear
         value={searchText}
         onChange={(e) => setSearchText(e.target.value)}
@@ -591,7 +593,7 @@ export const SearchPage: FC = () => {
         <>
           <AudioList
             items={playlist.audios}
-            getItemId={(audio) => audio.id}
+            getItemId={getAudioId}
             renderItem={renderSearchItem}
           />
 

@@ -157,9 +157,11 @@ export const createConfigSlice: StateCreator<AppState, [], [], ConfigSlice> = (
       let initialDuration = 0
 
       if (storedAudio && storedPlaylistId) {
-        const playlist = config.playlists.find(p => p.id === storedPlaylistId)
+        const playlist = config.playlists.find((p) => p.id === storedPlaylistId)
         if (playlist) {
-          const audio = playlist.audios.find(a => a.audio.id === storedAudio.audio.id)
+          const audio = playlist.audios.find(
+            (a) => a.audio.id === storedAudio.audio.id,
+          )
           if (audio) {
             restoredAudio = audio
             restoredPlaylistId = storedPlaylistId
@@ -466,8 +468,8 @@ export const createConfigSlice: StateCreator<AppState, [], [], ConfigSlice> = (
 
     const deletedAudio = shouldCheckCleanup
       ? config.playlists
-        .find((p) => p.id === playlistId)
-        ?.audios.find((a) => a.audio.id === audioId)
+          .find((p) => p.id === playlistId)
+          ?.audios.find((a) => a.audio.id === audioId)
       : null
 
     if (deletedAudio) {

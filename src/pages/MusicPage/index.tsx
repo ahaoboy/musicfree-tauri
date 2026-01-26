@@ -22,6 +22,8 @@ export const MusicPage: FC = () => {
   // Get highlight ID from URL params
   const highlightId = searchParams.get("highlight")
 
+  const getAudioId = useCallback((audio: LocalAudio) => audio.audio.id, [])
+
   const handleAudioClick = useCallback(
     (audio: LocalAudio) => {
       // Clear highlight param when user clicks to play
@@ -125,7 +127,7 @@ export const MusicPage: FC = () => {
     <Flex vertical className="page" style={{ flex: 1, overflow: "hidden" }}>
       <AudioList
         items={audios}
-        getItemId={(audio) => audio.audio.id}
+        getItemId={getAudioId}
         highlightId={highlightId}
         renderItem={renderAudioItem}
       />

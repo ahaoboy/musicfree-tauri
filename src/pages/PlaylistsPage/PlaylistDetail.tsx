@@ -39,6 +39,8 @@ export const PlaylistDetail: FC = () => {
     }
   }, [setIsInDetailView, setOnBackFromDetail, handleBack])
 
+  const getAudioId = useCallback((audio: LocalAudio) => audio.audio.id, [])
+
   const handleAudioClick = useCallback(
     (audio: LocalAudio) => {
       if (!playlist) return
@@ -145,7 +147,7 @@ export const PlaylistDetail: FC = () => {
     <Flex vertical className="page" style={{ flex: 1, overflow: "hidden" }}>
       <AudioList
         items={playlist.audios}
-        getItemId={(audio) => audio.audio.id}
+        getItemId={getAudioId}
         renderItem={renderAudioItem}
       />
     </Flex>

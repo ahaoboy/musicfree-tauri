@@ -42,7 +42,6 @@ export const SearchBottomBar: FC<SearchBottomBarProps> = ({
   onDownloadAll,
 }) => {
   const audioCount = playlist.audios?.length || 0
-  console.log("playlistCoverUrl", playlistCoverUrl)
   return (
     <div className="search-bottom-bar">
       <AudioCard
