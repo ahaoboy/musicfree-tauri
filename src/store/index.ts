@@ -76,7 +76,7 @@ export const usePlaylistsPageData = (): LocalPlaylist[] => {
 export const useCurrentAudio = () => useAppStore((state) => state.currentAudio)
 export const useIsPlaying = () => useAppStore((state) => state.isPlaying)
 export const usePlaybackRate = () => useAppStore((state) => state.playbackRate)
-export const usePlayMode = () => useAppStore((state) => state.playMode)
+export const usePlayMode = () => useAppStore((state) => state.currentPlayMode)
 export const useThemeMode = () => useAppStore((state) => state.theme)
 export const useCurrentTime = () => useAppStore((state) => state.currentTime)
 export const useDuration = () => useAppStore((state) => state.duration)

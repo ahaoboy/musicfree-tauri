@@ -14,7 +14,7 @@ export interface PlaybackSliceState {
   audioUrl: string | null
   isPlaying: boolean
   playbackRate: number
-  playMode: PlayMode
+  currentPlayMode: PlayMode | null
   playbackHistory: LocalAudio[]
   duration: number
   currentTime: number
@@ -61,12 +61,12 @@ export const createPlaybackSlice: StateCreator<
   PlaybackSlice
 > = (set, get) => ({
   // Initial state
-  currentAudio: storage.getCurrentAudio(),
-  currentPlaylistId: storage.getCurrentPlaylistId(),
+  currentAudio: null,
+  currentPlaylistId: null,
   audioUrl: null,
   isPlaying: false,
   playbackRate: 1,
-  playMode: storage.getPlayMode(),
+  currentPlayMode: null, // Updated initial state
   playbackHistory: [],
   duration: 0,
   currentTime: 0,
@@ -225,8 +225,8 @@ export const createPlaybackSlice: StateCreator<
   },
 
   getNextAudio: () => {
-    const { currentAudio, playMode, config, currentPlaylistId } = get()
-    if (!currentAudio || !currentPlaylistId) return null
+    const { currentAudio, currentPlayMode, config, currentPlaylistId } = get()
+    if (!currentAudio || !currentPlaylistId || !currentPlayMode) return null
 
     // Get current playlist
     const playlist = config.playlists.find((p) => p.id === currentPlaylistId)
@@ -238,7 +238,7 @@ export const createPlaybackSlice: StateCreator<
 
     let nextAudio: LocalAudio | null = null
 
-    switch (playMode) {
+    switch (currentPlayMode) {
       case "sequence":
         // Play next in sequence, stop at end
         if (currentIndex < playlist.audios.length - 1) {
@@ -292,16 +292,17 @@ export const createPlaybackSlice: StateCreator<
   },
 
   togglePlayMode: () => {
-    const { playMode } = get()
+    const { currentPlayMode } = get()
     const modes: PlayMode[] = [
       "sequence",
       "list-loop",
       "single-loop",
       "shuffle",
     ]
-    const currentIndex = modes.indexOf(playMode)
+    const currentMode = currentPlayMode || storage.getPlayMode()
+    const currentIndex = modes.indexOf(currentMode)
     const nextMode = modes[(currentIndex + 1) % modes.length]
-    set({ playMode: nextMode })
+    set({ currentPlayMode: nextMode })
     storage.setPlayMode(nextMode)
   },
 

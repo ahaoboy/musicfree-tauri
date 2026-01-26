@@ -146,22 +146,40 @@ export const createConfigSlice: StateCreator<AppState, [], [], ConfigSlice> = (
       const config = await get_config()
       applyTheme(storage.getTheme())
 
-      const currentAudio = storage.getCurrentAudio()
-      const currentPlaylistId = storage.getCurrentPlaylistId()
-      if (currentAudio && currentPlaylistId) {
-        audioElement.src = await get_web_url(currentAudio.path)
+      const [dir, version] = await Promise.all([app_dir(), app_version()])
+
+      // Restore playback state with validation
+      const storedAudio = storage.getCurrentAudio()
+      const storedPlaylistId = storage.getCurrentPlaylistId()
+
+      let restoredAudio: LocalAudio | null = null
+      let restoredPlaylistId: string | null = null
+      let initialDuration = 0
+
+      if (storedAudio && storedPlaylistId) {
+        const playlist = config.playlists.find(p => p.id === storedPlaylistId)
+        if (playlist) {
+          const audio = playlist.audios.find(a => a.audio.id === storedAudio.audio.id)
+          if (audio) {
+            restoredAudio = audio
+            restoredPlaylistId = storedPlaylistId
+            initialDuration = audio.audio.duration || 0
+            audioElement.src = await get_web_url(audio.path)
+          }
+        }
       }
+
       if (!listenersInitialized) {
         setupAudioListeners()
       }
 
-      const [dir, version] = await Promise.all([app_dir(), app_version()])
-
       set({
         config,
         isConfigLoading: false,
-        currentAudio,
-        currentPlaylistId,
+        currentAudio: restoredAudio,
+        currentPlaylistId: restoredPlaylistId,
+        currentPlayMode: storage.getPlayMode(),
+        duration: initialDuration,
         listenersInitialized: true,
         app_dir: dir,
         app_version: version,
@@ -448,8 +466,8 @@ export const createConfigSlice: StateCreator<AppState, [], [], ConfigSlice> = (
 
     const deletedAudio = shouldCheckCleanup
       ? config.playlists
-          .find((p) => p.id === playlistId)
-          ?.audios.find((a) => a.audio.id === audioId)
+        .find((p) => p.id === playlistId)
+        ?.audios.find((a) => a.audio.id === audioId)
       : null
 
     if (deletedAudio) {

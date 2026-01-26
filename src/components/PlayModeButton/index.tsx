@@ -1,7 +1,7 @@
 import { FC, useCallback, useMemo, MouseEvent } from "react"
 import { Button, Typography, Flex } from "antd"
 import RetweetOutlined from "@ant-design/icons/RetweetOutlined"
-import SwapOutlined from "@ant-design/icons/SwapOutlined"
+import QuestionOutlined from "@ant-design/icons/QuestionOutlined"
 import BarsOutlined from "@ant-design/icons/BarsOutlined"
 import { useAppStore } from "../../store"
 import type { PlayMode } from "../../api"
@@ -48,7 +48,7 @@ export const PlayModeButton: FC<PlayModeButtonProps> = ({
   onClick,
   disabled,
 }) => {
-  const playMode = useAppStore((state) => state.playMode)
+  const currentPlayMode = useAppStore((state) => state.currentPlayMode)
   const togglePlayMode = useAppStore((state) => state.togglePlayMode)
 
   const handleClick = useCallback(
@@ -66,17 +66,19 @@ export const PlayModeButton: FC<PlayModeButtonProps> = ({
           "single-loop",
           "shuffle",
         ]
-        const currentIndex = modes.indexOf(playMode)
+        // Use a safe default for index calculation
+        const currentMode = currentPlayMode || "sequence"
+        const currentIndex = modes.indexOf(currentMode)
         const newMode = modes[(currentIndex + 1) % modes.length]
         onClick?.(e, newMode)
       }
     },
-    [stopPropagation, disabled, togglePlayMode, playMode, onClick],
+    [stopPropagation, disabled, togglePlayMode, currentPlayMode, onClick],
   )
 
   // Memoize mode icon
   const modeIcon = useMemo(() => {
-    switch (playMode) {
+    switch (currentPlayMode) {
       case "sequence":
         return <BarsOutlined />
       case "list-loop":
@@ -104,15 +106,15 @@ export const PlayModeButton: FC<PlayModeButtonProps> = ({
           </Flex>
         )
       case "shuffle":
-        return <SwapOutlined />
+        return <QuestionOutlined />
       default:
         return <BarsOutlined />
     }
-  }, [playMode])
+  }, [currentPlayMode])
 
   // Memoize aria-label
   const ariaLabel = useMemo(() => {
-    switch (playMode) {
+    switch (currentPlayMode) {
       case "sequence":
         return "Play mode: Sequence"
       case "list-loop":
@@ -124,7 +126,7 @@ export const PlayModeButton: FC<PlayModeButtonProps> = ({
       default:
         return "Play mode"
     }
-  }, [playMode])
+  }, [currentPlayMode])
 
   return (
     <Button
