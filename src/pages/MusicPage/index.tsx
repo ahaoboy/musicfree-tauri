@@ -106,7 +106,6 @@ export const MusicPage: FC = () => {
                 coverUrl={audio.audio.cover}
                 platform={audio.audio.platform}
                 title={audio.audio.title}
-                subtitle={audio.audio.platform}
                 duration={audio.audio.duration}
                 onClick={() => handleAudioClick(audio)}
                 active={isActive}

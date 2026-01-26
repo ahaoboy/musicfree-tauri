@@ -1,4 +1,4 @@
-import { FC, useCallback } from "react"
+import { FC, useCallback, useMemo } from "react"
 import { Button, Dropdown, App } from "antd"
 import type { MenuProps } from "antd"
 import MoreOutlined from "@ant-design/icons/MoreOutlined"
@@ -17,14 +17,16 @@ interface MenuInfo {
 
 export interface MoreActionsDropdownProps {
   url?: string
-  onDelete: () => void
+  onDelete?: () => void // Made optional for PlayerPage use case
   disabled?: boolean
+  className?: string // Allow custom styling
 }
 
 export const MoreActionsDropdown: FC<MoreActionsDropdownProps> = ({
   url,
   onDelete,
   disabled = false,
+  className,
 }) => {
   const { message } = App.useApp()
 
@@ -71,37 +73,48 @@ export const MoreActionsDropdown: FC<MoreActionsDropdownProps> = ({
       info.domEvent.stopPropagation()
       info.domEvent.preventDefault()
 
-      onDelete()
+      onDelete?.()
     },
     [onDelete],
   )
 
-  const items: MenuProps["items"] = [
-    {
-      key: "copy",
-      label: "Copy URL",
-      icon: <SendOutlined />,
-      disabled: !url,
-      onClick: handleCopyUrl,
-    },
-    {
-      key: "open",
-      label: "Open in Browser",
-      icon: <ShareAltOutlined />,
-      disabled: !url,
-      onClick: handleOpenInBrowser,
-    },
-    {
-      type: "divider",
-    },
-    {
-      key: "delete",
-      label: "Delete",
-      icon: <DeleteOutlined />,
-      danger: true,
-      onClick: handleDelete,
-    },
-  ]
+  // Build menu items dynamically based on whether onDelete is provided
+  const items: MenuProps["items"] = useMemo(() => {
+    const baseItems: MenuProps["items"] = [
+      {
+        key: "copy",
+        label: "Copy URL",
+        icon: <SendOutlined />,
+        disabled: !url,
+        onClick: handleCopyUrl,
+      },
+      {
+        key: "open",
+        label: "Open in Browser",
+        icon: <ShareAltOutlined />,
+        disabled: !url,
+        onClick: handleOpenInBrowser,
+      },
+    ]
+
+    // Only add delete option if onDelete is provided
+    if (onDelete) {
+      baseItems.push(
+        {
+          type: "divider",
+        },
+        {
+          key: "delete",
+          label: "Delete",
+          icon: <DeleteOutlined />,
+          danger: true,
+          onClick: handleDelete,
+        },
+      )
+    }
+
+    return baseItems
+  }, [url, onDelete, handleCopyUrl, handleOpenInBrowser, handleDelete])
 
   return (
     <Dropdown
@@ -109,13 +122,18 @@ export const MoreActionsDropdown: FC<MoreActionsDropdownProps> = ({
       trigger={["click"]}
       placement="bottomRight"
       disabled={disabled}
+      styles={{
+        root: {
+          zIndex: 30,
+        },
+      }}
     >
       <Button
         type="text"
         icon={<MoreOutlined />}
+        className={className}
         onClick={(e) => {
           e.stopPropagation()
-          e.preventDefault()
         }}
       />
     </Dropdown>

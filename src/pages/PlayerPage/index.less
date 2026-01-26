@@ -3,7 +3,7 @@
 
 .player-page {
   background: var(--bg-primary);
-  z-index: 2000;
+  z-index: 20;
   overflow: hidden;
   // padding-top: env(safe-area-inset-top);
   transition: background @transition-normal @ease-out;
@@ -279,6 +279,7 @@
   }
 
   [data-prefers-color-scheme='dark'] & {
+
     // Desktop hover effects only
     @media (hover: hover) and (pointer: fine) {
       &.play:hover {

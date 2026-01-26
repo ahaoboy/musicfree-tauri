@@ -18,7 +18,7 @@ import {
   LocalAudio,
 } from "../../api"
 import { useAppStore } from "../../store"
-import { AudioCard, AudioList } from "../../components"
+import { AudioCard, AudioList, PlatformIcon } from "../../components"
 import { useSearchAudio } from "./useSearchAudio"
 import { useDownloadManager } from "./useDownloadManager"
 import { useSelectionManager } from "./useSelectionManager"
@@ -547,7 +547,7 @@ export const SearchPage: FC = () => {
       {playlist && !searching && (
         <>
           <Text type="secondary" style={{ fontSize: 14, paddingLeft: 16 }}>
-            Found {playlist.audios.length} tracks
+            Found {playlist.audios.length} ♪
           </Text>
 
           {playlist.title && playlist.audios.length > 1 && (
@@ -568,9 +568,9 @@ export const SearchPage: FC = () => {
                 <Text strong ellipsis>
                   {playlist.title}
                 </Text>
-                <Text type="secondary" style={{ fontSize: 12 }}>
-                  {playlist.platform}
-                </Text>
+                <Flex align="center" gap="small">
+                  <PlatformIcon platform={playlist.platform} size={12} />
+                </Flex>
               </Flex>
             </Flex>
           )}
@@ -593,7 +593,6 @@ export const SearchPage: FC = () => {
                     coverUrl={audio.cover}
                     platform={audio.platform}
                     title={audio.title}
-                    subtitle={audio.platform}
                     duration={audio.duration}
                     warnLongDuration={true}
                     onClick={() => {

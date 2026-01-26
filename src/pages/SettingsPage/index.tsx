@@ -115,7 +115,7 @@ export const SettingsPage: FC = () => {
           }}
         >
           <Flex align="center" justify="space-between">
-            <Text>Downloaded Tracks</Text>
+            <Text>Downloaded ♪</Text>
             <Text type="secondary">{totalAudios}</Text>
           </Flex>
           <Divider style={{ margin: "16px 0" }} />

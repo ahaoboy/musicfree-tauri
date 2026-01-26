@@ -1,11 +1,16 @@
 import { FC, useCallback } from "react"
-import ShareAltOutlined from "@ant-design/icons/ShareAltOutlined"
+import { useNavigate } from "react-router-dom"
 import AudioOutlined from "@ant-design/icons/AudioOutlined"
 import { Slider, Typography, Avatar, Flex } from "antd"
 import { useAppStore, useCurrentTime, useDuration } from "../../store"
-import { DEFAULT_COVER_URL } from "../../api"
-import { useCoverUrl } from "../../hooks"
-import { CopyButton, PlayerControls, BackButton } from "../../components"
+import { DEFAULT_COVER_URL, AUDIO_PLAYLIST_ID } from "../../api"
+import { useCoverUrl, useConfirm } from "../../hooks"
+import {
+  MoreActionsDropdown,
+  PlayerControls,
+  BackButton,
+  PlatformIcon,
+} from "../../components"
 import "./index.less"
 
 const { Title, Text } = Typography
@@ -19,10 +24,18 @@ const formatTime = (seconds: number) => {
 
 // Player page - full-screen audio player
 export const PlayerPage: FC = () => {
+  const navigate = useNavigate()
+  const { showConfirm } = useConfirm()
+
   // Selective store subscriptions
   const currentAudio = useAppStore((state) => state.currentAudio)
+  const currentPlaylistId = useAppStore((state) => state.currentPlaylistId)
   const isPlaying = useAppStore((state) => state.isPlaying)
   const audioElement = useAppStore((state) => state.audioElement)
+  const deleteAudio = useAppStore((state) => state.deleteAudio)
+  const getNextAudio = useAppStore((state) => state.getNextAudio)
+  const playAudio = useAppStore((state) => state.playAudio)
+  const pauseAudio = useAppStore((state) => state.pauseAudio)
 
   const coverUrl = useCoverUrl(
     currentAudio?.cover_path,
@@ -54,6 +67,47 @@ export const PlayerPage: FC = () => {
     },
     [audioElement, isPlaying, currentAudio],
   )
+
+  // Handle delete with navigation logic
+  const handleDelete = useCallback(() => {
+    if (!currentAudio || !currentPlaylistId) return
+
+    showConfirm({
+      title: "Delete Audio",
+      content: `Are you sure you want to delete "${currentAudio.audio.title}"?`,
+      onOk: async () => {
+        // Get next audio before deleting
+        const nextAudio = getNextAudio()
+
+        // Pause current playback
+        pauseAudio()
+
+        // Delete the current audio
+        await deleteAudio(currentAudio.audio.id, currentPlaylistId)
+
+        if (nextAudio && nextAudio.audio.id !== currentAudio.audio.id) {
+          // Play the next audio
+          await playAudio(nextAudio, currentPlaylistId, false)
+        } else {
+          // No more audio to play, navigate back based on source
+          if (currentPlaylistId === AUDIO_PLAYLIST_ID) {
+            navigate("/music")
+          } else {
+            navigate(`/playlists/${encodeURIComponent(currentPlaylistId)}`)
+          }
+        }
+      },
+    })
+  }, [
+    currentAudio,
+    currentPlaylistId,
+    showConfirm,
+    getNextAudio,
+    pauseAudio,
+    deleteAudio,
+    playAudio,
+    navigate,
+  ])
 
   if (!currentAudio) {
     return (
@@ -94,13 +148,11 @@ export const PlayerPage: FC = () => {
             {currentAudio.audio.title}
           </Text>
         </Flex>
-        <CopyButton
-          text={currentAudio.audio.download_url || ""}
-          icon={<ShareAltOutlined />}
-          successMessage="Download link copied!"
-          errorMessage="Failed to copy link"
+        <MoreActionsDropdown
+          url={currentAudio.audio.download_url}
+          onDelete={handleDelete}
+          disabled={!currentAudio.audio.download_url && !currentPlaylistId}
           className="icon-btn"
-          disabled={!currentAudio.audio.download_url}
         />
       </Flex>
 
@@ -125,7 +177,9 @@ export const PlayerPage: FC = () => {
           <Title level={3} ellipsis={{ rows: 2 }}>
             {currentAudio.audio.title}
           </Title>
-          <Text type="secondary">{currentAudio.audio.platform}</Text>
+          <Flex align="center" gap="small">
+            <PlatformIcon platform={currentAudio.audio.platform} size={24} />
+          </Flex>
         </Flex>
       </Flex>
 

@@ -96,7 +96,7 @@ const PlaylistsList: FC = () => {
                 coverUrl={playlist.cover}
                 platform={playlist.platform}
                 title={displayName}
-                subtitle={`${audioCount} tracks · ${playlist.platform}`}
+                subtitle={`${audioCount} ♪`}
                 icon={<FolderOutlined />}
                 onClick={() => handlePlaylistClick(playlist)}
                 active={isActive}

@@ -209,7 +209,7 @@ body {
   background: var(--bg-card);
   border-top: 1px solid var(--border-color);
   padding: 12px 16px;
-  z-index: 1000;
+  z-index: 30;
   touch-action: manipulation;
   .safe-area-padding(padding-bottom, 12px);
   box-shadow: 0 -2px 12px var(--shadow-color);
@@ -257,7 +257,7 @@ body {
 
 // Message notification styling
 .ant-message {
-  z-index: 2000;
+  z-index: 50;
   top: max(100px, calc(100px + env(safe-area-inset-top))) !important;
 
   .ant-message-notice-content {

@@ -4,6 +4,7 @@ import AudioOutlined from "@ant-design/icons/AudioOutlined"
 import CheckOutlined from "@ant-design/icons/CheckOutlined"
 import { DEFAULT_COVER_URL } from "../../api"
 import { useCoverUrl } from "../../hooks"
+import { PlatformIcon } from "../PlatformIcon"
 
 const { Text } = Typography
 
@@ -35,6 +36,7 @@ interface AudioCardProps {
   icon?: ReactNode // Avatar icon (default: AudioOutlined)
   duration?: number // Audio duration in seconds (optional)
   warnLongDuration?: boolean // Show warning color for long duration (>30min)
+  showPlatformIcon?: boolean // Show platform icon instead of text (default: true)
 
   // Click behavior
   onClick?: () => void
@@ -70,6 +72,7 @@ export const AudioCard: FC<AudioCardProps> = memo(
     icon = <AudioOutlined />,
     duration,
     warnLongDuration = false,
+    showPlatformIcon = true,
     onClick,
     active = false,
     badge,
@@ -159,35 +162,36 @@ export const AudioCard: FC<AudioCardProps> = memo(
             {title}
           </Text>
 
-          {/* Second row: Subtitle + Duration + Extra info */}
-          {(subtitle || formattedDuration || extraInfo) && (
-            <Flex align="center" gap="small">
-              {subtitle && (
-                <Text type="secondary" style={{ fontSize: 12 }}>
-                  {subtitle}
-                </Text>
-              )}
-              {formattedDuration && (
-                <>
-                  {subtitle && (
-                    <Text type="secondary" style={{ fontSize: 12 }}>
-                      ·
-                    </Text>
-                  )}
-                  <Text
-                    type="secondary"
-                    style={{
-                      fontSize: 12,
-                      color: isLongDuration ? "#faad14" : undefined,
-                    }}
-                  >
-                    {formattedDuration}
+          {/* Second row: Platform Icon + Subtitle + Duration + Extra info */}
+          <Flex align="center" gap="small">
+            {/* Platform icon */}
+            {showPlatformIcon && <PlatformIcon platform={platform} size={14} />}
+
+            {subtitle && (
+              <Text type="secondary" style={{ fontSize: 12 }}>
+                {subtitle}
+              </Text>
+            )}
+            {formattedDuration && (
+              <>
+                {(subtitle || showPlatformIcon) && (
+                  <Text type="secondary" style={{ fontSize: 12 }}>
+                    ·
                   </Text>
-                </>
-              )}
-              {extraInfo}
-            </Flex>
-          )}
+                )}
+                <Text
+                  type="secondary"
+                  style={{
+                    fontSize: 12,
+                    color: isLongDuration ? "#faad14" : undefined,
+                  }}
+                >
+                  {formattedDuration}
+                </Text>
+              </>
+            )}
+            {extraInfo}
+          </Flex>
         </Flex>
 
         {/* Right: Actions */}

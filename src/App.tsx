@@ -6,14 +6,16 @@ import {
   memo,
   useEffect,
   useMemo,
+  Activity,
 } from "react"
 import {
-  BrowserRouter,
-  Routes,
-  Route,
+  createBrowserRouter,
+  RouterProvider,
   useNavigate,
   useLocation,
   Navigate,
+  Outlet,
+  ScrollRestoration,
 } from "react-router-dom"
 import {
   PlayerCard,
@@ -102,10 +104,11 @@ const AppLayout: FC = memo(() => {
   const isDark = useAppStore((state) => state.isDark())
 
   // Get current tab - memoize to avoid recalculation
-  const currentTab = useMemo(
-    () => ROUTE_TO_TAB[location.pathname] || "playlists",
-    [location.pathname],
-  )
+  const currentTab = useMemo(() => {
+    // Handle nested routes like /playlists/:id
+    const basePath = `/${location.pathname.split("/")[1]}`
+    return ROUTE_TO_TAB[basePath] || "playlists"
+  }, [location.pathname])
 
   // Handle tab change
   const handleTabChange = useCallback(
@@ -163,7 +166,9 @@ const AppLayout: FC = memo(() => {
     onBackFromDetail,
     setOnBackFromDetail,
   }
-
+  const showPlayerCard = ["/playlists", "/music"].some((i) =>
+    location.pathname.startsWith(i),
+  )
   return (
     <ConfigProvider
       theme={{
@@ -179,6 +184,8 @@ const AppLayout: FC = memo(() => {
       <AntApp message={{ top: 100 }}>
         <ErrorBoundary onReset={() => window.location.reload()}>
           <NavigationContext.Provider value={navigationContextValue}>
+            {/* ScrollRestoration for automatic scroll position restoration */}
+            <ScrollRestoration />
             {isConfigLoading ? (
               <LoadingFallback fullscreen tip="Loading configuration..." />
             ) : (
@@ -205,26 +212,38 @@ const AppLayout: FC = memo(() => {
                 >
                   <Suspense fallback={<LoadingFallback />}>
                     <PageErrorBoundary>
-                      <Routes>
-                        <Route
-                          path="/"
-                          element={<Navigate to="/playlists" replace />}
-                        />
-                        <Route
-                          path="/playlists/*"
-                          element={<PlaylistsPage />}
-                        />
-                        <Route path="/music" element={<MusicPage />} />
-                        <Route path="/search" element={<SearchPage />} />
-                        <Route path="/settings" element={<SettingsPage />} />
-                        <Route path="/player" element={<PlayerPage />} />
-                      </Routes>
+                      {/* Use Activity for keep-alive on each tab */}
+                      <Activity
+                        mode={currentTab === "playlists" ? "visible" : "hidden"}
+                      >
+                        {currentTab === "playlists" && <Outlet />}
+                      </Activity>
+                      <Activity
+                        mode={currentTab === "music" ? "visible" : "hidden"}
+                      >
+                        {(currentTab === "music" ||
+                          location.pathname === "/music") && <MusicPage />}
+                      </Activity>
+                      <Activity
+                        mode={currentTab === "search" ? "visible" : "hidden"}
+                      >
+                        {(currentTab === "search" ||
+                          location.pathname === "/search") && <SearchPage />}
+                      </Activity>
+                      <Activity
+                        mode={currentTab === "settings" ? "visible" : "hidden"}
+                      >
+                        {(currentTab === "settings" ||
+                          location.pathname === "/settings") && (
+                          <SettingsPage />
+                        )}
+                      </Activity>
                     </PageErrorBoundary>
                   </Suspense>
                 </Flex>
-                {!["search", "settings"].includes(currentTab) && (
+                <Activity mode={showPlayerCard ? "visible" : "hidden"}>
                   <PlayerCard audio={currentAudio} />
-                )}
+                </Activity>
               </Flex>
             )}
           </NavigationContext.Provider>
@@ -236,13 +255,43 @@ const AppLayout: FC = memo(() => {
 
 AppLayout.displayName = "AppLayout"
 
+// Create router with DataRouter API
+const router = createBrowserRouter([
+  {
+    path: "/",
+    element: <AppLayout />,
+    children: [
+      {
+        index: true,
+        element: <Navigate to="/playlists" replace />,
+      },
+      {
+        path: "playlists/*",
+        element: <PlaylistsPage />,
+      },
+      {
+        path: "music",
+        element: null, // Rendered via Activity
+      },
+      {
+        path: "search",
+        element: null, // Rendered via Activity
+      },
+      {
+        path: "settings",
+        element: null, // Rendered via Activity
+      },
+      {
+        path: "player",
+        element: <PlayerPage />,
+      },
+    ],
+  },
+])
+
 // App entry
 const App: FC = () => {
-  return (
-    <BrowserRouter>
-      <AppLayout />
-    </BrowserRouter>
-  )
+  return <RouterProvider router={router} />
 }
 
 export default App
