@@ -33,9 +33,6 @@ export const PlayerPage: FC = () => {
   const isPlaying = useAppStore((state) => state.isPlaying)
   const audioElement = useAppStore((state) => state.audioElement)
   const deleteAudio = useAppStore((state) => state.deleteAudio)
-  const getNextAudio = useAppStore((state) => state.getNextAudio)
-  const playAudio = useAppStore((state) => state.playAudio)
-  const pauseAudio = useAppStore((state) => state.pauseAudio)
 
   const coverUrl = useCoverUrl(
     currentAudio?.cover_path,
@@ -76,20 +73,12 @@ export const PlayerPage: FC = () => {
       title: "Delete Audio",
       content: `Are you sure you want to delete "${currentAudio.audio.title}"?`,
       onOk: async () => {
-        // Get next audio before deleting
-        const nextAudio = getNextAudio()
-
-        // Pause current playback
-        pauseAudio()
-
-        // Delete the current audio
+        // Delegate logic to store action
         await deleteAudio(currentAudio.audio.id, currentPlaylistId)
 
-        if (nextAudio && nextAudio.audio.id !== currentAudio.audio.id) {
-          // Play the next audio
-          await playAudio(nextAudio, currentPlaylistId, false)
-        } else {
-          // No more audio to play, navigate back based on source
+        // Check if we need to navigate back (if no audio left/cleared)
+        const state = useAppStore.getState()
+        if (!state.currentAudio) {
           if (currentPlaylistId === AUDIO_PLAYLIST_ID) {
             navigate("/music")
           } else {
@@ -98,16 +87,7 @@ export const PlayerPage: FC = () => {
         }
       },
     })
-  }, [
-    currentAudio,
-    currentPlaylistId,
-    showConfirm,
-    getNextAudio,
-    pauseAudio,
-    deleteAudio,
-    playAudio,
-    navigate,
-  ])
+  }, [currentAudio, currentPlaylistId, showConfirm, deleteAudio, navigate])
 
   if (!currentAudio) {
     return (

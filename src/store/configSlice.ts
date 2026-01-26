@@ -269,13 +269,28 @@ export const createConfigSlice: StateCreator<AppState, [], [], ConfigSlice> = (
   },
 
   deletePlaylist: async (id: string) => {
-    const { config } = get()
+    const { config, currentPlaylistId, pauseAudio } = get()
     if (!config) return
 
     // Don't allow deleting special playlists
     if (id === FAVORITE_PLAYLIST_ID || id === AUDIO_PLAYLIST_ID) {
       console.warn("Cannot delete special playlist:", id)
       return
+    }
+
+    // If deleting current playlist, stop playback
+    if (currentPlaylistId === id) {
+      pauseAudio()
+      set({
+        currentAudio: null,
+        currentPlaylistId: null,
+        audioUrl: null,
+        isPlaying: false,
+        duration: 0,
+        currentTime: 0,
+      })
+      storage.setCurrentAudio(null)
+      storage.setCurrentPlaylistId(null)
     }
 
     const updatedPlaylists = config.playlists.filter((p) => p.id !== id)
@@ -303,8 +318,47 @@ export const createConfigSlice: StateCreator<AppState, [], [], ConfigSlice> = (
   },
 
   deleteAudio: async (audioId: string, playlistId: string) => {
-    const { config } = get()
+    const {
+      config,
+      currentAudio,
+      currentPlaylistId,
+      isPlaying,
+      playAudio,
+      pauseAudio,
+    } = get()
     if (!config) return
+
+    // Check if deleting currently playing audio
+    const isDeletingCurrent =
+      currentPlaylistId === playlistId && currentAudio?.audio.id === audioId
+
+    // Determine next audio if deleting current
+    let nextAudioToPlay: LocalAudio | null = null
+    if (isDeletingCurrent) {
+      const playlist = config.playlists.find((p) => p.id === playlistId)
+      if (playlist && playlist.audios.length > 1) {
+        const currentIndex = playlist.audios.findIndex(
+          (a) => a.audio.id === audioId,
+        )
+        // Default to next in sequence, or wrap to start
+        const nextIndex = (currentIndex + 1) % playlist.audios.length
+        // If it's the specific item we are deleting, ensure we get a DIFFERENT one if possible
+        // But since we haven't deleted yet, playlist still has it.
+        // If we only have 1 item, we can't play next.
+        if (playlist.audios.length > 1) {
+          nextAudioToPlay = playlist.audios[nextIndex]
+          // If next is same as current (e.g. 1 item?), handled by length check
+          if (
+            nextAudioToPlay.audio.id === audioId &&
+            playlist.audios.length > 1
+          ) {
+            // scan for another?
+            nextAudioToPlay =
+              playlist.audios.find((a) => a.audio.id !== audioId) || null
+          }
+        }
+      }
+    }
 
     let updatedPlaylists = config.playlists.map((playlist) => {
       // Remove audio from target playlist
@@ -339,6 +393,31 @@ export const createConfigSlice: StateCreator<AppState, [], [], ConfigSlice> = (
     }
 
     await get().saveConfig(updatedConfig)
+
+    // Handle playback state changes AFTER saving config
+    if (isDeletingCurrent) {
+      if (nextAudioToPlay) {
+        // Switch to next audio
+        await playAudio(nextAudioToPlay, playlistId, false)
+        // Restore pause state if was paused
+        if (!isPlaying) {
+          pauseAudio()
+        }
+      } else {
+        // No more audio, stop playback
+        pauseAudio()
+        set({
+          currentAudio: null,
+          currentPlaylistId: null,
+          audioUrl: null,
+          isPlaying: false,
+          duration: 0,
+          currentTime: 0,
+        })
+        storage.setCurrentAudio(null)
+        storage.setCurrentPlaylistId(null)
+      }
+    }
   },
 
   // Favorite actions
