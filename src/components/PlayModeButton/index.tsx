@@ -15,6 +15,8 @@ interface PlayModeButtonProps {
   className?: string
   /** Button size */
   size?: "small" | "middle" | "large"
+  /** Icon font size */
+  iconSize?: number
   /** Stop event propagation (useful when inside clickable containers) */
   stopPropagation?: boolean
   /** Custom onClick handler (called after toggle) */
@@ -44,6 +46,7 @@ export const PlayModeButton: FC<PlayModeButtonProps> = ({
   type = "text",
   className,
   size,
+  iconSize,
   stopPropagation = false,
   onClick,
   disabled,
@@ -76,13 +79,15 @@ export const PlayModeButton: FC<PlayModeButtonProps> = ({
     [stopPropagation, disabled, togglePlayMode, currentPlayMode, onClick],
   )
 
+  const iconStyle = iconSize ? { fontSize: iconSize } : undefined
+
   // Memoize mode icon
   const modeIcon = useMemo(() => {
     switch (currentPlayMode) {
       case "sequence":
-        return <BarsOutlined />
+        return <BarsOutlined style={iconStyle} />
       case "list-loop":
-        return <RetweetOutlined />
+        return <RetweetOutlined style={iconStyle} />
       case "single-loop":
         return (
           <Flex
@@ -90,13 +95,13 @@ export const PlayModeButton: FC<PlayModeButtonProps> = ({
             align="center"
             justify="center"
           >
-            <RetweetOutlined />
+            <RetweetOutlined style={iconStyle} />
             <Text
               style={{
                 position: "absolute",
-                fontSize: 10,
-                right: -6,
-                top: -4,
+                fontSize: iconSize ? iconSize * 0.3 : 10,
+                right: iconSize ? -iconSize * 0.2 : -6,
+                top: iconSize ? -iconSize * 0.1 : -4,
                 fontWeight: "bold",
                 color: "currentColor",
               }}
@@ -106,11 +111,11 @@ export const PlayModeButton: FC<PlayModeButtonProps> = ({
           </Flex>
         )
       case "shuffle":
-        return <QuestionOutlined />
+        return <QuestionOutlined style={iconStyle} />
       default:
-        return <BarsOutlined />
+        return <BarsOutlined style={iconStyle} />
     }
-  }, [currentPlayMode])
+  }, [currentPlayMode, iconStyle, iconSize])
 
   // Memoize aria-label
   const ariaLabel = useMemo(() => {

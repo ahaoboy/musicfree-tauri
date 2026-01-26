@@ -21,16 +21,20 @@ interface PlayerControlsProps {
   className?: string
   /** Button className */
   buttonClassName?: string
+  /** Button size */
+  buttonSize?: "small" | "middle" | "large"
+  /** Icon font size */
+  iconSize?: number
   /** Gap between buttons */
   gap?: "small" | "middle" | "large" | number
   /** Alignment */
   align?:
-    | "start"
-    | "center"
-    | "end"
-    | "space-between"
-    | "space-around"
-    | "space-evenly"
+  | "start"
+  | "center"
+  | "end"
+  | "space-between"
+  | "space-around"
+  | "space-evenly"
 }
 
 /**
@@ -70,6 +74,8 @@ export const PlayerControls: FC<PlayerControlsProps> = ({
   layout = "full",
   className,
   buttonClassName,
+  buttonSize,
+  iconSize,
   gap = "small",
   align = "space-between",
 }) => {
@@ -82,9 +88,16 @@ export const PlayerControls: FC<PlayerControlsProps> = ({
             audio={audio}
             stopPropagation
             className={buttonClassName}
+            size={buttonSize}
+            iconSize={iconSize}
           />
         )}
-        <PlayButton stopPropagation className={`${buttonClassName} play`} />
+        <PlayButton
+          stopPropagation
+          className={`${buttonClassName} play`}
+          size={buttonSize}
+          iconSize={iconSize}
+        />
       </Flex>
     )
   }
@@ -92,16 +105,45 @@ export const PlayerControls: FC<PlayerControlsProps> = ({
   // Full layout: all controls
   return (
     <Flex align="center" justify={align} gap={gap} className={className}>
-      {showPlayMode && <PlayModeButton className={buttonClassName} />}
+      {showPlayMode && (
+        <PlayModeButton
+          className={buttonClassName}
+          size={buttonSize}
+          iconSize={iconSize}
+        />
+      )}
 
-      {showSkip && <SkipButton direction="prev" className={buttonClassName} />}
+      {showSkip && (
+        <SkipButton
+          direction="prev"
+          className={buttonClassName}
+          size={buttonSize}
+          iconSize={iconSize}
+        />
+      )}
 
-      <PlayButton className={`${buttonClassName} play`} />
+      <PlayButton
+        className={`${buttonClassName} play`}
+        size={buttonSize}
+        iconSize={iconSize}
+      />
 
-      {showSkip && <SkipButton direction="next" className={buttonClassName} />}
+      {showSkip && (
+        <SkipButton
+          direction="next"
+          className={buttonClassName}
+          size={buttonSize}
+          iconSize={iconSize}
+        />
+      )}
 
       {showFavorite && (
-        <FavoriteButton audio={audio} className={buttonClassName} />
+        <FavoriteButton
+          audio={audio}
+          className={buttonClassName}
+          size={buttonSize}
+          iconSize={iconSize}
+        />
       )}
     </Flex>
   )

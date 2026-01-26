@@ -13,6 +13,8 @@ interface SkipButtonProps {
   className?: string
   /** Button size */
   size?: "small" | "middle" | "large"
+  /** Icon font size */
+  iconSize?: number
   /** Stop event propagation (useful when inside clickable containers) */
   stopPropagation?: boolean
   /** Custom onClick handler (called after skip) */
@@ -44,6 +46,7 @@ export const SkipButton: FC<SkipButtonProps> = ({
   type = "text",
   className,
   size,
+  iconSize,
   stopPropagation = false,
   onClick,
   disabled,
@@ -73,14 +76,16 @@ export const SkipButton: FC<SkipButtonProps> = ({
     [stopPropagation, direction, playPrev, playNext, onClick],
   )
 
+  const iconStyle = iconSize ? { fontSize: iconSize } : undefined
+
   return (
     <Button
       type={type}
       icon={
         direction === "prev" ? (
-          <StepBackwardOutlined />
+          <StepBackwardOutlined style={iconStyle} />
         ) : (
-          <StepForwardOutlined />
+          <StepForwardOutlined style={iconStyle} />
         )
       }
       onClick={handleClick}

@@ -13,6 +13,8 @@ interface PlayButtonProps {
   size?: "small" | "middle" | "large"
   /** Stop event propagation (useful when inside clickable containers) */
   stopPropagation?: boolean
+  /** Icon font size */
+  iconSize?: number
   /** Custom onClick handler (called after toggle) */
   onClick?: (e: MouseEvent, isPlaying: boolean) => void
   /** Disabled state */
@@ -45,6 +47,7 @@ export const PlayButton: FC<PlayButtonProps> = ({
   className,
   size,
   stopPropagation = false,
+  iconSize,
   onClick,
   disabled,
 }) => {
@@ -65,10 +68,18 @@ export const PlayButton: FC<PlayButtonProps> = ({
     [stopPropagation, disabled, togglePlay, isPlaying, onClick],
   )
 
+  const iconStyle = iconSize ? { fontSize: iconSize } : undefined
+
   return (
     <Button
       type={type}
-      icon={isPlaying ? <PauseCircleFilled /> : <PlayCircleFilled />}
+      icon={
+        isPlaying ? (
+          <PauseCircleFilled style={iconStyle} />
+        ) : (
+          <PlayCircleFilled style={iconStyle} />
+        )
+      }
       onClick={handleClick}
       className={className}
       size={size}

@@ -49,6 +49,7 @@ interface AudioCardProps {
 
   // State
   active?: boolean // Whether the card is active/selected/highlighted
+  showBorder?: boolean // Whether to show the card border (default: true)
 
   // Badge configuration
   badge?: {
@@ -56,6 +57,9 @@ interface AudioCardProps {
     icon?: ReactNode // Custom badge icon (default: CheckOutlined)
     offset?: [number, number] // Badge position offset
   }
+
+  // Size configuration
+  avatarSize?: number // Avatar size in pixels (default: 60)
 
   // Extra info section (after subtitle)
   extraInfo?: ReactNode
@@ -79,6 +83,8 @@ export const AudioCard: FC<AudioCardProps> = memo(
     duration,
     warnLongDuration = false,
     showPlatformIcon = true,
+    avatarSize = 60,
+    showBorder = true,
     onClick,
     active = false,
     badge,
@@ -108,7 +114,7 @@ export const AudioCard: FC<AudioCardProps> = memo(
       <Avatar
         src={finalCoverUrl}
         icon={icon}
-        size={60}
+        size={avatarSize}
         shape="square"
         alt={title}
         className="card-avatar"
@@ -151,7 +157,9 @@ export const AudioCard: FC<AudioCardProps> = memo(
         gap="middle"
         style={{
           cursor: onClick ? "pointer" : "default",
-          border: active ? "2px solid #1890ff" : "2px solid transparent",
+          border: showBorder
+            ? (active ? "2px solid #1890ff" : "2px solid transparent")
+            : "none",
           borderRadius: "8px",
           padding: "4px",
           boxSizing: "border-box",

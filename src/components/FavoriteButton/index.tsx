@@ -14,6 +14,8 @@ interface FavoriteButtonProps {
   className?: string
   /** Button size */
   size?: "small" | "middle" | "large"
+  /** Icon font size */
+  iconSize?: number
   /** Stop event propagation (useful when inside clickable containers) */
   stopPropagation?: boolean
   /** Custom onClick handler (called after toggle) */
@@ -51,6 +53,7 @@ export const FavoriteButton: FC<FavoriteButtonProps> = ({
   type = "text",
   className,
   size,
+  iconSize,
   stopPropagation = false,
   onClick,
   disabled,
@@ -78,14 +81,16 @@ export const FavoriteButton: FC<FavoriteButtonProps> = ({
     return null
   }
 
+  const iconStyle = iconSize ? { fontSize: iconSize } : undefined
+
   return (
     <Button
       type={type}
       icon={
         isFavorited ? (
-          <HeartFilled style={{ color: "#ff4d4f" }} />
+          <HeartFilled style={{ ...iconStyle, color: "#ff4d4f" }} />
         ) : (
-          <HeartOutlined />
+          <HeartOutlined style={iconStyle} />
         )
       }
       onClick={handleClick}
