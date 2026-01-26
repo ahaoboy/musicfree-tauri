@@ -4,8 +4,7 @@ pub mod core;
 pub mod error;
 
 use std::path::Path;
-use std::fs::File;
-use std::io::{Read, Seek, SeekFrom};
+use std::io::SeekFrom;
 use tauri::http::{Response, StatusCode};
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -14,17 +13,27 @@ pub fn run() {
         .plugin(tauri_plugin_os::init())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_clipboard_manager::init())
-        .register_uri_scheme_protocol("musicfree", |ctx, request| {
+        .register_asynchronous_uri_scheme_protocol("musicfree", |ctx, request, responder| {
             // Get the URI path (e.g., "assets/covers/bilibili/q.jpg")
-            let path = request.uri().path();
+            let path = request.uri().path().to_string();
 
             // Get Range header if present
-            let range = request.headers().get("range").and_then(|v| v.to_str().ok());
+            let range = request
+                .headers()
+                .get("range")
+                .and_then(|v| v.to_str().ok())
+                .map(|s| s.to_string());
 
             // Remove leading slash if present
-            let path = path.trim_start_matches('/');
+            let path = path.trim_start_matches('/').to_string();
 
-            musicfree_protocol_handler(ctx.app_handle(), path, range)
+            let app_handle = ctx.app_handle().clone();
+
+            // Spawn async task to handle the request
+            tauri::async_runtime::spawn(async move {
+                let response = musicfree_protocol_handler_async(&app_handle, &path, range.as_deref()).await;
+                responder.respond(response);
+            });
         })
         .plugin(tauri_plugin_fs::init());
 
@@ -56,15 +65,15 @@ pub fn run() {
         .expect("error while running tauri application");
 }
 
-/// Handler for musicfree:// protocol
+/// Handler for musicfree:// protocol (async version)
 /// Example: musicfree://assets/covers/bilibili/q.jpg
-fn musicfree_protocol_handler(
+async fn musicfree_protocol_handler_async(
     app_handle: &tauri::AppHandle,
     path: &str,
     range: Option<&str>,
 ) -> Response<Vec<u8>> {
     // Get app data directory
-    let app_data_dir = match api::app_dir(app_handle) {
+    let app_data_dir = match api::app_dir(app_handle).await {
         Ok(dir) => dir,
         Err(e) => {
             eprintln!("Failed to get app data directory: {}", e);
@@ -84,7 +93,7 @@ fn musicfree_protocol_handler(
 
     // Handle Range requests for audio/video streaming
     if let Some(range_header) = range {
-        match handle_range_request(&file_path, range_header, mime_type) {
+        match handle_range_request_async(&file_path, range_header, mime_type).await {
             Ok(response) => response,
             Err(e) => {
                 eprintln!("Failed to handle range request: {}", e);
@@ -97,7 +106,7 @@ fn musicfree_protocol_handler(
         }
     } else {
         // Read entire file for non-range requests
-        match std::fs::read(&file_path) {
+        match tokio::fs::read(&file_path).await {
             Ok(data) => {
                 Response::builder()
                     .status(StatusCode::OK)
@@ -119,21 +128,23 @@ fn musicfree_protocol_handler(
     }
 }
 
-/// Handle HTTP Range requests for streaming
-fn handle_range_request(
+/// Handle HTTP Range requests for streaming (async version)
+async fn handle_range_request_async(
     file_path: &Path,
     range_header: &str,
     mime_type: &str,
 ) -> Result<Response<Vec<u8>>, Box<dyn std::error::Error>> {
-    let mut file = File::open(file_path)?;
-    let file_size = file.metadata()?.len();
+    use tokio::io::{AsyncReadExt, AsyncSeekExt};
+
+    let mut file = tokio::fs::File::open(file_path).await?;
+    let file_size = file.metadata().await?.len();
 
     let (start, end) = parse_range(range_header, file_size)?;
     let chunk_size = end - start + 1;
 
-    file.seek(SeekFrom::Start(start))?;
+    file.seek(SeekFrom::Start(start)).await?;
     let mut buf = vec![0; chunk_size as usize];
-    file.read_exact(&mut buf)?;
+    file.read_exact(&mut buf).await?;
 
     Ok(Response::builder()
         .status(StatusCode::PARTIAL_CONTENT) // 206

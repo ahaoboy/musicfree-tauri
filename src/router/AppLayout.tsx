@@ -94,9 +94,13 @@ export const AppLayout: FC = memo(() => {
     return "playlists" as Tab
   }, [routeHandle])
 
-  // Show player card on tab pages and detail pages
+  // Show player card only on specific pages
   const showPlayerCard = useMemo(() => {
-    return !routeHandle.isSpecial
+    return (
+      routeHandle.tabKey === "playlists" ||
+      routeHandle.tabKey === "music" ||
+      routeHandle.isDetail
+    )
   }, [routeHandle])
 
   // Handle scroll saving before route change

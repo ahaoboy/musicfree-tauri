@@ -6,26 +6,25 @@ use musicfree::{Audio, Platform};
 use std::path::{Path, PathBuf};
 use tauri::Manager;
 
-pub fn app_dir(app_handle: &tauri::AppHandle) -> AppResult<PathBuf> {
+pub async fn app_dir(app_handle: &tauri::AppHandle) -> AppResult<PathBuf> {
     let app_data_dir = app_handle
         .path()
         .app_data_dir()
         .map_err(|e| AppError::Unknown(e.to_string()))?;
 
-    if !std::fs::exists(&app_data_dir).unwrap_or(false) {
-        std::fs::create_dir_all(&app_data_dir).map_err(AppError::Io)?;
+    if !tokio::fs::try_exists(&app_data_dir).await.unwrap_or(false) {
+        tokio::fs::create_dir_all(&app_data_dir).await.map_err(AppError::Io)?;
     }
     Ok(app_data_dir)
 }
 
-fn write<P: AsRef<Path>, C: AsRef<[u8]>>(p: P, c: C) -> std::io::Result<()> {
+async fn write<P: AsRef<Path>, C: AsRef<[u8]>>(p: P, c: C) -> std::io::Result<()> {
     let p = p.as_ref();
     if let Some(d) = p.parent()
-        && !d.exists()
-    {
-        std::fs::create_dir_all(d)?;
-    }
-    std::fs::write(p, c)
+        && !tokio::fs::try_exists(d).await.unwrap_or(false) {
+            tokio::fs::create_dir_all(d).await?;
+        }
+    tokio::fs::write(p, c).await
 }
 
 pub fn get_audio_filename(audio: &Audio) -> String {
@@ -56,14 +55,14 @@ pub async fn download_audio(audio: &Audio, app_dir: PathBuf) -> anyhow::Result<L
     );
     let file_path = app_dir.join(&audio_path);
 
-    if !file_path.exists() {
+    if !tokio::fs::try_exists(&file_path).await.unwrap_or(false) {
         println!("Downloading audio: {}", audio.title);
         let bin = audio
             .platform
             .extractor()
             .download(&audio.download_url)
             .await?;
-        write(&file_path, bin)?;
+        write(&file_path, bin).await?;
         println!("Successfully downloaded audio: {}", audio_path);
     } else {
         println!(
@@ -93,7 +92,7 @@ pub async fn exists_audio(audio: &Audio, app_dir: PathBuf) -> AppResult<Option<S
     );
     let file_path = app_dir.join(&audio_path);
 
-    if !file_path.exists() {
+    if !tokio::fs::try_exists(&file_path).await.unwrap_or(false) {
         return Ok(None);
     }
     Ok(Some(audio_path))
@@ -107,7 +106,7 @@ pub async fn exists_cover(
     let filename = get_cover_filename(cover_url);
     let cover_path = format!("{}/{:?}/{}/{}", ASSETS_DIR, platform, COVERS_DIR, filename);
     let full_cover_path = app_dir.join(&cover_path);
-    if full_cover_path.exists() {
+    if tokio::fs::try_exists(&full_cover_path).await.unwrap_or(false) {
         return Ok(Some(cover_path));
     }
     Ok(None)
@@ -121,11 +120,11 @@ pub async fn download_cover(
     let filename = get_cover_filename(cover_url);
     let cover_path = format!("{}/{:?}/{}/{}", ASSETS_DIR, platform, COVERS_DIR, filename);
     let full_cover_path = app_dir.join(&cover_path);
-    if full_cover_path.exists() {
+    if tokio::fs::try_exists(&full_cover_path).await.unwrap_or(false) {
         return Some(cover_path);
     }
     if let Ok(cover_data) = platform.extractor().download_cover(cover_url).await
-        && let Ok(_) = write(&full_cover_path, &cover_data)
+        && let Ok(_) = write(&full_cover_path, &cover_data).await
     {
         return Some(cover_path);
     }
