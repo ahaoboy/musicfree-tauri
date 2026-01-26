@@ -177,6 +177,7 @@ export const PlayerPage: FC = () => {
             value={currentTime}
             onChange={handleSliderChange}
             disabled={!duration || duration === 0}
+            tooltip={{ open: false }}
           />
           <Text type="secondary" className="time-text">
             {formatTime(duration)}
