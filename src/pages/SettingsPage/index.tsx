@@ -1,4 +1,4 @@
-import { FC, useCallback, useMemo, useState } from "react"
+import { FC, useCallback, useMemo, useState, useEffect } from "react"
 import { Button, App, Typography, Flex, Select, Divider } from "antd"
 import BulbOutlined from "@ant-design/icons/BulbOutlined"
 import MoonOutlined from "@ant-design/icons/MoonOutlined"
@@ -9,6 +9,7 @@ import { openUrl, openPath } from "@tauri-apps/plugin-opener"
 import { useAppStore } from "../../store"
 import {
   clear_all_data,
+  get_storage_size,
   ThemeMode,
   is_builtin,
   export_data,
@@ -17,6 +18,8 @@ import {
 } from "../../api"
 import { useConfirm } from "../../hooks"
 import { CopyButton } from "../../components"
+import LoadingOutlined from "@ant-design/icons/LoadingOutlined"
+import prettyBytes from "pretty-bytes"
 
 const { Title, Text } = Typography
 
@@ -45,6 +48,26 @@ export const SettingsPage: FC = () => {
 
   const [exporting, setExporting] = useState(false)
   const [importing, setImporting] = useState(false)
+  const [storageSize, setStorageSize] = useState<number>(0)
+  const [loadingStorage, setLoadingStorage] = useState(false)
+
+  // Load storage size
+  const loadStorageSize = useCallback(async () => {
+    setLoadingStorage(true)
+    try {
+      const size = await get_storage_size()
+      setStorageSize(size)
+    } catch (error) {
+      console.error("Failed to get storage size:", error)
+    } finally {
+      setLoadingStorage(false)
+    }
+  }, [])
+
+  // Load storage size on mount
+  useEffect(() => {
+    loadStorageSize()
+  }, [loadStorageSize])
 
   const handleClearData = useCallback(() => {
     showConfirm({
@@ -56,6 +79,7 @@ export const SettingsPage: FC = () => {
       onOk: async () => {
         try {
           await clear_all_data()
+          await loadStorageSize() // Reload storage size after clearing
           window.location.reload()
         } catch (e) {
           console.error(e)
@@ -63,7 +87,7 @@ export const SettingsPage: FC = () => {
         }
       },
     })
-  }, [showConfirm, message])
+  }, [showConfirm, message, loadStorageSize])
 
   const handleExport = useCallback(async () => {
     setExporting(true)
@@ -256,9 +280,16 @@ export const SettingsPage: FC = () => {
           </Flex>
           <Divider style={{ margin: "16px 0" }} />
           <Flex align="center" justify="space-between">
-            <Text>Clear All Data</Text>
+            <Flex vertical gap={4}>
+              <Text>Clear Storage</Text>
+            </Flex>
             <Button danger type="primary" onClick={handleClearData}>
               Clear
+              {loadingStorage ? (
+                <LoadingOutlined />
+              ) : (
+                `${prettyBytes(storageSize)}`
+              )}
             </Button>
           </Flex>
         </Flex>

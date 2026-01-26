@@ -85,6 +85,10 @@ export function clear_all_data(): Promise<void> {
   return invoke("clear_all_data")
 }
 
+export function get_storage_size(): Promise<number> {
+  return invoke("get_storage_size")
+}
+
 export function download_cover(
   url: string,
   platform: string,

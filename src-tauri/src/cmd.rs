@@ -139,6 +139,36 @@ pub async fn clear_all_data(app_handle: tauri::AppHandle) -> AppResult<()> {
 }
 
 #[tauri::command]
+pub async fn get_storage_size(app_handle: tauri::AppHandle) -> AppResult<u64> {
+    let dir = app_dir(app_handle)?;
+    let mut total_size: u64 = 0;
+
+    // Calculate ASSETS_DIR size
+    let assets_dir = dir.join(ASSETS_DIR);
+    if tokio::fs::try_exists(&assets_dir).await.unwrap_or(false) {
+        for entry in WalkDir::new(&assets_dir) {
+            if let Ok(entry) = entry {
+                if entry.path().is_file() {
+                    if let Ok(metadata) = entry.metadata() {
+                        total_size += metadata.len();
+                    }
+                }
+            }
+        }
+    }
+
+    // Add musicfree.json size
+    let config_path = get_config_path(dir);
+    if tokio::fs::try_exists(&config_path).await.unwrap_or(false) {
+        if let Ok(metadata) = tokio::fs::metadata(&config_path).await {
+            total_size += metadata.len();
+        }
+    }
+
+    Ok(total_size)
+}
+
+#[tauri::command]
 pub async fn export_data(app_handle: tauri::AppHandle) -> AppResult<String> {
     let app_dir = api::app_dir(&app_handle)?;
     let download_dir = app_handle
