@@ -237,22 +237,17 @@ const AppLayout: FC = memo(() => {
                       <Activity
                         mode={currentTab === "music" ? "visible" : "hidden"}
                       >
-                        {(currentTab === "music" ||
-                          location.pathname === "/music") && <MusicPage />}
+                        <MusicPage />
                       </Activity>
                       <Activity
                         mode={currentTab === "search" ? "visible" : "hidden"}
                       >
-                        {(currentTab === "search" ||
-                          location.pathname === "/search") && <SearchPage />}
+                        <SearchPage />
                       </Activity>
                       <Activity
                         mode={currentTab === "settings" ? "visible" : "hidden"}
                       >
-                        {(currentTab === "settings" ||
-                          location.pathname === "/settings") && (
-                          <SettingsPage />
-                        )}
+                        <SettingsPage />
                       </Activity>
                     </PageErrorBoundary>
                   </Suspense>
