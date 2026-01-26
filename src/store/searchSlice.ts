@@ -138,7 +138,7 @@ export const createSearchSlice: StateCreator<AppState, [], [], SearchSlice> = (
     })
 
     try {
-      const [playlist] = await extract_audios(url)
+      const [playlist, defaultAudioIndex] = await extract_audios(url)
 
       // Check existing audios
       const downloadedIds = new Set<string>()
@@ -165,11 +165,25 @@ export const createSearchSlice: StateCreator<AppState, [], [], SearchSlice> = (
         }),
       )
 
+      // Determine default selection
+      const defaultSelectedIds = new Set<string>()
+      if (playlist.audios.length > 0) {
+        // Use default_audio index if provided, otherwise select first audio
+        const targetIndex =
+          defaultAudioIndex !== null &&
+          defaultAudioIndex >= 0 &&
+          defaultAudioIndex < playlist.audios.length
+            ? defaultAudioIndex
+            : 0
+        defaultSelectedIds.add(playlist.audios[targetIndex].id)
+      }
+
       set({
         searchPlaylist: playlist,
         searchSearching: false,
         searchDownloadedIds: downloadedIds,
         searchDownloadedAudios: downloadedAudios,
+        searchSelectedIds: defaultSelectedIds,
       })
 
       // Background download playlist cover
