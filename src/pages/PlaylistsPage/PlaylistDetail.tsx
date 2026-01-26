@@ -1,5 +1,5 @@
 import { FC, useCallback, useEffect } from "react"
-import { useNavigate, useParams } from "react-router-dom"
+import { useNavigate } from "react-router-dom"
 import { Flex, Avatar } from "antd"
 import { useAppStore } from "../../store"
 import { LocalAudio, DEFAULT_COVER_URL } from "../../api"
@@ -9,9 +9,9 @@ import { useConfirm } from "../../hooks"
 
 // Playlist detail view
 export const PlaylistDetail: FC = () => {
-  const { playlistId } = useParams<{ playlistId: string }>()
   const navigate = useNavigate()
   const playlists = useAppStore((state) => state.config.playlists)
+  const viewingPlaylistId = useAppStore((state) => state.viewingPlaylistId)
   const currentAudio = useAppStore((state) => state.currentAudio)
   const currentPlaylistId = useAppStore((state) => state.currentPlaylistId)
   const playAudio = useAppStore((state) => state.playAudio)
@@ -22,7 +22,7 @@ export const PlaylistDetail: FC = () => {
 
   // Find the playlist
   const playlist = playlists.find(
-    (p) => p.id === decodeURIComponent(playlistId || ""),
+    (p) => p.id === viewingPlaylistId,
   )
 
   // Handle back navigation

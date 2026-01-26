@@ -36,6 +36,9 @@ export interface ConfigSliceState {
   // App info
   app_dir: string | null
   app_version: string | null
+
+  // UI State
+  viewingPlaylistId: string | null
 }
 
 // ============================================
@@ -60,6 +63,9 @@ export interface ConfigSliceActions {
   // Favorite actions
   toggleFavorite: (audio: LocalAudio) => Promise<void>
   isFavoritedAudio: (id: string) => boolean
+
+  // UI Actions
+  setViewingPlaylistId: (id: string | null) => void
 }
 
 export type ConfigSlice = ConfigSliceState & ConfigSliceActions
@@ -130,6 +136,7 @@ export const createConfigSlice: StateCreator<AppState, [], [], ConfigSlice> = (
   theme: storage.getTheme(),
   app_dir: null,
   app_version: null,
+  viewingPlaylistId: null,
 
   // Config actions
   loadConfig: async () => {
@@ -441,8 +448,8 @@ export const createConfigSlice: StateCreator<AppState, [], [], ConfigSlice> = (
 
     const deletedAudio = shouldCheckCleanup
       ? config.playlists
-          .find((p) => p.id === playlistId)
-          ?.audios.find((a) => a.audio.id === audioId)
+        .find((p) => p.id === playlistId)
+        ?.audios.find((a) => a.audio.id === audioId)
       : null
 
     if (deletedAudio) {
@@ -553,5 +560,9 @@ export const createConfigSlice: StateCreator<AppState, [], [], ConfigSlice> = (
     )
     if (!favPlaylist) return false
     return favPlaylist.audios.some((a) => a.audio.id === id)
+  },
+
+  setViewingPlaylistId: (id: string | null) => {
+    set({ viewingPlaylistId: id })
   },
 })

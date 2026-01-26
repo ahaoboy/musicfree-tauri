@@ -1,5 +1,5 @@
-import { FC, useCallback, useEffect } from "react"
-import { Routes, Route, useNavigate, useSearchParams } from "react-router-dom"
+import { FC, useCallback } from "react"
+import { useNavigate, useSearchParams } from "react-router-dom"
 import { Flex, Avatar } from "antd"
 import FolderOutlined from "@ant-design/icons/FolderOutlined"
 import { useAppStore, usePlaylistsPageData } from "../../store"
@@ -9,30 +9,21 @@ import {
   DEFAULT_COVER_URL,
 } from "../../api"
 import { AudioCard, AudioList, MoreActionsDropdown } from "../../components"
-import { useNavigation } from "../../contexts"
 import { useConfirm } from "../../hooks"
-import { PlaylistDetail } from "./PlaylistDetail"
 
 // Playlists list view
-const PlaylistsList: FC = () => {
+export const PlaylistsPage: FC = () => {
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const playlists = usePlaylistsPageData()
   const currentPlaylistId = useAppStore((state) => state.currentPlaylistId)
   const deletePlaylist = useAppStore((state) => state.deletePlaylist)
-  const { setIsInDetailView } = useNavigation()
   const { showConfirm } = useConfirm()
 
   // Get highlight ID from URL params
   const highlightId = searchParams.get("highlight")
 
-  // Clear detail view state when on list view
-  useEffect(() => {
-    setIsInDetailView(false)
-    return () => {
-      setIsInDetailView(false)
-    }
-  }, [setIsInDetailView])
+  const setViewingPlaylistId = useAppStore((state) => state.setViewingPlaylistId)
 
   const handlePlaylistClick = useCallback(
     (playlist: LocalPlaylist) => {
@@ -40,9 +31,10 @@ const PlaylistsList: FC = () => {
       if (highlightId) {
         setSearchParams({}, { replace: true })
       }
-      navigate(`/playlists/${encodeURIComponent(playlist.id)}`)
+      setViewingPlaylistId(playlist.id)
+      navigate("/playlist-detail")
     },
-    [navigate, highlightId, setSearchParams],
+    [navigate, highlightId, setSearchParams, setViewingPlaylistId],
   )
 
   const handleDeletePlaylist = useCallback(
@@ -120,16 +112,6 @@ const PlaylistsList: FC = () => {
         })}
       </AudioList>
     </Flex>
-  )
-}
-
-// Main playlists page with nested routes
-export const PlaylistsPage: FC = () => {
-  return (
-    <Routes>
-      <Route index element={<PlaylistsList />} />
-      <Route path=":playlistId" element={<PlaylistDetail />} />
-    </Routes>
   )
 }
 

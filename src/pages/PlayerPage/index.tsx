@@ -82,7 +82,9 @@ export const PlayerPage: FC = () => {
           if (currentPlaylistId === AUDIO_PLAYLIST_ID) {
             navigate("/music")
           } else {
-            navigate(`/playlists/${encodeURIComponent(currentPlaylistId)}`)
+            navigate(
+              `/playlist-detail/${encodeURIComponent(currentPlaylistId)}`,
+            )
           }
         }
       },
