@@ -3,6 +3,9 @@ import { Button, App, Typography, Flex, Select, Divider } from "antd"
 import BulbOutlined from "@ant-design/icons/BulbOutlined"
 import MoonOutlined from "@ant-design/icons/MoonOutlined"
 import DesktopOutlined from "@ant-design/icons/DesktopOutlined"
+import GithubOutlined from "@ant-design/icons/GithubOutlined"
+import FolderOpenOutlined from "@ant-design/icons/FolderOpenOutlined"
+import { openUrl, openPath } from "@tauri-apps/plugin-opener"
 import { useAppStore } from "../../store"
 import {
   clear_all_data,
@@ -10,6 +13,7 @@ import {
   is_builtin,
   export_data,
   import_data,
+  CurrentPlatform,
 } from "../../api"
 import { useConfirm } from "../../hooks"
 import { CopyButton } from "../../components"
@@ -185,21 +189,40 @@ export const SettingsPage: FC = () => {
           <Divider style={{ margin: "16px 0" }} />
           <Flex align="center" justify="space-between">
             <Text>Repository</Text>
-            <CopyButton
-              text={REPO_URL}
-              successMessage="Repository URL copied to clipboard"
-              errorMessage="Failed to copy URL"
-            />
+            <Flex gap="small">
+              <Button
+                type="text"
+                icon={<GithubOutlined />}
+                onClick={() => openUrl(REPO_URL)}
+                title="Open in Browser"
+              />
+              <CopyButton
+                text={REPO_URL}
+                successMessage="Repository URL copied to clipboard"
+                errorMessage="Failed to copy URL"
+              />
+            </Flex>
           </Flex>
           <Divider style={{ margin: "16px 0" }} />
           <Flex align="center" justify="space-between">
             <Text>App Directory</Text>
-            <CopyButton
-              text={appDir || ""}
-              successMessage="Path copied to clipboard"
-              errorMessage="Failed to copy path"
-              disabled={!appDir}
-            />
+            <Flex gap="small">
+              {CurrentPlatform !== "android" && (
+                <Button
+                  type="text"
+                  icon={<FolderOpenOutlined />}
+                  onClick={() => appDir && openPath(appDir)}
+                  disabled={!appDir}
+                  title="Open Directory"
+                />
+              )}
+              <CopyButton
+                text={appDir || ""}
+                successMessage="Path copied to clipboard"
+                errorMessage="Failed to copy path"
+                disabled={!appDir}
+              />
+            </Flex>
           </Flex>
         </Flex>
       </Flex>

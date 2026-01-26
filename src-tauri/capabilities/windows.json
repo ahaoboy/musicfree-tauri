@@ -11,6 +11,8 @@
   "permissions": [
     "opener:default",
     "opener:allow-default-urls",
+    "opener:allow-open-path",
+    "opener:allow-reveal-item-in-dir",
     "core:default",
     "fs:read-all",
     "fs:write-all",
@@ -20,6 +22,14 @@
     "updater:default",
     "updater:allow-check",
     "updater:allow-download-and-install",
-    "os:default"
+    "os:default",
+    {
+      "identifier": "opener:allow-open-path",
+      "allow": [
+        {
+          "path": "**"
+        }
+      ]
+    }
   ]
 }
