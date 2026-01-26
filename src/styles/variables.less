@@ -34,7 +34,7 @@
 // ============================================
 // Dimensions
 // ============================================
-@player-bar-height: 80px;
+@player-bar-height: 68px;
 @safe-area-bottom: env(safe-area-inset-bottom, 0px);
 
 // Border radius
@@ -48,7 +48,7 @@
 @btn-size-sm: 44px;
 @btn-size-md: 48px;
 @btn-size-lg: 52px;
-@btn-size-xl: 80px;
+@btn-size-xl: 68px;
 
 // ============================================
 // Mixins
@@ -65,10 +65,11 @@
   }
 }
 
-// Scrollbar styling
-.custom-scrollbar(@width: 6px) {
+// Scrollbar styling - Mobile-friendly and theme-aware
+.custom-scrollbar(@width: 4px) {
   &::-webkit-scrollbar {
     width: @width;
+    height: @width;
   }
 
   &::-webkit-scrollbar-track {
@@ -79,9 +80,19 @@
     background: var(--border-color);
     border-radius: @radius-full;
     transition: background @transition-fast @ease-out;
+    border: 1px solid transparent; // Create some space
+    background-clip: padding-box;
 
     &:hover {
       background: var(--text-secondary);
+    }
+
+    [data-prefers-color-scheme='dark'] & {
+      background: rgba(255, 255, 255, 0.15);
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.25);
+      }
     }
   }
 }

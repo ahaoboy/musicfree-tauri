@@ -1,16 +1,31 @@
-import { FC, ReactNode, useEffect, useRef } from "react"
-import { Flex } from "antd"
+import { FC, ReactElement, useRef, CSSProperties, useEffect, memo } from "react"
+import { List } from "react-window"
 
-interface AudioListProps {
+interface AudioListProps<T = any> {
+  /**
+   * Data items to render
+   */
+  items: T[]
+
+  /**
+   * Render function for each item
+   */
+  renderItem: (item: T, index: number) => ReactElement
+
+  /**
+   * Get unique ID from item for highlighting
+   */
+  getItemId: (item: T) => string
+
   /**
    * Highlight ID from URL params or other source
    */
   highlightId?: string | null
 
   /**
-   * Children to render (AudioCard items)
+   * Height of each item in pixels
    */
-  children: ReactNode
+  itemHeight?: number
 
   /**
    * Additional class name
@@ -18,73 +33,91 @@ interface AudioListProps {
   className?: string
 
   /**
-   * Gap between items
+   * Custom style for the list container
    */
-  gap?: "small" | "middle" | "large" | number
+  style?: CSSProperties
 }
 
+// Row component for react-window, moved outside to prevent re-creation on every render
+const RowComponent = memo(
+  ({ index, style, items, renderItem, getItemId, highlightId }: any) => {
+    const item = items?.[index]
+    if (!item) return null
+
+    const itemId = getItemId(item)
+    const isHighlighted = highlightId === itemId
+
+    return (
+      <div
+        style={{
+          ...style,
+          padding: "4px 8px",
+          boxSizing: "border-box",
+        }}
+        data-item-id={itemId}
+        className={isHighlighted ? "highlighted-item" : ""}
+      >
+        {renderItem(item, index)}
+      </div>
+    )
+  },
+)
+
+RowComponent.displayName = "RowComponent"
+
 /**
- * Generic audio list component with highlight and auto-scroll functionality
- *
- * Usage:
- * ```tsx
- * <AudioList highlightId={highlightId}>
- *   {items.map(item => (
- *     <div key={item.id} data-item-id={item.id}>
- *       <AudioCard {...item} />
- *     </div>
- *   ))}
- * </AudioList>
- * ```
- *
- * Note: Each child must have a wrapper with `data-item-id` attribute
+ * Virtual audio list component with highlight and auto-scroll functionality
+ * Optimized for performance: uses react-window and stable row components.
  */
 export const AudioList: FC<AudioListProps> = ({
+  items,
+  renderItem,
+  getItemId,
   highlightId,
-  children,
+  itemHeight = 80,
   className = "audio-list",
-  gap = "small",
+  style,
 }) => {
-  // Ref to store item elements by ID
-  const itemRefs = useRef<Map<string, HTMLElement>>(new Map())
+  const listRef = useRef<any>(null)
 
   // Scroll to highlighted item when highlight changes
   useEffect(() => {
-    if (highlightId) {
-      const element = itemRefs.current.get(highlightId)
-      if (element) {
-        // Small delay to ensure DOM is ready
-        setTimeout(() => {
-          element?.scrollIntoView({
-            behavior: "smooth",
-            block: "center",
-          })
-        }, 100)
+    if (highlightId && listRef.current) {
+      const index = items.findIndex((item) => getItemId(item) === highlightId)
+      if (index !== -1) {
+        // Scroll to the highlighted item
+        listRef.current.scrollToRow(index, "center")
       }
     }
-  }, [highlightId])
+  }, [highlightId, items, getItemId])
 
-  // Register item refs from children
-  useEffect(() => {
-    const container = document.querySelector(`.${className}`)
-    if (!container) return
-
-    // Find all elements with data-item-id
-    const items = container.querySelectorAll<HTMLElement>("[data-item-id]")
-    itemRefs.current.clear()
-
-    items.forEach((item) => {
-      const id = item.getAttribute("data-item-id")
-      if (id) {
-        itemRefs.current.set(id, item)
-      }
-    })
-  }, [children, className])
+  // Row props for the list rows
+  const rowProps = {
+    items,
+    renderItem,
+    getItemId,
+    highlightId,
+  }
 
   return (
-    <Flex vertical className={className} gap={gap}>
-      {children}
-    </Flex>
+    <div
+      className={className}
+      style={{ height: "100%", width: "100%", ...style }}
+    >
+      <List
+        listRef={listRef}
+        rowComponent={RowComponent as any}
+        rowCount={items.length}
+        rowHeight={itemHeight}
+        rowProps={rowProps} // Correct prop name for this library version
+        overscanCount={6}
+        style={{
+          height: "100%",
+          width: "100%",
+          overflowX: "hidden", // Prevent horizontal scroll
+        }}
+      />
+    </div>
   )
 }
 

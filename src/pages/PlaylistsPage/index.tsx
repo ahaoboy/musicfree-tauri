@@ -55,6 +55,49 @@ export const PlaylistsPage: FC = () => {
     return `${count.toString().padStart(3, " ")}♪`
   }, [])
 
+  const renderPlaylistItem = useCallback(
+    (playlist: LocalPlaylist) => {
+      const audioCount = playlist.audios?.length || 0
+      const displayName = playlist.title || playlist.id
+      const canDelete = playlist.id !== FAVORITE_PLAYLIST_ID
+
+      // Priority: highlightId > currentPlaylistId
+      const isActive = highlightId
+        ? highlightId === playlist.id
+        : currentPlaylistId === playlist.id
+
+      return (
+        <AudioCard
+          coverPath={playlist.cover_path}
+          coverUrl={playlist.cover}
+          platform={playlist.platform}
+          title={displayName}
+          subtitle={formatAudioCount(audioCount)}
+          icon={<FolderOutlined />}
+          onClick={() => handlePlaylistClick(playlist)}
+          active={isActive}
+          actions={
+            canDelete ? (
+              <MoreActionsDropdown
+                url={playlist.download_url}
+                onDelete={() =>
+                  handleDeletePlaylist(playlist.id, playlist.title)
+                }
+              />
+            ) : undefined
+          }
+        />
+      )
+    },
+    [
+      highlightId,
+      currentPlaylistId,
+      formatAudioCount,
+      handlePlaylistClick,
+      handleDeletePlaylist,
+    ],
+  )
+
   if (playlists.length === 0) {
     return (
       <Flex vertical className="page" flex={1}>
@@ -73,46 +116,12 @@ export const PlaylistsPage: FC = () => {
 
   return (
     <Flex vertical className="page" style={{ flex: 1, overflow: "hidden" }}>
-      <AudioList highlightId={highlightId}>
-        {playlists.map((playlist, index) => {
-          const audioCount = playlist.audios?.length || 0
-          const displayName = playlist.title || playlist.id
-          const canDelete = playlist.id !== FAVORITE_PLAYLIST_ID
-
-          // Priority: highlightId > currentPlaylistId
-          const isActive = highlightId
-            ? highlightId === playlist.id
-            : currentPlaylistId === playlist.id
-
-          return (
-            <div
-              key={`${playlist.id}-${playlist.platform}-${index}`}
-              data-item-id={playlist.id}
-            >
-              <AudioCard
-                coverPath={playlist.cover_path}
-                coverUrl={playlist.cover}
-                platform={playlist.platform}
-                title={displayName}
-                subtitle={formatAudioCount(audioCount)}
-                icon={<FolderOutlined />}
-                onClick={() => handlePlaylistClick(playlist)}
-                active={isActive}
-                actions={
-                  canDelete ? (
-                    <MoreActionsDropdown
-                      url={playlist.download_url}
-                      onDelete={() =>
-                        handleDeletePlaylist(playlist.id, playlist.title)
-                      }
-                    />
-                  ) : undefined
-                }
-              />
-            </div>
-          )
-        })}
-      </AudioList>
+      <AudioList
+        items={playlists}
+        getItemId={(playlist) => playlist.id}
+        highlightId={highlightId}
+        renderItem={renderPlaylistItem}
+      />
     </Flex>
   )
 }

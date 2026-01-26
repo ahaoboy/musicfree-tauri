@@ -72,6 +72,41 @@ export const PlaylistDetail: FC = () => {
     [playlist, showConfirm, deleteAudio],
   )
 
+  const renderAudioItem = useCallback(
+    (audio: LocalAudio) => {
+      const isActive =
+        currentAudio?.audio.id === audio.audio.id &&
+        currentPlaylistId === playlist?.id
+
+      return (
+        <AudioCard
+          coverPath={audio.cover_path}
+          coverUrl={audio.audio.cover}
+          platform={audio.audio.platform}
+          title={audio.audio.title}
+          duration={audio.audio.duration}
+          onClick={() => handleAudioClick(audio)}
+          active={isActive}
+          actions={
+            <MoreActionsDropdown
+              url={audio.audio.download_url}
+              onDelete={() =>
+                handleDeleteAudio(audio.audio.id, audio.audio.title)
+              }
+            />
+          }
+        />
+      )
+    },
+    [
+      currentAudio?.audio.id,
+      currentPlaylistId,
+      playlist?.id,
+      handleAudioClick,
+      handleDeleteAudio,
+    ],
+  )
+
   // Playlist not found
   if (!playlist) {
     return (
@@ -108,38 +143,11 @@ export const PlaylistDetail: FC = () => {
 
   return (
     <Flex vertical className="page" style={{ flex: 1, overflow: "hidden" }}>
-      <AudioList>
-        {playlist.audios.map((audio, index) => {
-          const isActive =
-            currentAudio?.audio.id === audio.audio.id &&
-            currentPlaylistId === playlist.id
-
-          return (
-            <div
-              key={`${playlist.id}-${audio.audio.id}-${audio.audio.platform}-${index}`}
-              data-item-id={audio.audio.id}
-            >
-              <AudioCard
-                coverPath={audio.cover_path}
-                coverUrl={audio.audio.cover}
-                platform={audio.audio.platform}
-                title={audio.audio.title}
-                duration={audio.audio.duration}
-                onClick={() => handleAudioClick(audio)}
-                active={isActive}
-                actions={
-                  <MoreActionsDropdown
-                    url={audio.audio.download_url}
-                    onDelete={() =>
-                      handleDeleteAudio(audio.audio.id, audio.audio.title)
-                    }
-                  />
-                }
-              />
-            </div>
-          )
-        })}
-      </AudioList>
+      <AudioList
+        items={playlist.audios}
+        getItemId={(audio) => audio.audio.id}
+        renderItem={renderAudioItem}
+      />
     </Flex>
   )
 }

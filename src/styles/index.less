@@ -135,7 +135,7 @@ body {
 
 // Audio card
 .audio-card {
-  padding: 12px;
+  padding: 4px;
   background: var(--bg-card);
   border-radius: @radius-sm;
   border: 1px solid var(--border-color);
@@ -195,11 +195,15 @@ body {
 
 // Audio list (used by both MusicPage and PlaylistsPage)
 .audio-list {
-  overflow-y: auto;
-  overflow-x: hidden;
-  -webkit-overflow-scrolling: touch;
-  padding: 4px; // Add padding to prevent border clipping on hover
-  .custom-scrollbar(6px);
+  overflow: hidden;
+  height: 100%;
+  width: 100%;
+
+  // Styled scrollbar for the virtual list internal container
+  &>div {
+    .custom-scrollbar(6px);
+    overflow-x: hidden !important;
+  }
 }
 
 // Mini player bar

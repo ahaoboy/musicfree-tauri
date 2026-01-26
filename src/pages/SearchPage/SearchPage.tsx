@@ -407,6 +407,147 @@ export const SearchPage: FC = () => {
     return { downloadButtonText: text, downloadButtonIcon: icon }
   }, [selectedIds, downloadedIds, failedIds, skippedIds])
 
+  const renderSearchItem = useCallback(
+    (audio: LocalAudio["audio"]) => {
+      const audioId = audio.id
+      const downloading = downloadingIds.has(audioId)
+      const downloaded = downloadedIds.has(audioId)
+      const failed = failedIds.has(audioId)
+      const skipped = skippedIds.has(audioId)
+      const selected = selectedIds.has(audioId)
+      const inLibrary = checkInLibrary(audioId)
+
+      // Status badges
+      const statusBadges = (
+        <Flex align="center" gap={4}>
+          {downloading && (
+            <LoadingOutlined
+              style={{
+                fontSize: 12,
+                color: "#1890ff",
+              }}
+              title="Downloading"
+            />
+          )}
+          {downloaded && (
+            <div
+              style={{
+                width: 8,
+                height: 8,
+                borderRadius: "50%",
+                background: "#52c41a",
+              }}
+              title="Downloaded"
+            />
+          )}
+          {failed && (
+            <div
+              style={{
+                width: 8,
+                height: 8,
+                borderRadius: "50%",
+                background: "#ff4d4f",
+              }}
+              title="Failed"
+            />
+          )}
+          {skipped && (
+            <div
+              style={{
+                width: 8,
+                height: 8,
+                borderRadius: "50%",
+                background: "#faad14",
+              }}
+              title="Skipped"
+            />
+          )}
+        </Flex>
+      )
+
+      return (
+        <AudioCard
+          coverPath={null}
+          coverUrl={audio.cover}
+          platform={audio.platform}
+          title={audio.title}
+          duration={audio.duration}
+          warnLongDuration={true}
+          onClick={() => {
+            if (!downloading && !downloadingAll) {
+              toggleSelect(audioId)
+            }
+          }}
+          active={false}
+          badge={{
+            show: true,
+            icon: selected ? (
+              <CheckOutlined
+                style={{
+                  color: "#fff",
+                  background: "#52c41a",
+                  borderRadius: "50%",
+                  padding: 4,
+                  fontSize: 12,
+                }}
+              />
+            ) : (
+              0
+            ),
+          }}
+          extraInfo={statusBadges}
+          actions={
+            downloading ? (
+              <Button
+                type="text"
+                danger
+                icon={<StopOutlined />}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  abortDownload(audioId)
+                }}
+              />
+            ) : inLibrary ? (
+              <Button
+                type="text"
+                icon={<EnvironmentOutlined />}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  handleNavigateToAudio(audioId)
+                }}
+                title="Go to audio"
+              />
+            ) : (
+              <Button
+                type="text"
+                icon={<DownloadOutlined />}
+                disabled={downloadingAll || downloaded}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  handleDownloadSingle(audioId)
+                }}
+                title="Download"
+              />
+            )
+          }
+        />
+      )
+    },
+    [
+      downloadingIds,
+      downloadedIds,
+      failedIds,
+      skippedIds,
+      selectedIds,
+      downloadingAll,
+      checkInLibrary,
+      toggleSelect,
+      abortDownload,
+      handleNavigateToAudio,
+      handleDownloadSingle,
+    ],
+  )
+
   return (
     <Flex vertical className="page search-page" gap="middle">
       <Search
@@ -451,137 +592,11 @@ export const SearchPage: FC = () => {
             </Flex>
           )}
 
-          <AudioList>
-            {playlist.audios.map((audio) => {
-              const downloading = downloadingIds.has(audio.id)
-              const downloaded = downloadedIds.has(audio.id)
-              const failed = failedIds.has(audio.id)
-              const skipped = skippedIds.has(audio.id)
-              const selected = selectedIds.has(audio.id)
-              const inLibrary = checkInLibrary(audio.id)
-
-              // Status badges
-              const statusBadges = (
-                <Flex align="center" gap={4}>
-                  {downloading && (
-                    <LoadingOutlined
-                      style={{
-                        fontSize: 12,
-                        color: "#1890ff",
-                      }}
-                      title="Downloading"
-                    />
-                  )}
-                  {downloaded && (
-                    <div
-                      style={{
-                        width: 8,
-                        height: 8,
-                        borderRadius: "50%",
-                        background: "#52c41a",
-                      }}
-                      title="Downloaded"
-                    />
-                  )}
-                  {failed && (
-                    <div
-                      style={{
-                        width: 8,
-                        height: 8,
-                        borderRadius: "50%",
-                        background: "#ff4d4f",
-                      }}
-                      title="Failed"
-                    />
-                  )}
-                  {skipped && (
-                    <div
-                      style={{
-                        width: 8,
-                        height: 8,
-                        borderRadius: "50%",
-                        background: "#faad14",
-                      }}
-                      title="Skipped"
-                    />
-                  )}
-                </Flex>
-              )
-
-              return (
-                <div
-                  key={`${playlist.id || "search"}-${audio.id}`}
-                  data-item-id={audio.id}
-                >
-                  <AudioCard
-                    coverPath={null}
-                    coverUrl={audio.cover}
-                    platform={audio.platform}
-                    title={audio.title}
-                    duration={audio.duration}
-                    warnLongDuration={true}
-                    onClick={() => {
-                      if (!downloading && !downloadingAll) {
-                        toggleSelect(audio.id)
-                      }
-                    }}
-                    active={false}
-                    badge={{
-                      show: true,
-                      icon: selected ? (
-                        <CheckOutlined
-                          style={{
-                            color: "#fff",
-                            background: "#52c41a",
-                            borderRadius: "50%",
-                            padding: 4,
-                            fontSize: 12,
-                          }}
-                        />
-                      ) : (
-                        0
-                      ),
-                    }}
-                    extraInfo={statusBadges}
-                    actions={
-                      downloading ? (
-                        <Button
-                          type="text"
-                          danger
-                          icon={<StopOutlined />}
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            abortDownload(audio.id)
-                          }}
-                        />
-                      ) : inLibrary ? (
-                        <Button
-                          type="text"
-                          icon={<EnvironmentOutlined />}
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            handleNavigateToAudio(audio.id)
-                          }}
-                          title="Go to audio"
-                        />
-                      ) : (
-                        <Button
-                          type="text"
-                          icon={<DownloadOutlined />}
-                          disabled={downloadingAll || downloaded}
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            handleDownloadSingle(audio.id)
-                          }}
-                          title="Download"
-                        />
-                      )
-                    }
-                  />
-                </div>
-              )
-            })}
-          </AudioList>
+          <AudioList
+            items={playlist.audios}
+            getItemId={(audio) => audio.id}
+            renderItem={renderSearchItem}
+          />
 
           <Flex
             align="center"

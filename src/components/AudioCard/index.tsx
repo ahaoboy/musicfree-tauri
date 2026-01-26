@@ -107,7 +107,7 @@ export const AudioCard: FC<AudioCardProps> = memo(
       <Avatar
         src={finalCoverUrl}
         icon={icon}
-        size={56}
+        size={60}
         shape="square"
         alt={title}
         className="card-avatar"
@@ -152,7 +152,7 @@ export const AudioCard: FC<AudioCardProps> = memo(
           cursor: onClick ? "pointer" : "default",
           border: active ? "2px solid #1890ff" : "2px solid transparent",
           borderRadius: "8px",
-          padding: "10px",
+          padding: "4px",
           boxSizing: "border-box",
           transition: "all 0.3s ease",
         }}

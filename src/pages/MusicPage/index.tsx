@@ -63,6 +63,40 @@ export const MusicPage: FC = () => {
     [showConfirm, deleteAudio],
   )
 
+  const renderAudioItem = useCallback(
+    (audio: LocalAudio) => {
+      const isActive = highlightId
+        ? highlightId === audio.audio.id
+        : currentPlaylistId === AUDIO_PLAYLIST_ID &&
+          currentAudio?.audio.id === audio.audio.id
+
+      return (
+        <AudioCard
+          coverPath={audio.cover_path}
+          coverUrl={audio.audio.cover}
+          platform={audio.audio.platform}
+          title={audio.audio.title}
+          duration={audio.audio.duration}
+          onClick={() => handleAudioClick(audio)}
+          active={isActive}
+          actions={
+            <MoreActionsDropdown
+              url={audio.audio.download_url}
+              onDelete={() => handleDelete(audio.audio.id, audio.audio.title)}
+            />
+          }
+        />
+      )
+    },
+    [
+      highlightId,
+      currentPlaylistId,
+      currentAudio?.audio.id,
+      handleAudioClick,
+      handleDelete,
+    ],
+  )
+
   if (isConfigLoading) {
     return (
       <Flex flex={1} align="center" justify="center" className="page">
@@ -89,39 +123,12 @@ export const MusicPage: FC = () => {
 
   return (
     <Flex vertical className="page" style={{ flex: 1, overflow: "hidden" }}>
-      <AudioList highlightId={highlightId}>
-        {audios.map((audio) => {
-          const isActive = highlightId
-            ? highlightId === audio.audio.id
-            : currentPlaylistId === AUDIO_PLAYLIST_ID &&
-              currentAudio?.audio.id === audio.audio.id
-
-          return (
-            <div
-              key={`${AUDIO_PLAYLIST_ID}-${audio.audio.id}-${audio.audio.platform}`}
-              data-item-id={audio.audio.id}
-            >
-              <AudioCard
-                coverPath={audio.cover_path}
-                coverUrl={audio.audio.cover}
-                platform={audio.audio.platform}
-                title={audio.audio.title}
-                duration={audio.audio.duration}
-                onClick={() => handleAudioClick(audio)}
-                active={isActive}
-                actions={
-                  <MoreActionsDropdown
-                    url={audio.audio.download_url}
-                    onDelete={() =>
-                      handleDelete(audio.audio.id, audio.audio.title)
-                    }
-                  />
-                }
-              />
-            </div>
-          )
-        })}
-      </AudioList>
+      <AudioList
+        items={audios}
+        getItemId={(audio) => audio.audio.id}
+        highlightId={highlightId}
+        renderItem={renderAudioItem}
+      />
     </Flex>
   )
 }
