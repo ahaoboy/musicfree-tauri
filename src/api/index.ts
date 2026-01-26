@@ -210,6 +210,14 @@ export function exists_cover(
   return invoke("exists_cover", { url, platform })
 }
 
+export function export_data(): Promise<string> {
+  return invoke("export_data")
+}
+
+export function import_data(): Promise<string> {
+  return invoke("import_data")
+}
+
 // ============================================
 // LocalStorage Keys
 // ============================================

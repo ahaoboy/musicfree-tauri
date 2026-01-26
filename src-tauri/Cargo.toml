@@ -56,6 +56,10 @@ git-version = "0.3"
 const-str = "1"
 tauri-plugin-opener = "2"
 tauri-plugin-os = "2"
+zip = "7"
+walkdir = "2"
+chrono = "0.4"
+
 
 # FIXME: https://github.com/aws/aws-lc-rs/issues/1006
 # [patch.crates-io]

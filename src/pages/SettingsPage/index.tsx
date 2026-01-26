@@ -1,10 +1,16 @@
-import { FC, useCallback, useMemo } from "react"
+import { FC, useCallback, useMemo, useState } from "react"
 import { Button, App, Typography, Flex, Select, Divider } from "antd"
 import BulbOutlined from "@ant-design/icons/BulbOutlined"
 import MoonOutlined from "@ant-design/icons/MoonOutlined"
 import DesktopOutlined from "@ant-design/icons/DesktopOutlined"
 import { useAppStore } from "../../store"
-import { clear_all_data, ThemeMode, is_builtin } from "../../api"
+import {
+  clear_all_data,
+  ThemeMode,
+  is_builtin,
+  export_data,
+  import_data,
+} from "../../api"
 import { useConfirm } from "../../hooks"
 import { CopyButton } from "../../components"
 
@@ -16,6 +22,7 @@ const REPO_URL = "https://github.com/ahaoboy/musicfree-tauri"
 export const SettingsPage: FC = () => {
   const theme = useAppStore((state) => state.theme)
   const setThemeMode = useAppStore((state) => state.setThemeMode)
+  const loadConfig = useAppStore((state) => state.loadConfig)
 
   // Calculate total audios across all playlists (excluding duplicates)
   const totalAudios = useAppStore((state) => state.getTotalAudios().length)
@@ -31,6 +38,9 @@ export const SettingsPage: FC = () => {
 
   const { message } = App.useApp()
   const { showConfirm } = useConfirm()
+
+  const [exporting, setExporting] = useState(false)
+  const [importing, setImporting] = useState(false)
 
   const handleClearData = useCallback(() => {
     showConfirm({
@@ -50,6 +60,37 @@ export const SettingsPage: FC = () => {
       },
     })
   }, [showConfirm, message])
+
+  const handleExport = useCallback(async () => {
+    setExporting(true)
+    try {
+      const filename = await export_data()
+      message.success(`Data exported to Downloads/${filename}`)
+    } catch (e) {
+      console.error(e)
+      message.error(`Failed to export data ${e}`)
+    } finally {
+      setExporting(false)
+    }
+  }, [message])
+
+  const handleImport = useCallback(async () => {
+    setImporting(true)
+    try {
+      const filename = await import_data()
+      message.success(`Successfully imported data from ${filename}`)
+      await loadConfig()
+    } catch (e: any) {
+      console.error(e)
+      if (typeof e === "string" && e.includes("No backup")) {
+        message.warning("No backup file found in Downloads")
+      } else {
+        message.error(`Failed to import data: ${e}`)
+      }
+    } finally {
+      setImporting(false)
+    }
+  }, [message, loadConfig])
 
   const themeOptions = useMemo(
     () => [
@@ -115,13 +156,10 @@ export const SettingsPage: FC = () => {
           }}
         >
           <Flex align="center" justify="space-between">
-            <Text>Downloaded ♪</Text>
-            <Text type="secondary">{totalAudios}</Text>
-          </Flex>
-          <Divider style={{ margin: "16px 0" }} />
-          <Flex align="center" justify="space-between">
-            <Text>Playlists</Text>
-            <Text type="secondary">{userPlaylistsCount}</Text>
+            <Text>Downloaded</Text>
+            <Text type="secondary">
+              ♪ {totalAudios} 🎶{userPlaylistsCount}
+            </Text>
           </Flex>
         </Flex>
       </Flex>
@@ -180,6 +218,20 @@ export const SettingsPage: FC = () => {
             padding: 16,
           }}
         >
+          <Flex align="center" justify="space-between">
+            <Flex vertical>
+              <Text>Backup & Restore</Text>
+            </Flex>
+            <Flex gap="small">
+              <Button onClick={handleExport} loading={exporting}>
+                Export
+              </Button>
+              <Button onClick={handleImport} loading={importing}>
+                Import
+              </Button>
+            </Flex>
+          </Flex>
+          <Divider style={{ margin: "16px 0" }} />
           <Flex align="center" justify="space-between">
             <Text>Clear All Data</Text>
             <Button danger type="primary" onClick={handleClearData}>

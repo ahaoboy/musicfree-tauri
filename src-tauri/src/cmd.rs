@@ -1,8 +1,15 @@
 use crate::api::{self};
-use crate::core::{ASSETS_DIR, Config, LocalAudio, get_config_path};
+use crate::core::{ASSETS_DIR, CONFIG_FILE, Config, LocalAudio, get_config_path};
 use crate::error::{AppError, AppResult};
+use chrono::Local;
 use musicfree::{Audio, Platform, Playlist};
-use std::path::PathBuf;
+use std::collections::HashSet;
+use std::fs::File;
+use std::io::{Read, Write};
+use std::path::{Path, PathBuf};
+use tauri::Manager;
+use walkdir::WalkDir;
+use zip::write::FileOptions;
 
 #[tauri::command]
 pub fn app_dir(app_handle: tauri::AppHandle) -> AppResult<PathBuf> {
@@ -113,4 +120,231 @@ pub async fn clear_all_data(app_handle: tauri::AppHandle) -> AppResult<()> {
     }
 
     Ok(())
+}
+
+#[tauri::command]
+pub async fn export_data(app_handle: tauri::AppHandle) -> AppResult<String> {
+    let app_dir = api::app_dir(&app_handle)?;
+    let download_dir = app_handle
+        .path()
+        .download_dir()
+        .map_err(|e| AppError::Unknown(e.to_string()))?;
+
+    // Ensure download dir exists
+    if !std::path::Path::new(&download_dir).exists() {
+        std::fs::create_dir_all(&download_dir).map_err(AppError::Io)?;
+    }
+
+    let date_str = Local::now().format("%Y-%m-%d").to_string();
+    let zip_filename = format!("musicfree-{}.zip", date_str);
+    let zip_path = download_dir.join(&zip_filename);
+
+    let file = File::create(&zip_path).map_err(AppError::Io)?;
+    let mut zip = zip::ZipWriter::new(file);
+    let options = FileOptions::<()>::default()
+        .compression_method(zip::CompressionMethod::Stored)
+        .unix_permissions(0o755);
+
+    // Add musicfree.json
+    let config_path = get_config_path(app_dir.clone());
+    if config_path.exists() {
+        zip.start_file(CONFIG_FILE, options)
+            .map_err(|e| AppError::Unknown(e.to_string()))?;
+        let content = std::fs::read(&config_path).map_err(AppError::Io)?;
+        zip.write_all(&content).map_err(AppError::Io)?;
+    }
+
+    // Add assets directory
+    let assets_path = app_dir.join(ASSETS_DIR);
+    if assets_path.exists() {
+        for entry in WalkDir::new(&assets_path) {
+            let entry = entry.map_err(|e| AppError::Io(e.into()))?;
+            let path = entry.path();
+            if path.is_file() {
+                let name = path.strip_prefix(&app_dir).unwrap();
+                let name_str = name.to_str().unwrap().replace("\\", "/");
+
+                zip.start_file(name_str, options)
+                    .map_err(|e| AppError::Unknown(e.to_string()))?;
+                let mut f = File::open(path).map_err(AppError::Io)?;
+                let mut buffer = Vec::new();
+                f.read_to_end(&mut buffer).map_err(AppError::Io)?;
+                zip.write_all(&buffer).map_err(AppError::Io)?;
+            }
+        }
+    }
+
+    zip.finish().map_err(|e| AppError::Unknown(e.to_string()))?;
+
+    Ok(zip_filename)
+}
+
+#[tauri::command]
+pub async fn import_data(app_handle: tauri::AppHandle) -> AppResult<String> {
+    let app_dir = api::app_dir(&app_handle)?;
+    let download_dir = app_handle
+        .path()
+        .download_dir()
+        .map_err(|e| AppError::Unknown(e.to_string()))?;
+
+    // 1. Find latest musicfree-*.zip
+    let mut latest_zip: Option<(PathBuf, std::time::SystemTime)> = None;
+
+    if let Ok(entries) = std::fs::read_dir(&download_dir) {
+        for entry in entries.filter_map(Result::ok) {
+            let path = entry.path();
+            if let Some(name) = path.file_name().and_then(|n| n.to_str())
+                && name.starts_with("musicfree-")
+                && name.ends_with(".zip")
+                && let Ok(metadata) = std::fs::metadata(&path)
+                && let Ok(modified) = metadata.modified()
+            {
+                match latest_zip {
+                    Some((_, time)) => {
+                        if modified > time {
+                            latest_zip = Some((path, modified));
+                        }
+                    }
+                    None => {
+                        latest_zip = Some((path, modified));
+                    }
+                }
+            }
+        }
+    }
+
+    let (zip_path, _) = latest_zip.ok_or(AppError::Unknown("No backup file found".to_string()))?;
+    let zip_filename = zip_path.file_name().unwrap().to_string_lossy().to_string();
+
+    // 2. Unzip to temp
+    let temp_dir = std::env::temp_dir().join("musicfree_import_temp");
+    if temp_dir.exists() {
+        std::fs::remove_dir_all(&temp_dir).map_err(AppError::Io)?;
+    }
+    std::fs::create_dir_all(&temp_dir).map_err(AppError::Io)?;
+
+    let file = File::open(&zip_path).map_err(AppError::Io)?;
+    let mut archive = zip::ZipArchive::new(file).map_err(|e| AppError::Unknown(e.to_string()))?;
+
+    for i in 0..archive.len() {
+        let mut file = archive
+            .by_index(i)
+            .map_err(|e| AppError::Unknown(e.to_string()))?;
+        let outpath = match file.enclosed_name() {
+            Some(path) => temp_dir.join(path),
+            None => continue,
+        };
+
+        if file.name().ends_with('/') {
+            std::fs::create_dir_all(&outpath).map_err(AppError::Io)?;
+        } else {
+            if let Some(p) = outpath.parent()
+                && !p.exists()
+            {
+                std::fs::create_dir_all(p).map_err(AppError::Io)?;
+            }
+            let mut outfile = File::create(&outpath).map_err(AppError::Io)?;
+            std::io::copy(&mut file, &mut outfile).map_err(AppError::Io)?;
+        }
+    }
+
+    // 3. Load configs
+    let import_config_path = temp_dir.join(CONFIG_FILE);
+    if !import_config_path.exists() {
+        // Cleanup
+        let _ = std::fs::remove_dir_all(&temp_dir);
+        return Err(AppError::Unknown(
+            "Invalid backup: no config file".to_string(),
+        ));
+    }
+
+    let import_json = std::fs::read_to_string(&import_config_path).map_err(AppError::Io)?;
+    let import_config: Config = serde_json::from_str(&import_json).map_err(AppError::Serde)?;
+
+    let local_config_path = get_config_path(app_dir.clone());
+    let mut local_config: Config = if local_config_path.exists() {
+        let local_json = std::fs::read_to_string(&local_config_path).map_err(AppError::Io)?;
+        serde_json::from_str(&local_json).unwrap_or_default()
+    } else {
+        Config::default()
+    };
+
+    // 4. Merge Logic
+    // let favorite_id = "__FAVORITE__";
+    // let audio_id = "__AUDIO__";
+
+    for import_playlist in import_config.playlists {
+        // let _is_special = import_playlist.id.as_deref() == Some(favorite_id)
+        //     || import_playlist.id.as_deref() == Some(audio_id);
+
+        let target_playlist_opt = local_config
+            .playlists
+            .iter_mut()
+            .find(|p| p.id == import_playlist.id);
+
+        if let Some(target_playlist) = target_playlist_opt {
+            // Merge existing
+            let existing_ids: HashSet<String> = target_playlist
+                .audios
+                .iter()
+                .map(|a| a.audio.id.clone())
+                .collect();
+
+            for audio in import_playlist.audios {
+                if !existing_ids.contains(&audio.audio.id) {
+                    // Check and copy asset file
+                    if let Some(ref relative_path) = audio.cover_path {
+                        copy_asset_if_needed(&temp_dir, &app_dir, relative_path);
+                    }
+                    // Audio file path logic?
+                    // LocalAudio.path usually is relative like "assets/..."
+                    // We treat it as relative path to copy
+                    copy_asset_if_needed(&temp_dir, &app_dir, &audio.path);
+
+                    target_playlist.audios.push(audio);
+                }
+            }
+        } else {
+            // Add new playlist
+            // Copy all assets
+            for audio in &import_playlist.audios {
+                if let Some(ref relative_path) = audio.cover_path {
+                    copy_asset_if_needed(&temp_dir, &app_dir, relative_path);
+                }
+                copy_asset_if_needed(&temp_dir, &app_dir, &audio.path);
+            }
+            // Add playlist if we need to copy cover for playlist itself?
+            if let Some(ref cover_path) = import_playlist.cover_path {
+                copy_asset_if_needed(&temp_dir, &app_dir, cover_path);
+            }
+
+            local_config.playlists.push(import_playlist);
+        }
+    }
+
+    // 5. Save
+    let s = serde_json::to_string_pretty(&local_config).map_err(AppError::Serde)?;
+    std::fs::write(local_config_path, s).map_err(AppError::Io)?;
+
+    // 6. Cleanup
+    let _ = std::fs::remove_dir_all(&temp_dir);
+
+    Ok(zip_filename)
+}
+
+fn copy_asset_if_needed(src_root: &Path, dest_root: &Path, relative_path: &str) {
+    // Basic security check: ensure relative path doesn't escape
+    if relative_path.contains("..") {
+        return;
+    }
+
+    let src_file = src_root.join(relative_path);
+    let dest_file = dest_root.join(relative_path);
+
+    if src_file.exists() && !dest_file.exists() {
+        if let Some(parent) = dest_file.parent() {
+            let _ = std::fs::create_dir_all(parent);
+        }
+        let _ = std::fs::copy(src_file, dest_file);
+    }
 }

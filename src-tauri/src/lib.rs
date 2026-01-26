@@ -47,6 +47,8 @@ pub fn run() {
             cmd::app_version,
             cmd::exists_audio,
             cmd::exists_cover,
+            cmd::export_data,
+            cmd::import_data,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
