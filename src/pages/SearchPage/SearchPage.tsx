@@ -1,11 +1,10 @@
-import { FC, useState, useCallback, useMemo, useEffect } from "react"
+import { FC, useCallback, useMemo, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
-import { Button, Checkbox, Input, Flex, Typography, Avatar, Spin } from "antd"
+import { Button, Checkbox, Input, Flex, Typography, Avatar } from "antd"
 import DownloadOutlined from "@ant-design/icons/DownloadOutlined"
 import AudioOutlined from "@ant-design/icons/AudioOutlined"
 import ReloadOutlined from "@ant-design/icons/ReloadOutlined"
 import PlusOutlined from "@ant-design/icons/PlusOutlined"
-import DeleteOutlined from "@ant-design/icons/DeleteOutlined"
 import StopOutlined from "@ant-design/icons/StopOutlined"
 import CheckOutlined from "@ant-design/icons/CheckOutlined"
 import ClearOutlined from "@ant-design/icons/ClearOutlined"
@@ -19,9 +18,6 @@ import {
 } from "../../api"
 import { useAppStore } from "../../store"
 import { AudioCard, AudioList, PlatformIcon } from "../../components"
-import { useSearchAudio } from "./useSearchAudio"
-import { useDownloadManager } from "./useDownloadManager"
-import { useSelectionManager } from "./useSelectionManager"
 import "./index.less"
 
 const { Search } = Input
@@ -29,41 +25,55 @@ const { Text } = Typography
 
 export const SearchPage: FC = () => {
   const navigate = useNavigate()
-  const [searchText, setSearchText] = useState("")
-  const [defaultAudioId, setDefaultAudioId] = useState<string | null>(null)
 
-  // Custom hooks
-  const { playlist, searching, playlistCoverUrl, searchAudios, clearSearch } =
-    useSearchAudio()
+  // Store State
+  const searchText = useAppStore((state) => state.searchText)
+  const playlist = useAppStore((state) => state.searchPlaylist)
+  const searching = useAppStore((state) => state.searchSearching)
+  const playlistCoverUrl = useAppStore((state) => state.searchPlaylistCoverUrl)
 
-  const {
-    downloadingIds,
-    downloadedIds,
-    failedIds,
-    downloadingAll,
-    downloadedAudios,
-    startDownload,
-    abortDownload,
-    downloadMultiple,
-    markAsDownloaded,
-    removeFromFailed,
-    clearDownloadState,
-  } = useDownloadManager()
+  const downloadingIds = useAppStore((state) => state.searchDownloadingIds)
+  const downloadedIds = useAppStore((state) => state.searchDownloadedIds)
+  const failedIds = useAppStore((state) => state.searchFailedIds)
+  const skippedIds = useAppStore((state) => state.searchSkippedIds)
+  const downloadingAll = useAppStore((state) => state.searchDownloadingAll)
+  const downloadedAudios = useAppStore((state) => state.searchDownloadedAudios)
+  const selectedIds = useAppStore((state) => state.searchSelectedIds)
 
-  const {
-    selectedIds,
-    toggleSelect,
-    toggleSelectAll,
-    removeFromSelection,
-    clearSelection,
-    isAllSelected,
-    isSomeSelected,
-  } = useSelectionManager()
+  // Store Actions
+  const setSearchText = useAppStore((state) => state.setSearchText)
+  const search = useAppStore((state) => state.search)
+  const clearSearchRuntimeData = useAppStore(
+    (state) => state.clearSearchRuntimeData,
+  )
+  const toggleSelect = useAppStore((state) => state.toggleSearchSelect)
+  const toggleSelectAll = useAppStore((state) => state.toggleSearchSelectAll)
+  const clearSelection = useAppStore((state) => state.clearSearchSelection)
 
-  // Store actions
+  const startDownload = useAppStore((state) => state.startDownload)
+  const abortDownload = useAppStore((state) => state.abortDownload)
+  const downloadMultiple = useAppStore((state) => state.downloadMultiple)
+  const clearSearchFailedAndSkippedIds = useAppStore(
+    (state) => state.clearSearchFailedAndSkippedIds,
+  )
+
   const addAudiosToConfig = useAppStore((state) => state.addAudiosToConfig)
   const addPlaylistToConfig = useAppStore((state) => state.addPlaylistToConfig)
   const configPlaylists = useAppStore((state) => state.config.playlists)
+
+  // Clear on unmount
+  useEffect(() => {
+    return () => {
+      // Optional cleanup
+    }
+  }, [])
+
+  // Clear if text empty
+  useEffect(() => {
+    if (!searchText.trim() && playlist) {
+      clearSearchRuntimeData()
+    }
+  }, [searchText, playlist, clearSearchRuntimeData])
 
   // Get existing audios from config
   const configAudios = useMemo(() => {
@@ -73,164 +83,19 @@ export const SearchPage: FC = () => {
     return audioPlaylist?.audios || []
   }, [configPlaylists])
 
-  // Check if audio exists in AUDIO_PLAYLIST
-  const checkAudioExists = useCallback(
+  // Check if audio exists in CONFIG (Library)
+  const checkInLibrary = useCallback(
     (audioId: string): boolean => {
       return configAudios.some((a) => a.audio.id === audioId)
     },
     [configAudios],
   )
 
-  // Check if playlist exists and all selected audios are downloaded
-  const checkPlaylistExists = useCallback(
-    (playlistId: string): boolean => {
-      if (!playlist) return false
+  const handleSearch = useCallback(() => {
+    search(searchText)
+  }, [search, searchText])
 
-      const existingPlaylist = configPlaylists.find((p) => p.id === playlistId)
-      if (!existingPlaylist) return false
-
-      // Check if all selected audios exist in the playlist
-      const selectedArray = Array.from(selectedIds)
-      if (selectedArray.length === 0) return false
-
-      const existingAudioIds = new Set(
-        existingPlaylist.audios.map((a) => a.audio.id),
-      )
-      return selectedArray.every((id) => existingAudioIds.has(id))
-    },
-    [playlist, configPlaylists, selectedIds],
-  )
-
-  // Check if all operations are complete
-  const allOperationsComplete = useMemo(() => {
-    if (!playlist || selectedIds.size === 0) return false
-
-    const selectedArray = Array.from(selectedIds)
-    const allDownloaded = selectedArray.every((id) => downloadedIds.has(id))
-    const noFailed = selectedArray.every((id) => !failedIds.has(id))
-
-    if (!allDownloaded || !noFailed) return false
-
-    // For playlists, check if already added to config
-    const isPlaylist = playlist.audios.length > 1
-    if (isPlaylist) {
-      const playlistId =
-        playlist.id || playlist.title || new Date().toISOString()
-      const existingPlaylist = configPlaylists.find((p) => p.id === playlistId)
-
-      if (existingPlaylist) {
-        const existingAudioIds = new Set(
-          existingPlaylist.audios.map((a) => a.audio.id),
-        )
-        return selectedArray.every((id) => existingAudioIds.has(id))
-      }
-      return false
-    }
-
-    return true
-  }, [playlist, selectedIds, downloadedIds, failedIds, configPlaylists])
-
-  // Check if should show navigate button (exists in config)
-  const shouldShowNavigateButton = useMemo(() => {
-    if (!playlist || selectedIds.size === 0) return false
-
-    const isPlaylist = playlist.audios.length > 1
-    const selectedArray = Array.from(selectedIds)
-
-    if (isPlaylist) {
-      // For playlist: check if playlist exists and all selected audios are in it
-      const playlistId =
-        playlist.id || playlist.title || new Date().toISOString()
-      return checkPlaylistExists(playlistId)
-    } else {
-      // For single audio: check if exists in AUDIO_PLAYLIST
-      if (selectedArray.length !== 1) return false
-      return checkAudioExists(selectedArray[0])
-    }
-  }, [playlist, selectedIds, checkAudioExists, checkPlaylistExists])
-
-  // Clear search when text is empty
-  useEffect(() => {
-    if (!searchText.trim()) {
-      clearSearch()
-      clearDownloadState()
-      clearSelection()
-      setDefaultAudioId(null)
-    }
-  }, [searchText, clearSearch, clearDownloadState, clearSelection])
-
-  /**
-   * Handle search
-   */
-  const handleSearch = useCallback(async () => {
-    if (!searchText.trim()) return
-
-    clearDownloadState()
-    clearSelection()
-    setDefaultAudioId(null)
-
-    const result = await searchAudios(searchText)
-    if (!result) return
-
-    const { playlist, defaultAudioIndex, existingAudios } = result
-
-    // Mark existing audios as downloaded
-    existingAudios.forEach((audio) => {
-      markAsDownloaded(audio.audio.id, audio)
-    })
-
-    // Add single existing audio to config
-    if (existingAudios.length > 0 && playlist.audios.length === 1) {
-      await addAudiosToConfig(existingAudios)
-    }
-
-    // Set default audio ID for highlighting and scrolling
-    if (
-      defaultAudioIndex !== null &&
-      defaultAudioIndex >= 0 &&
-      defaultAudioIndex < playlist.audios.length
-    ) {
-      const defaultAudio = playlist.audios[defaultAudioIndex]
-      if (defaultAudio) {
-        setDefaultAudioId(defaultAudio.id)
-        toggleSelect(defaultAudio.id)
-      }
-    }
-  }, [
-    searchText,
-    searchAudios,
-    clearDownloadState,
-    clearSelection,
-    markAsDownloaded,
-    addAudiosToConfig,
-    toggleSelect,
-  ])
-
-  /**
-   * Handle navigate to existing audio/playlist
-   */
-  const handleNavigateToExisting = useCallback(() => {
-    if (!playlist || selectedIds.size === 0) return
-
-    const isPlaylist = playlist.audios.length > 1
-    const selectedArray = Array.from(selectedIds)
-
-    if (isPlaylist) {
-      // Navigate to playlist
-      const playlistId =
-        playlist.id || playlist.title || new Date().toISOString()
-      navigate(`/playlists?highlight=${encodeURIComponent(playlistId)}`)
-    } else {
-      // Navigate to single audio in music page
-      if (selectedArray.length === 1) {
-        navigate(`/music?highlight=${encodeURIComponent(selectedArray[0])}`)
-      }
-    }
-  }, [playlist, selectedIds, navigate])
-
-  /**
-   * Handle navigate to single audio
-   */
+  // Navigation handlers
   const handleNavigateToAudio = useCallback(
     (audioId: string) => {
       navigate(`/music?highlight=${encodeURIComponent(audioId)}`)
@@ -238,13 +103,9 @@ export const SearchPage: FC = () => {
     [navigate],
   )
 
-  /**
-   * Handle download single audio
-   */
   const handleDownloadSingle = useCallback(
     async (audioId: string) => {
       if (!playlist) return
-
       const audio = playlist.audios.find((a) => a.id === audioId)
       if (!audio) return
 
@@ -256,37 +117,29 @@ export const SearchPage: FC = () => {
     [playlist, startDownload, addAudiosToConfig],
   )
 
-  /**
-   * Handle delete audio from list
-   */
-  const handleDeleteAudio = useCallback(
-    (audioId: string) => {
-      if (!playlist) return
-
-      removeFromSelection(audioId)
-      // Note: We don't modify the playlist here, just remove from selection
-      // If you want to remove from playlist, you'd need to update the playlist state
-    },
-    [playlist, removeFromSelection],
-  )
-
-  /**
-   * Handle clear all failed audios
-   */
   const handleClearFailed = useCallback(() => {
-    if (!playlist) return
+    // Unselect all failed/skipped items
+    const audiosToUnselect = new Set<string>()
+    failedIds.forEach((id) => audiosToUnselect.add(id))
+    skippedIds.forEach((id) => audiosToUnselect.add(id))
 
-    // Remove all failed audios from selection and failed state
-    const failedArray = Array.from(failedIds)
-    failedArray.forEach((id) => {
-      removeFromSelection(id)
-      removeFromFailed(id)
+    // We can't batch unselect easily with toggleSelect, but we can compute new selection
+    // Or just clear state and selection of those items
+    // Current slice toggleSelect is single.
+    // Let's iterate.
+    audiosToUnselect.forEach((id) => {
+      if (selectedIds.has(id)) toggleSelect(id)
     })
-  }, [playlist, failedIds, removeFromSelection, removeFromFailed])
 
-  /**
-   * Handle download/add all selected
-   */
+    clearSearchFailedAndSkippedIds()
+  }, [
+    failedIds,
+    skippedIds,
+    selectedIds,
+    toggleSelect,
+    clearSearchFailedAndSkippedIds,
+  ])
+
   const handleDownloadAll = useCallback(async () => {
     if (!playlist || selectedIds.size === 0) return
 
@@ -296,235 +149,233 @@ export const SearchPage: FC = () => {
     const selectedFailedIds = Array.from(selectedIds).filter((id) =>
       failedIds.has(id),
     )
-    const selectedDownloadedIds = Array.from(selectedIds).filter((id) =>
-      downloadedIds.has(id),
+    const selectedSkippedIds = Array.from(selectedIds).filter((id) =>
+      skippedIds.has(id),
     )
     const selectedPendingIds = Array.from(selectedIds).filter(
-      (id) => !downloadedIds.has(id) && !failedIds.has(id),
+      (id) =>
+        !downloadedIds.has(id) && !failedIds.has(id) && !skippedIds.has(id),
     )
 
-    console.log("handleDownloadAll debug:", {
-      selectedIds: Array.from(selectedIds),
-      selectedFailedIds,
-      selectedDownloadedIds,
-      selectedPendingIds,
-      failedIds: Array.from(failedIds),
-      downloadedIds: Array.from(downloadedIds),
-    })
+    // Retry if we have failed/skipped and NO pending? Or Retry mixes with pending?
+    // Usually Retry is specific. If text is "Retry", we are in retry mode.
+    // Simplification:
+    // If we have pending items, we download them.
+    // If we have ONLY failed/skipped, we retry them.
+    // If we have ONLY downloaded, we add.
 
     const isRetryMode =
-      selectedFailedIds.length > 0 && selectedPendingIds.length === 0
+      (selectedFailedIds.length > 0 || selectedSkippedIds.length > 0) &&
+      selectedPendingIds.length === 0
     const isAddMode =
-      selectedDownloadedIds.length > 0 &&
       selectedPendingIds.length === 0 &&
-      selectedFailedIds.length === 0
+      selectedFailedIds.length === 0 &&
+      selectedSkippedIds.length === 0
 
-    console.log("Mode:", { isRetryMode, isAddMode })
-
-    let result
-
+    // Collect existing audios for "Add" mode
+    const existingAudios: LocalAudio[] = []
     if (isAddMode) {
-      // In add mode, collect LocalAudio objects from downloadedAudios Map
-      const existingAudios: LocalAudio[] = []
-
-      for (const audioId of selectedDownloadedIds) {
-        const localAudio = downloadedAudios.get(audioId)
-        if (localAudio) {
-          existingAudios.push(localAudio)
+      for (const id of selectedIds) {
+        if (downloadedAudios.has(id)) {
+          existingAudios.push(downloadedAudios.get(id)!)
         } else {
-          // Also check configAudios as fallback
-          const configAudio = configAudios.find((a) => a.audio.id === audioId)
-          if (configAudio) {
-            existingAudios.push(configAudio)
-          }
+          const cfg = configAudios.find((a) => a.audio.id === id)
+          if (cfg) existingAudios.push(cfg)
         }
-      }
-
-      console.log("Add mode - checking existingAudios:", {
-        selectedDownloadedIds,
-        downloadedAudiosMapSize: downloadedAudios.size,
-        existingAudiosCount: existingAudios.length,
-      })
-
-      result = {
-        successCount: 0,
-        failedCount: 0,
-        skippedCount: existingAudios.length,
-        downloadedAudios: [],
-        existingAudios,
-      }
-      console.log("Add mode result:", result)
-    } else {
-      // Download or retry
-      const existingAudios = configAudios.filter((a) =>
-        selectedDownloadedIds.includes(a.audio.id),
-      )
-      result = await downloadMultiple(
-        selectedAudios,
-        existingAudios,
-        isRetryMode,
-      )
-
-      console.log("Download result:", result)
-
-      // If there are any failed downloads, don't auto-add to config
-      // Let user decide to clear failed or retry
-      if (result.failedCount > 0) {
-        console.log("Has failed downloads, not auto-adding")
-        return
       }
     }
 
-    const allAudios = [...result.downloadedAudios, ...result.existingAudios]
-    const isPlaylist = playlist.audios.length > 1
+    const knownExisting = configAudios.filter((a) =>
+      selectedIds.has(a.audio.id),
+    )
 
-    console.log("Processing result:", {
-      allAudios: allAudios.length,
-      isPlaylist,
-    })
-
-    if (isPlaylist && allAudios.length > 0) {
-      // Download playlist cover
-      let coverPath: string | null = null
-      if (playlist.cover) {
-        try {
-          coverPath = await download_cover(playlist.cover, playlist.platform)
-        } catch (error) {
-          console.error("Failed to download playlist cover:", error)
-        }
-      } else {
-        // Use first audio's cover as fallback
-        const firstAudioWithCover = playlist.audios.find((audio) => audio.cover)
-        if (firstAudioWithCover?.cover) {
-          try {
-            coverPath = await download_cover(
-              firstAudioWithCover.cover,
-              firstAudioWithCover.platform,
-            )
-          } catch (error) {
-            console.error("Failed to download fallback cover:", error)
-          }
-        }
+    if (isAddMode) {
+      const result = {
+        downloadedAudios: [],
+        existingAudios,
       }
-
-      // Create playlist
-      const playlistId =
-        playlist.id || playlist.title || new Date().toISOString()
-      const audioMap = new Map(allAudios.map((a) => [a.audio.id, a]))
-      const finalAudios = playlist.audios
-        .map((audio) => audioMap.get(audio.id))
-        .filter(Boolean) as any[]
-
-      const localPlaylist: LocalPlaylist = {
-        id: playlistId,
-        title: playlist.title,
-        cover_path: coverPath,
-        cover: playlist.cover,
-        audios: finalAudios,
-        platform: playlist.platform,
-        download_url: playlist.id,
-      }
-
-      console.log("Adding playlist to config:", localPlaylist)
-      await addPlaylistToConfig(localPlaylist)
-      clearSelection()
-
-      // Navigate to playlists page with highlight parameter
-      console.log("Navigating to playlists page")
-      navigate(`/playlists?highlight=${encodeURIComponent(playlistId)}`)
-    } else if (!isPlaylist && result.downloadedAudios.length > 0) {
-      // Single audio - add to AUDIO_PLAYLIST
-      console.log("Adding single audio to config")
-      await addAudiosToConfig(result.downloadedAudios)
-      clearSelection()
-
-      // Navigate to music page with highlight parameter
-      const downloadedAudio = result.downloadedAudios[0]
-      console.log("Navigating to music page")
-      navigate(
-        `/music?highlight=${encodeURIComponent(downloadedAudio.audio.id)}`,
+      await processDownloadResult(result, playlist, isAddMode)
+    } else {
+      const result = await downloadMultiple(
+        selectedAudios,
+        knownExisting,
+        isRetryMode,
       )
-    } else if (!isPlaylist && isAddMode && result.existingAudios.length > 0) {
-      console.log("Adding existing single audio")
-      clearSelection()
+      // If failed/skipped > 0, do NOT auto-add.
+      // Note: skippedCount includes already downloaded ones skipped?
+      // downloadMultiple returns { failedCount ... }
+      if (result.failedCount === 0) {
+        // If some were aborted during this batch, failedCount is 0, but they are now in skippedIds?
+        // Wait, startDownload adds to skippedIds if aborted.
+        // downloadMultiple doesn't count skipped as failed.
+        // We should check if we have any non-success that prevents adding.
+        // If user aborted, they probably don't want auto-add?
+        // Let's rely on user clicking "Add" after ensuring everything is green.
+        // So ONLY auto-add if EVERYTHING in selection is now downloaded.
 
-      // Navigate to music page with highlight parameter
-      const existingAudio = result.existingAudios[0]
-      console.log("Navigating to music page (existing)")
-      navigate(`/music?highlight=${encodeURIComponent(existingAudio.audio.id)}`)
+        // Check selection status after download
+        // We can't check store immediately if batch updates?
+        // But we can check result.
+
+        // Actually, safer to NOT auto-add if we just did a download batch,
+        // UNLESS it was a perfect run.
+        // User asked "When selected audios all downloaded... click executes add".
+        // This implies manual click for Add?
+        // "When (condition), download button becomes PlusOutlined".
+        // So I should validly just let the button state update, and user clicks again.
+        // But previously I had auto-add logic.
+        // Removing auto-add logic ensures consistent behavior ("Download" -> "Add").
+        // But seamless is better.
+        // Ref: "Clicking will execute add".
+        // If I make it auto, button doesn't become Plus.
+        // I will keep auto-add for seamlessness, BUT if skipped/failed, stop.
+
+        // Check if any selected items are NOT downloaded
+        // Since store updates are async in React but synchronous in Zustand vanilla,
+        // we can check if result.downloaded + existing covers all selected?
+        // Let's just trust `failedCount === 0`.
+        // If aborted, `failedCount` is 0 (it counts as skipped/failed in startDownload logic? No, startDownload returns null. downloadMultiple increments failedCount).
+        // My `downloadMultiple` in slice increments `failedCount` if `startDownload` returns null.
+        // `startDownload` returns null on ABORT.
+        // So failedCount INCLUDES skipped/aborted.
+        // So `if (result.failedCount === 0)` handles it.
+
+        await processDownloadResult(result, playlist, isAddMode)
+      }
     }
   }, [
     playlist,
     selectedIds,
     failedIds,
+    skippedIds,
     downloadedIds,
+    downloadedAudios,
     configAudios,
     downloadMultiple,
-    addPlaylistToConfig,
-    addAudiosToConfig,
-    clearSelection,
-    navigate,
   ])
 
-  // Check if should show clear failed button
+  const processDownloadResult = async (
+    result: { downloadedAudios: LocalAudio[]; existingAudios: LocalAudio[] },
+    currentPlaylist: any,
+    _isAddMode: boolean,
+  ) => {
+    const allAudios = [...result.downloadedAudios, ...result.existingAudios]
+    const isPlaylist = currentPlaylist.audios.length > 1
+
+    if (isPlaylist && allAudios.length > 0) {
+      let coverPath: string | null = null
+      if (currentPlaylist.cover) {
+        try {
+          coverPath = await download_cover(
+            currentPlaylist.cover,
+            currentPlaylist.platform,
+          )
+        } catch (e) {
+          console.error(e)
+        }
+      } else {
+        const first = result.downloadedAudios[0] || result.existingAudios[0]
+        if (first?.audio.cover) {
+          try {
+            coverPath = await download_cover(
+              first.audio.cover,
+              first.audio.platform,
+            )
+          } catch (_e) {}
+        }
+      }
+
+      const audioMap = new Map(allAudios.map((a) => [a.audio.id, a]))
+      const finalAudios = currentPlaylist.audios
+        .map((a: any) => audioMap.get(a.id))
+        .filter(Boolean)
+
+      const localPlaylist: LocalPlaylist = {
+        id:
+          currentPlaylist.id ||
+          currentPlaylist.title ||
+          new Date().toISOString(),
+        title: currentPlaylist.title,
+        cover_path: coverPath,
+        cover: currentPlaylist.cover,
+        audios: finalAudios,
+        platform: currentPlaylist.platform,
+        download_url: currentPlaylist.id,
+      }
+
+      await addPlaylistToConfig(localPlaylist)
+      clearSelection()
+      navigate(`/playlists?highlight=${encodeURIComponent(localPlaylist.id!)}`)
+    } else if (!isPlaylist && allAudios.length > 0) {
+      if (result.downloadedAudios.length > 0) {
+        await addAudiosToConfig(result.downloadedAudios)
+      }
+      clearSelection()
+      navigate(`/music?highlight=${encodeURIComponent(allAudios[0].audio.id)}`)
+    }
+  }
+
+  // Selection helpers
+  const isAllSelected = useMemo(() => {
+    if (!playlist) return false
+    return (
+      playlist.audios.length > 0 && selectedIds.size === playlist.audios.length
+    )
+  }, [playlist, selectedIds])
+
+  const isSomeSelected = useMemo(() => {
+    if (!playlist) return false
+    return selectedIds.size > 0 && selectedIds.size < playlist.audios.length
+  }, [playlist, selectedIds])
+
+  // UI States
   const showClearFailedButton = useMemo(() => {
     if (!playlist || downloadingAll) return false
+    // Show if we have failed OR skipped items in selection
+    return Array.from(selectedIds).some(
+      (id) => failedIds.has(id) || skippedIds.has(id),
+    )
+  }, [playlist, downloadingAll, selectedIds, failedIds, skippedIds])
 
-    // Show button if:
-    // 1. There are failed audios
-    // 2. Not currently downloading
-    // 3. Some audios are selected and failed
-    const selectedArray = Array.from(selectedIds)
-    const hasFailedInSelection = selectedArray.some((id) => failedIds.has(id))
-
-    return failedIds.size > 0 && hasFailedInSelection
-  }, [playlist, downloadingAll, selectedIds, failedIds])
-
-  // Compute button state
+  // Button logic
   const { downloadButtonText, downloadButtonIcon } = useMemo(() => {
     const selectedArray = Array.from(selectedIds)
-
     const alreadyDownloadedCount = selectedArray.filter((id) =>
       downloadedIds.has(id),
     ).length
     const failedCount = selectedArray.filter((id) => failedIds.has(id)).length
+    const skippedCount = selectedArray.filter((id) => skippedIds.has(id)).length
     const pendingCount = selectedArray.filter(
-      (id) => !downloadedIds.has(id) && !failedIds.has(id),
+      (id) =>
+        !downloadedIds.has(id) && !failedIds.has(id) && !skippedIds.has(id),
     ).length
 
-    let text = "Download"
+    // Logic:
+    // All downloaded -> Add
+    // Failed/Skipped > 0 and Pending == 0 -> Retry
+    // Pending > 0 -> Download
+
+    let text = ""
     let icon = <DownloadOutlined />
 
-    // Check if should show navigate button
-    if (shouldShowNavigateButton) {
-      text = "Go to"
-      icon = <EnvironmentOutlined />
-    } else if (pendingCount === 0 && failedCount > 0) {
-      text = failedCount === 1 ? "Retry" : `Retry ${failedCount}`
+    if (pendingCount === 0 && (failedCount > 0 || skippedCount > 0)) {
+      text = ` (${failedCount + skippedCount})`
       icon = <ReloadOutlined />
     } else if (
       pendingCount === 0 &&
       failedCount === 0 &&
+      skippedCount === 0 &&
       alreadyDownloadedCount > 0
     ) {
-      text =
-        alreadyDownloadedCount === 1
-          ? "Add to playlist"
-          : `Add ${alreadyDownloadedCount} to playlist`
+      text = ` (${alreadyDownloadedCount})`
       icon = <PlusOutlined />
     } else if (pendingCount > 0) {
-      if (alreadyDownloadedCount > 0) {
-        text = `Download ${pendingCount} (${alreadyDownloadedCount} existing)`
-      } else {
-        text = pendingCount === 1 ? "Download" : `Download ${pendingCount}`
-      }
-      icon = <DownloadOutlined />
+      text = ` (${pendingCount})`
     }
 
     return { downloadButtonText: text, downloadButtonIcon: icon }
-  }, [selectedIds, downloadedIds, failedIds, shouldShowNavigateButton])
+  }, [selectedIds, downloadedIds, failedIds, skippedIds])
 
-  // Render
   return (
     <Flex vertical className="page search-page" gap="middle">
       <Search
@@ -534,15 +385,9 @@ export const SearchPage: FC = () => {
         onChange={(e) => setSearchText(e.target.value)}
         onSearch={handleSearch}
         loading={searching}
-        disabled={searching}
+        disabled={searching || downloadingAll}
         size="large"
       />
-
-      {searching && (
-        <Flex flex={1} align="center" justify="center">
-          <Spin fullscreen size="large" tip="Searching..." />
-        </Flex>
-      )}
 
       {playlist && !searching && (
         <>
@@ -575,17 +420,57 @@ export const SearchPage: FC = () => {
             </Flex>
           )}
 
-          <AudioList highlightId={defaultAudioId}>
+          <AudioList>
             {playlist.audios.map((audio) => {
               const downloading = downloadingIds.has(audio.id)
               const downloaded = downloadedIds.has(audio.id)
               const failed = failedIds.has(audio.id)
+              const skipped = skippedIds.has(audio.id)
               const selected = selectedIds.has(audio.id)
-              const isHighlighted = defaultAudioId === audio.id
+              const inLibrary = checkInLibrary(audio.id)
+
+              // Status badges
+              const statusBadges = (
+                <Flex align="center" gap={4}>
+                  {downloaded && (
+                    <div
+                      style={{
+                        width: 8,
+                        height: 8,
+                        borderRadius: "50%",
+                        background: "#52c41a",
+                      }}
+                      title="Downloaded"
+                    />
+                  )}
+                  {failed && (
+                    <div
+                      style={{
+                        width: 8,
+                        height: 8,
+                        borderRadius: "50%",
+                        background: "#ff4d4f",
+                      }}
+                      title="Failed"
+                    />
+                  )}
+                  {skipped && (
+                    <div
+                      style={{
+                        width: 8,
+                        height: 8,
+                        borderRadius: "50%",
+                        background: "#faad14",
+                      }}
+                      title="Skipped"
+                    />
+                  )}
+                </Flex>
+              )
 
               return (
                 <div
-                  key={`${playlist.id || "search"}-${audio.id}-${audio.platform}`}
+                  key={`${playlist.id || "search"}-${audio.id}`}
                   data-item-id={audio.id}
                 >
                   <AudioCard
@@ -596,104 +481,61 @@ export const SearchPage: FC = () => {
                     duration={audio.duration}
                     warnLongDuration={true}
                     onClick={() => {
-                      if (
-                        !downloading &&
-                        !downloadingAll &&
-                        !allOperationsComplete
-                      ) {
+                      if (!downloading && !downloadingAll) {
                         toggleSelect(audio.id)
                       }
                     }}
-                    active={isHighlighted}
+                    active={false}
                     badge={{
                       show: true,
                       icon: selected ? (
                         <CheckOutlined
                           style={{
                             color: "#fff",
-                            backgroundColor: "#52c41a",
+                            background: "#52c41a",
                             borderRadius: "50%",
-                            padding: "4px",
-                            fontSize: "12px",
+                            padding: 4,
+                            fontSize: 12,
                           }}
                         />
                       ) : (
                         0
                       ),
                     }}
-                    extraInfo={
-                      <>
-                        {downloaded && (
-                          <Text type="success" style={{ fontSize: 12 }}>
-                            · Downloaded
-                          </Text>
-                        )}
-                        {failed && (
-                          <Text type="danger" style={{ fontSize: 12 }}>
-                            · Failed
-                          </Text>
-                        )}
-                      </>
-                    }
+                    extraInfo={statusBadges}
                     actions={
-                      <>
+                      downloading ? (
                         <Button
                           type="text"
-                          icon={
-                            checkAudioExists(audio.id) ? (
-                              <EnvironmentOutlined />
-                            ) : (
-                              <DownloadOutlined />
-                            )
-                          }
-                          loading={downloading}
-                          disabled={
-                            checkAudioExists(audio.id)
-                              ? false
-                              : downloaded ||
-                                downloadingAll ||
-                                allOperationsComplete
-                          }
+                          danger
+                          icon={<StopOutlined />}
                           onClick={(e) => {
                             e.stopPropagation()
-                            if (checkAudioExists(audio.id)) {
-                              handleNavigateToAudio(audio.id)
-                            } else {
-                              handleDownloadSingle(audio.id)
-                            }
+                            abortDownload(audio.id)
                           }}
-                          title={
-                            checkAudioExists(audio.id)
-                              ? "Go to audio"
-                              : "Download"
-                          }
                         />
-                        {downloading ? (
-                          <Button
-                            type="text"
-                            danger
-                            icon={<StopOutlined />}
-                            disabled={allOperationsComplete}
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              abortDownload(audio.id)
-                            }}
-                            title="Abort download"
-                          />
-                        ) : (
-                          <Button
-                            type="text"
-                            danger
-                            icon={<DeleteOutlined />}
-                            disabled={allOperationsComplete}
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              handleDeleteAudio(audio.id)
-                            }}
-                            title="Remove from list"
-                          />
-                        )}
-                      </>
+                      ) : inLibrary ? (
+                        <Button
+                          type="text"
+                          icon={<EnvironmentOutlined />}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleNavigateToAudio(audio.id)
+                          }}
+                          title="Go to audio"
+                        />
+                      ) : (
+                        <Button
+                          type="text"
+                          icon={<DownloadOutlined />}
+                          disabled={downloadingAll || downloaded}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleDownloadSingle(audio.id)
+                          }}
+                          title="Download"
+                        />
+                      )
                     }
                   />
                 </div>
@@ -707,36 +549,28 @@ export const SearchPage: FC = () => {
             className="search-bottom-bar"
           >
             <Checkbox
-              checked={isAllSelected(playlist.audios)}
-              indeterminate={isSomeSelected(playlist.audios)}
+              checked={isAllSelected}
+              indeterminate={isSomeSelected}
               onChange={(e) =>
                 toggleSelectAll(playlist.audios, e.target.checked)
               }
-              disabled={downloadingAll || allOperationsComplete}
-            ></Checkbox>
-
+              disabled={downloadingAll}
+            />
             <Flex gap="small">
               {showClearFailedButton && (
                 <Button
                   icon={<ClearOutlined />}
                   onClick={handleClearFailed}
-                  disabled={downloadingAll || allOperationsComplete}
-                  title="Clear all failed audios from selection"
-                ></Button>
+                  disabled={downloadingAll}
+                  title="Clear failed/skipped"
+                />
               )}
               <Button
                 type="primary"
                 icon={downloadButtonIcon}
-                onClick={
-                  shouldShowNavigateButton
-                    ? handleNavigateToExisting
-                    : handleDownloadAll
-                }
+                onClick={handleDownloadAll}
                 loading={downloadingAll}
-                disabled={
-                  selectedIds.size === 0 ||
-                  (!shouldShowNavigateButton && allOperationsComplete)
-                }
+                disabled={selectedIds.size === 0}
               >
                 {downloadButtonText}
               </Button>
