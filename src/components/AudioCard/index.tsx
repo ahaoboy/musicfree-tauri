@@ -10,6 +10,7 @@ const { Text } = Typography
 
 /**
  * Format duration in seconds to MM:SS or HH:MM:SS
+ * Uses spaces for padding instead of leading zeros for a cleaner look
  */
 const formatDuration = (seconds?: number): string | null => {
   if (!seconds || seconds <= 0) return null
@@ -19,9 +20,13 @@ const formatDuration = (seconds?: number): string | null => {
   const secs = Math.floor(seconds % 60)
 
   if (hours > 0) {
+    // Format: H:MM:SS or HH:MM:SS (no leading zero for hours)
     return `${hours}:${minutes.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`
   }
-  return `${minutes}:${secs.toString().padStart(2, "0")}`
+  // Format: M:SS or MM:SS (no leading zero for minutes)
+  // Pad with spaces to maintain consistent width (5 chars: "MM:SS")
+  const timeStr = `${minutes}:${secs.toString().padStart(2, "0")}`
+  return timeStr.padStart(5, " ")
 }
 
 interface AudioCardProps {
@@ -168,27 +173,29 @@ export const AudioCard: FC<AudioCardProps> = memo(
             {showPlatformIcon && <PlatformIcon platform={platform} size={14} />}
 
             {subtitle && (
-              <Text type="secondary" style={{ fontSize: 12 }}>
+              <Text
+                type="secondary"
+                style={{
+                  fontSize: 12,
+                  fontFamily: "monospace", // Use monospace for consistent spacing
+                  whiteSpace: "pre", // Preserve spaces
+                }}
+              >
                 {subtitle}
               </Text>
             )}
             {formattedDuration && (
-              <>
-                {(subtitle || showPlatformIcon) && (
-                  <Text type="secondary" style={{ fontSize: 12 }}>
-                    ·
-                  </Text>
-                )}
-                <Text
-                  type="secondary"
-                  style={{
-                    fontSize: 12,
-                    color: isLongDuration ? "#faad14" : undefined,
-                  }}
-                >
-                  {formattedDuration}
-                </Text>
-              </>
+              <Text
+                type="secondary"
+                style={{
+                  fontSize: 12,
+                  color: isLongDuration ? "#faad14" : undefined,
+                  fontFamily: "monospace", // Use monospace for consistent spacing
+                  whiteSpace: "pre", // Preserve spaces
+                }}
+              >
+                {formattedDuration}
+              </Text>
             )}
             {extraInfo}
           </Flex>

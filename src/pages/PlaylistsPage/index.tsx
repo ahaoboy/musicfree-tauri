@@ -57,6 +57,10 @@ const PlaylistsList: FC = () => {
     [showConfirm, deletePlaylist],
   )
 
+  const formatAudioCount = useCallback((count: number): string => {
+    return `${count.toString().padStart(3, " ")}♪`
+  }, [])
+
   if (playlists.length === 0) {
     return (
       <Flex vertical className="page" flex={1}>
@@ -96,7 +100,7 @@ const PlaylistsList: FC = () => {
                 coverUrl={playlist.cover}
                 platform={playlist.platform}
                 title={displayName}
-                subtitle={`${audioCount} ♪`}
+                subtitle={formatAudioCount(audioCount)}
                 icon={<FolderOutlined />}
                 onClick={() => handlePlaylistClick(playlist)}
                 active={isActive}

@@ -83,14 +83,14 @@ export const MoreActionsDropdown: FC<MoreActionsDropdownProps> = ({
     const baseItems: MenuProps["items"] = [
       {
         key: "copy",
-        label: "Copy URL",
+        label: "Copy",
         icon: <SendOutlined />,
         disabled: !url,
         onClick: handleCopyUrl,
       },
       {
         key: "open",
-        label: "Open in Browser",
+        label: "Open",
         icon: <ShareAltOutlined />,
         disabled: !url,
         onClick: handleOpenInBrowser,
