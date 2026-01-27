@@ -81,6 +81,7 @@ export const PlaylistsPage: FC = () => {
           icon={<FolderOutlined />}
           onClick={() => handlePlaylistClick(playlist)}
           active={isActive}
+          isFavorite={playlist.id === FAVORITE_PLAYLIST_ID}
           actions={
             canDelete ? (
               <MoreActionsDropdown

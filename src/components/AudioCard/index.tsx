@@ -2,6 +2,7 @@ import { FC, memo, useCallback, ReactNode } from "react"
 import { Flex, Typography, Avatar, Badge } from "antd"
 import AudioOutlined from "@ant-design/icons/AudioOutlined"
 import CheckOutlined from "@ant-design/icons/CheckOutlined"
+import HeartFilled from "@ant-design/icons/HeartFilled"
 import { DEFAULT_COVER_URL } from "../../api"
 import { useCoverUrl } from "../../hooks"
 import { PlatformIcon } from "../PlatformIcon"
@@ -11,7 +12,6 @@ const { Text } = Typography
 
 /**
  * Format duration in seconds to MM:SS or HH:MM:SS
- * Uses spaces for padding instead of leading zeros for a cleaner look
  */
 const formatDuration = (seconds?: number): string | null => {
   if (!seconds || seconds <= 0) return null
@@ -21,50 +21,48 @@ const formatDuration = (seconds?: number): string | null => {
   const secs = Math.floor(seconds % 60)
 
   if (hours > 0) {
-    // Format: H:MM:SS or HH:MM:SS (no leading zero for hours)
     return `${hours}:${minutes.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`
   }
-  // Format: M:SS or MM:SS (no leading zero for minutes)
-  // Pad with spaces to maintain consistent width (5 chars: "MM:SS")
   const timeStr = `${minutes}:${secs.toString().padStart(2, "0")}`
   return timeStr.padStart(5, " ")
 }
 
 interface AudioCardProps {
   // Cover
-  coverPath?: string | null // Local cover path
-  coverUrl?: string // Remote cover URL
-  platform: string // Platform name (required)
+  coverPath?: string | null
+  coverUrl?: string
+  platform: string
 
   // Display info
   title: string
-  subtitle?: string // Secondary info (e.g., "Platform · Extra info")
-  icon?: ReactNode // Avatar icon (default: AudioOutlined)
-  duration?: number // Audio duration in seconds (optional)
-  warnLongDuration?: boolean // Show warning color for long duration (>30min)
-  showPlatformIcon?: boolean // Show platform icon instead of text (default: true)
+  subtitle?: string
+  icon?: ReactNode
+  duration?: number
+  warnLongDuration?: boolean
+  showPlatformIcon?: boolean
 
   // Click behavior
   onClick?: () => void
 
   // State
-  active?: boolean // Whether the card is active/selected/highlighted
-  showBorder?: boolean // Whether to show the card border (default: true)
+  active?: boolean
+  showBorder?: boolean
+  isFavorite?: boolean
 
   // Badge configuration
   badge?: {
-    show: boolean // Whether to show badge
-    icon?: ReactNode // Custom badge icon (default: CheckOutlined)
-    offset?: [number, number] // Badge position offset
+    show: boolean
+    icon?: ReactNode
+    offset?: [number, number]
   }
 
   // Size configuration
-  avatarSize?: number // Avatar size in pixels (default: 60)
+  avatarSize?: number
 
-  // Extra info section (after subtitle)
+  // Extra info section
   extraInfo?: ReactNode
 
-  // Actions section (right side)
+  // Actions section
   actions?: ReactNode
 
   /** Additional className */
@@ -73,7 +71,6 @@ interface AudioCardProps {
 
 /**
  * Generic card component for displaying audio/playlist items
- * Highly customizable and reusable across different contexts
  */
 export const AudioCard: FC<AudioCardProps> = memo(
   ({
@@ -90,12 +87,12 @@ export const AudioCard: FC<AudioCardProps> = memo(
     showBorder = true,
     onClick,
     active = false,
+    isFavorite = false,
     badge,
     extraInfo,
     actions,
     className,
   }) => {
-    // Auto-download and cache cover
     const autoCoverUrl = useCoverUrl(coverPath, coverUrl, platform)
     const finalCoverUrl = autoCoverUrl || DEFAULT_COVER_URL
 
@@ -107,13 +104,9 @@ export const AudioCard: FC<AudioCardProps> = memo(
       [onClick],
     )
 
-    // Format duration
     const formattedDuration = formatDuration(duration)
-
-    // Check if duration is too long using utility
     const isLongDurationValue = warnLongDuration && isLongDuration(duration)
 
-    // Avatar element
     const avatarElement = (
       <Avatar
         src={finalCoverUrl}
@@ -125,7 +118,6 @@ export const AudioCard: FC<AudioCardProps> = memo(
       />
     )
 
-    // Wrap avatar with badge if needed
     const avatarWithBadge = badge?.show ? (
       <Badge
         count={
@@ -141,7 +133,6 @@ export const AudioCard: FC<AudioCardProps> = memo(
             />
           )
         }
-        // FIXME: Displayed in the bottom left corner of the image, perhaps a responsive layout should be used.
         offset={badge.offset ?? [-56, 56]}
       >
         {avatarElement}
@@ -177,28 +168,27 @@ export const AudioCard: FC<AudioCardProps> = memo(
           transition: "all 0.3s ease",
         }}
       >
-        {/* Left: Avatar with optional Badge */}
         {avatarWithBadge}
 
-        {/* Center: Info section */}
         <Flex vertical flex={1} style={{ minWidth: 0 }}>
-          {/* First row: Title */}
           <Text strong ellipsis>
             {title}
           </Text>
 
-          {/* Second row: Platform Icon + Subtitle + Duration + Extra info */}
           <Flex align="center" gap="small">
-            {/* Platform icon */}
-            {showPlatformIcon && <PlatformIcon platform={platform} size={14} />}
+            {isFavorite ? (
+              <HeartFilled style={{ fontSize: 14, color: "#ff4d4f" }} />
+            ) : (
+              showPlatformIcon && <PlatformIcon platform={platform} size={14} />
+            )}
 
             {subtitle && (
               <Text
                 type="secondary"
                 style={{
                   fontSize: 12,
-                  fontFamily: "monospace", // Use monospace for consistent spacing
-                  whiteSpace: "pre", // Preserve spaces
+                  fontFamily: "monospace",
+                  whiteSpace: "pre",
                 }}
               >
                 {subtitle}
@@ -210,8 +200,8 @@ export const AudioCard: FC<AudioCardProps> = memo(
                 style={{
                   fontSize: 12,
                   color: isLongDurationValue ? "#faad14" : undefined,
-                  fontFamily: "monospace", // Use monospace for consistent spacing
-                  whiteSpace: "pre", // Preserve spaces
+                  fontFamily: "monospace",
+                  whiteSpace: "pre",
                 }}
               >
                 {formattedDuration}
@@ -221,7 +211,6 @@ export const AudioCard: FC<AudioCardProps> = memo(
           </Flex>
         </Flex>
 
-        {/* Right: Actions */}
         {actions}
       </Flex>
     )
