@@ -22,6 +22,7 @@ export const PlayerCard: FC<PlayerCardProps> = memo(({ audio }) => {
 
   return (
     <AudioCard
+      className="player-card"
       coverPath={audio.cover_path}
       coverUrl={audio.audio.cover}
       platform={audio.audio.platform}
@@ -39,7 +40,7 @@ export const PlayerCard: FC<PlayerCardProps> = memo(({ audio }) => {
           buttonClassName="mini-player-btn"
           buttonSize="large"
           iconSize={32}
-          gap={4}
+          gap={"small"}
         />
       }
     />

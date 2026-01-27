@@ -66,6 +66,9 @@ interface AudioCardProps {
 
   // Actions section (right side)
   actions?: ReactNode
+
+  /** Additional className */
+  className?: string
 }
 
 /**
@@ -90,6 +93,7 @@ export const AudioCard: FC<AudioCardProps> = memo(
     badge,
     extraInfo,
     actions,
+    className,
   }) => {
     // Auto-download and cache cover
     const autoCoverUrl = useCoverUrl(coverPath, coverUrl, platform)
@@ -138,7 +142,7 @@ export const AudioCard: FC<AudioCardProps> = memo(
           )
         }
         // FIXME: Displayed in the bottom left corner of the image, perhaps a responsive layout should be used.
-        offset={badge.offset ?? [-48, 48]}
+        offset={badge.offset ?? [-56, 56]}
       >
         {avatarElement}
       </Badge>
@@ -148,7 +152,12 @@ export const AudioCard: FC<AudioCardProps> = memo(
 
     return (
       <Flex
-        className={badge?.show ? "audio-card-selectable" : "audio-card"}
+        className={[
+          badge?.show ? "audio-card-selectable" : "audio-card",
+          className,
+        ]
+          .filter(Boolean)
+          .join(" ")}
         onClick={onClick ? handleCardClick : undefined}
         role={onClick ? "button" : undefined}
         tabIndex={onClick ? 0 : undefined}
