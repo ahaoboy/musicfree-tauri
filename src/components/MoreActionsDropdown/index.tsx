@@ -7,7 +7,6 @@ import ShareAltOutlined from "@ant-design/icons/ShareAltOutlined"
 import DeleteOutlined from "@ant-design/icons/DeleteOutlined"
 import { writeText } from "@tauri-apps/plugin-clipboard-manager"
 import { openUrl } from "@tauri-apps/plugin-opener"
-import { AdaptiveButton } from "../AdaptiveButton"
 
 // MenuInfo type from Ant Design
 interface MenuInfo {
@@ -119,11 +118,13 @@ export const MoreActionsDropdown: FC<MoreActionsDropdownProps> = ({
         root: { zIndex: 30 },
       }}
     >
-      <AdaptiveButton
-        type="text"
-        icon={<MoreOutlined />}
+      <MoreOutlined
         className={className}
-        stopPropagation
+        onClick={(e) => {
+          e.stopPropagation()
+          e.preventDefault()
+        }}
+        style={{ cursor: "pointer", display: "inline-flex", padding: 4 }}
       />
     </Dropdown>
   )
