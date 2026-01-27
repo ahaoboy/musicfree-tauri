@@ -1,6 +1,6 @@
 import { FC, useCallback, useMemo, useEffect, useRef } from "react"
 import { useNavigate } from "react-router-dom"
-import { Button, Input, Flex, Avatar } from "antd"
+import { Input, Flex, Avatar } from "antd"
 import DownloadOutlined from "@ant-design/icons/DownloadOutlined"
 import ReloadOutlined from "@ant-design/icons/ReloadOutlined"
 import PlusOutlined from "@ant-design/icons/PlusOutlined"
@@ -17,7 +17,7 @@ import {
   LocalAudio,
 } from "../../api"
 import { useAppStore } from "../../store"
-import { AudioCard, AudioList } from "../../components"
+import { AudioCard, AudioList, AdaptiveButton } from "../../components"
 import { isLongDuration } from "../../utils/audio"
 import "./index.less"
 
@@ -526,27 +526,29 @@ export const SearchPage: FC = () => {
           extraInfo={statusBadges}
           actions={
             downloading ? (
-              <Button
+              <AdaptiveButton
                 type="text"
-                danger
+                className="action-btn"
+                style={{ color: "#ff4d4f" }}
                 icon={<StopOutlined />}
                 onClick={(e) => {
                   e.stopPropagation()
                   abortDownload(audioId)
                 }}
+                aria-label="Stop download"
               />
             ) : inLibrary ? (
-              <Button
+              <AdaptiveButton
                 type="text"
                 icon={<EnvironmentOutlined />}
                 onClick={(e) => {
                   e.stopPropagation()
                   handleNavigateToAudio(audioId)
                 }}
-                title="Go to audio"
+                aria-label="Go to audio"
               />
             ) : (
-              <Button
+              <AdaptiveButton
                 type="text"
                 icon={<DownloadOutlined />}
                 disabled={downloadingAll || downloaded}
@@ -554,7 +556,7 @@ export const SearchPage: FC = () => {
                   e.stopPropagation()
                   handleDownloadSingle(audioId)
                 }}
-                title="Download"
+                aria-label="Download"
               />
             )
           }

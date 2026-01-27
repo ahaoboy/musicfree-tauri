@@ -1,5 +1,6 @@
 import { Component, ReactNode, ErrorInfo } from "react"
-import { Result, Button } from "antd"
+import { Result } from "antd"
+import { AdaptiveButton } from "../AdaptiveButton"
 
 interface Props {
   children: ReactNode
@@ -14,7 +15,6 @@ interface State {
 
 /**
  * Error Boundary component to catch rendering errors
- * Follows React best practices for error handling
  */
 export class ErrorBoundary extends Component<Props, State> {
   constructor(props: Props) {
@@ -47,9 +47,9 @@ export class ErrorBoundary extends Component<Props, State> {
           title="Something went wrong"
           subTitle={this.state.error?.message || "An unexpected error occurred"}
           extra={
-            <Button type="primary" onClick={this.handleReset}>
+            <AdaptiveButton type="primary" onClick={this.handleReset}>
               Try Again
-            </Button>
+            </AdaptiveButton>
           }
         />
       )

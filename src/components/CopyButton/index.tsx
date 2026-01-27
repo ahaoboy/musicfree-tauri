@@ -1,8 +1,9 @@
 import { FC, useState, useCallback, ReactNode } from "react"
-import { Button, App } from "antd"
+import { App } from "antd"
 import CopyOutlined from "@ant-design/icons/CopyOutlined"
 import CheckOutlined from "@ant-design/icons/CheckOutlined"
 import { writeText } from "@tauri-apps/plugin-clipboard-manager"
+import { AdaptiveButton } from "../AdaptiveButton"
 
 interface CopyButtonProps {
   /** Text to copy to clipboard */
@@ -28,23 +29,7 @@ interface CopyButtonProps {
 }
 
 /**
- * CopyButton - A reusable button component for copying text to clipboard
- *
- * @example
- * // Basic usage
- * <CopyButton text="Hello World" />
- *
- * @example
- * // Custom icon
- * <CopyButton text={appDir} icon={<ShareAltOutlined />} />
- *
- * @example
- * // Custom messages
- * <CopyButton
- *   text={downloadUrl}
- *   successMessage="Download link copied!"
- *   errorMessage="Failed to copy link"
- * />
+ * CopyButton - Uses AdaptiveButton for reliable copy interaction.
  */
 export const CopyButton: FC<CopyButtonProps> = ({
   text,
@@ -76,7 +61,7 @@ export const CopyButton: FC<CopyButtonProps> = ({
   }, [text, disabled, successMessage, errorMessage, copiedDuration, message])
 
   return (
-    <Button
+    <AdaptiveButton
       type={type}
       icon={copied ? copiedIcon : icon}
       onClick={handleCopy}

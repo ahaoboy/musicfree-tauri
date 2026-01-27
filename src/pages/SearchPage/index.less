@@ -3,26 +3,21 @@
 
 .search-page {
   height: 100%;
-  overflow: hidden;
   display: flex !important;
   flex-direction: column;
+  overflow: hidden;
 
   .audio-list {
     flex: 1;
-    min-height: 0; // Crucial for flex child overflow
     overflow: hidden;
-    -webkit-overflow-scrolling: touch;
-    .custom-scrollbar(6px);
   }
 
   .search-bottom-bar {
     flex: none;
-    // padding: 12px 16px;
     background: var(--bg-card);
     border-top: 1px solid var(--border-color);
     box-shadow: 0 -4px 12px var(--shadow-color);
     backdrop-filter: blur(10px);
     border-radius: 8px;
-    // .safe-area-padding(padding-bottom, 16px);
   }
 }

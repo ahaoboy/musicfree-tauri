@@ -4,31 +4,25 @@
 // ============================================
 
 // ============================================
-// Colors - Using CSS Custom Properties for dynamic theming
+// Colors - Linked to CSS Custom Properties
 // ============================================
-// LESS variables for fallback and compilation
-@primary-color: #6366f1;
-@primary-color-light: #8b8ff6;
-@primary-color-lighter: #9fa3f7;
+@primary-color: var(--primary-color);
+@primary-color-light: var(--primary-color-light);
+@primary-color-lighter: var(--primary-color-lighter);
 @error-color: #ff4d4f;
 
-// Primary color with opacity (LESS variables for compilation)
-@primary-alpha-10: rgba(99, 102, 241, 0.1);
-@primary-alpha-15: rgba(99, 102, 241, 0.15);
-@primary-alpha-20: rgba(99, 102, 241, 0.2);
-@primary-alpha-25: rgba(99, 102, 241, 0.25);
-@primary-alpha-30: rgba(99, 102, 241, 0.3);
-@primary-alpha-35: rgba(99, 102, 241, 0.35);
-@primary-alpha-40: rgba(99, 102, 241, 0.4);
-@primary-alpha-50: rgba(99, 102, 241, 0.5);
+// Alpha variants
+@primary-alpha-10: var(--primary-alpha-10);
+@primary-alpha-20: var(--primary-alpha-20);
+@primary-alpha-30: var(--primary-alpha-30);
+@primary-alpha-50: var(--primary-alpha-50);
 
 // ============================================
 // Timing & Easing
 // ============================================
 @transition-fast: 150ms;
 @transition-normal: 200ms;
-@transition-slow: 250ms;
-@transition-slower: 300ms;
+@transition-slow: 300ms;
 @ease-out: cubic-bezier(0.25, 0.46, 0.45, 0.94);
 
 // ============================================
@@ -37,35 +31,40 @@
 @player-bar-height: 68px;
 @safe-area-bottom: env(safe-area-inset-bottom, 0px);
 
-// Border radius
-@radius-sm: 12px;
-@radius-md: 16px;
-@radius-lg: 24px;
-@radius-xl: 32px;
+// Border radius - Aligned with Ant Design
+@radius-sm: 8px;
+@radius-md: 12px;
+@radius-lg: 16px;
+@radius-xl: 24px;
 @radius-full: 9999px;
 
 // Button sizes
-@btn-size-sm: 44px;
+@btn-size-sm: 40px;
 @btn-size-md: 48px;
-@btn-size-lg: 52px;
-@btn-size-xl: 68px;
+@btn-size-lg: 56px;
+@btn-size-xl: 72px;
 
 // ============================================
 // Mixins
 // ============================================
 
-// Glass-morphism effect
-.glass-effect(@blur: 8px, @bg-light: rgba(255, 255, 255, 0.1), @bg-dark: rgba(0, 0, 0, 0.2)) {
-  backdrop-filter: blur(@blur) saturate(180%);
-  -webkit-backdrop-filter: blur(@blur) saturate(180%);
-  background: @bg-light;
+// Glass-morphism effect - Performance optimized
+.glass-effect(@blur: 16px, @bg: var(--primary-alpha-10)) {
+  background: @bg;
 
-  [data-prefers-color-scheme='dark'] & {
-    background: @bg-dark;
+  // Apply blur only on desktop/capable hardware
+  @media (hover: hover) and (pointer: fine) {
+    backdrop-filter: blur(@blur) saturate(180%);
+    -webkit-backdrop-filter: blur(@blur) saturate(180%);
+  }
+
+  @media (hover: none) {
+    background: var(--bg-card);
+    opacity: 0.98;
   }
 }
 
-// Scrollbar styling - Mobile-friendly and theme-aware
+// Custom Scrollbar - Minimal and consistent
 .custom-scrollbar(@width: 4px) {
   &::-webkit-scrollbar {
     width: @width;
@@ -79,80 +78,72 @@
   &::-webkit-scrollbar-thumb {
     background: var(--border-color);
     border-radius: @radius-full;
-    transition: background @transition-fast @ease-out;
-    border: 1px solid transparent; // Create some space
     background-clip: padding-box;
+    border: 1px solid transparent;
 
     &:hover {
       background: var(--text-secondary);
     }
-
-    [data-prefers-color-scheme='dark'] & {
-      background: rgba(255, 255, 255, 0.15);
-
-      &:hover {
-        background: rgba(255, 255, 255, 0.25);
-      }
-    }
   }
 }
 
-// Control button base style
-.control-btn-base(@size, @font-size, @radius) {
-  background: var(--primary-alpha-10);
-  border: 1px solid var(--primary-alpha-20);
-  cursor: pointer;
-  font-size: @font-size;
-  // color: var(--primary-color);
+// Control button base style - Simplified physical hitbox
+.control-btn-base(@size, @font-size, @radius: @radius-md) {
   width: @size;
   height: @size;
   min-width: @size;
-  display: flex;
+  padding: 0 !important;
+  display: flex !important;
   align-items: center;
   justify-content: center;
   border-radius: @radius;
-  transition: all @transition-slow @ease-out;
-  .glass-effect(12px, var(--primary-alpha-10), var(--primary-alpha-15));
-  padding: 0;
-  -webkit-tap-highlight-color: transparent;
+  cursor: pointer;
+  border: 1px solid var(--primary-alpha-20);
+  background: var(--primary-alpha-10);
+  transition: all @transition-fast @ease-out;
   user-select: none;
-  -webkit-touch-callout: none; // Disable context menu on long press
-  -webkit-user-drag: none;
   touch-action: manipulation;
 
-  // Desktop hover effects only
-  @media (hover: hover) and (pointer: fine) {
-    &:hover {
-      background: var(--primary-alpha-20);
-      transform: translateY(-4px) scale(1.05);
-      box-shadow: 0 8px 20px var(--primary-alpha-30);
-      color: var(--primary-color);
-      border-color: var(--primary-alpha-30);
-    }
-  }
-
-  &:active {
-    background: var(--primary-alpha-25);
-    transform: translateY(0) scale(0.95);
-  }
+  // Sync antd-mobile CSS variables
+  --background-color: var(--primary-alpha-10);
+  --border-color: var(--primary-alpha-20);
+  --border-radius: @radius;
+  --text-color: var(--text-primary);
 
   .anticon {
     font-size: @font-size;
   }
 
-  [data-prefers-color-scheme='dark'] & {
-    background: var(--primary-alpha-15);
-    border: 1px solid var(--primary-alpha-25);
-    color: var(--primary-color-light);
+  // Native antd-mobile support
+  &.adm-button {
+    padding: 0;
+    font-size: @font-size;
+    border-radius: @radius;
 
-    // Desktop hover effects only
-    @media (hover: hover) and (pointer: fine) {
-      &:hover {
-        background: var(--primary-alpha-25);
-        box-shadow: 0 8px 24px var(--primary-alpha-40);
-        color: var(--primary-color-lighter);
-      }
+    &.adm-button-none {
+      --background-color: transparent;
+      --border-color: transparent;
     }
+
+    &.adm-button-primary {
+      --background-color: var(--primary-color);
+      --border-color: var(--primary-color);
+      --text-color: #fff;
+    }
+  }
+
+  &:hover {
+    @media (hover: hover) {
+      background: var(--primary-alpha-20);
+      transform: translateY(-1px);
+      --background-color: var(--primary-alpha-20);
+    }
+  }
+
+  &:active {
+    transform: scale(0.96);
+    background: var(--primary-alpha-30);
+    --background-color: var(--primary-alpha-30);
   }
 }
 
@@ -160,37 +151,23 @@
 .card-hover-effect(@lift: -2px) {
   transition: all @transition-fast @ease-out;
   will-change: transform, box-shadow;
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
-  -webkit-tap-highlight-color: transparent;
 
-  // Desktop hover effects only
-  @media (hover: hover) and (pointer: fine) {
+  @media (hover: hover) {
     &:hover {
       border-color: var(--primary-color);
-      transform: translateY(@lift) scale(1.02) translateZ(0);
+      transform: translateY(@lift);
       box-shadow: 0 4px 12px var(--shadow-color);
     }
   }
 
   &:active {
-    transform: scale(0.98) translateZ(0);
+    transform: scale(0.98);
   }
 }
 
-// Text shadow for better readability
-.text-shadow-light() {
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-
-  [data-prefers-color-scheme='dark'] & {
-    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
-  }
-}
-
-// Safe area padding
-.safe-area-padding(@property, @base-value) {
-  @{property}: @base-value;
-  @{property}: calc(@base-value + @safe-area-bottom);
+// Text shadow for readability on covers
+.text-shadow() {
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 // Responsive breakpoint

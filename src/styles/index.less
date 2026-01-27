@@ -1,6 +1,4 @@
 // Main styles - Mobile-first design with modern aesthetics
-// Optimized: Using centralized variables and mixins
-
 @import './variables.less';
 
 // Base reset
@@ -12,43 +10,33 @@
 }
 
 html,
-body {
+body,
+.app {
   height: 100%;
   overflow: hidden;
-  // Prevent pinch-to-zoom on mobile
   touch-action: pan-x pan-y;
-  -ms-touch-action: pan-x pan-y;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', Roboto, sans-serif;
+  user-select: none;
 }
 
-body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', 'Roboto',
-    'Oxygen', 'Ubuntu', sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-// Theme styles
+// Theme variables integration
 [data-prefers-color-scheme='light'] {
   --bg-primary: #f8fafc;
   --bg-card: #ffffff;
   --text-primary: #1e293b;
   --text-secondary: #64748b;
   --border-color: #e2e8f0;
-  --shadow-color: rgba(0, 0, 0, 0.08);
+  --shadow-color: rgba(0, 0, 0, 0.06);
 
-  // Primary color CSS variables - Darker/more saturated for light theme
-  // Ensures 4.5:1 contrast ratio on light backgrounds (WCAG AA compliant)
-  --primary-color: #4f46e5; // Darker indigo for better contrast
-  --primary-color-light: #6366f1;
-  --primary-color-lighter: #818cf8;
-  --primary-alpha-10: rgba(79, 70, 229, 0.1);
-  --primary-alpha-15: rgba(79, 70, 229, 0.15);
-  --primary-alpha-20: rgba(79, 70, 229, 0.2);
-  --primary-alpha-25: rgba(79, 70, 229, 0.25);
-  --primary-alpha-30: rgba(79, 70, 229, 0.3);
-  --primary-alpha-35: rgba(79, 70, 229, 0.35);
-  --primary-alpha-40: rgba(79, 70, 229, 0.4);
-  --primary-alpha-50: rgba(79, 70, 229, 0.5);
+  --primary-color: #6366f1;
+  --primary-color-light: #818cf8;
+  --primary-color-lighter: #a5b4fc;
+  --primary-alpha-10: rgba(99, 102, 241, 0.08);
+  --primary-alpha-20: rgba(99, 102, 241, 0.16);
+  --primary-alpha-30: rgba(99, 102, 241, 0.24);
+  --primary-alpha-50: rgba(99, 102, 241, 0.4);
 }
 
 [data-prefers-color-scheme='dark'] {
@@ -56,34 +44,19 @@ body {
   --bg-card: #1e293b;
   --text-primary: #f1f5f9;
   --text-secondary: #94a3b8;
-  --border-color: #334155;
-  --shadow-color: rgba(0, 0, 0, 0.24);
+  --border-color: rgba(255, 255, 255, 0.1);
+  --shadow-color: rgba(0, 0, 0, 0.2);
 
-  // Primary color CSS variables - Lighter/brighter for dark theme
-  // Ensures visibility and vibrancy on dark backgrounds
-  --primary-color: #818cf8; // Lighter indigo for dark backgrounds
+  --primary-color: #818cf8;
   --primary-color-light: #a5b4fc;
   --primary-color-lighter: #c7d2fe;
-  --primary-alpha-10: rgba(129, 140, 248, 0.1);
-  --primary-alpha-15: rgba(129, 140, 248, 0.15);
-  --primary-alpha-20: rgba(129, 140, 248, 0.2);
-  --primary-alpha-25: rgba(129, 140, 248, 0.25);
-  --primary-alpha-30: rgba(129, 140, 248, 0.3);
-  --primary-alpha-35: rgba(129, 140, 248, 0.35);
-  --primary-alpha-40: rgba(129, 140, 248, 0.4);
+  --primary-alpha-10: rgba(129, 140, 248, 0.12);
+  --primary-alpha-20: rgba(129, 140, 248, 0.24);
+  --primary-alpha-30: rgba(129, 140, 248, 0.36);
   --primary-alpha-50: rgba(129, 140, 248, 0.5);
 }
 
-// App container
-.app {
-  background: var(--bg-primary);
-  color: var(--text-primary);
-  overflow: hidden;
-  user-select: none;
-  -webkit-user-select: none;
-}
-
-// Top tabs navigation
+// Layout components
 .top-tabs {
   background: var(--bg-card);
   border-bottom: 1px solid var(--border-color);
@@ -104,105 +77,56 @@ body {
   .ant-tabs-tab {
     flex: 1;
     justify-content: center;
-    margin: 0;
+    margin: 0 !important;
     padding: 12px 0;
-    transition: all @transition-fast @ease-out;
-
-    .ant-tabs-tab-btn {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
   }
 }
 
-// Main content area
 .main-content {
-  -webkit-overflow-scrolling: touch;
-  .custom-scrollbar(4px);
-
-  // &.has-player-card {
-  //   .safe-area-padding(padding-bottom, @player-bar-height);
-  // }
+  flex: 1;
+  overflow: hidden;
+  .custom-scrollbar();
 }
 
-// Page container
 .page {
-  min-height: 100%;
-  padding: 8px;
-  // padding-top: max(8px, env(safe-area-inset-top));
+  height: 100%;
+  padding: 12px;
+  overflow-y: auto;
+  .custom-scrollbar();
 }
 
-// Audio card
-.audio-card {
-  padding: 4px;
+// Shared Card styles
+.card-base() {
   background: var(--bg-card);
-  border-radius: @radius-sm;
+  border-radius: @radius-md;
   border: 1px solid var(--border-color);
+  padding: 12px;
   cursor: pointer;
-  touch-action: manipulation;
-  .card-hover-effect(-2px);
+  .card-hover-effect();
 
   .card-avatar {
     transition: transform @transition-normal @ease-out;
-    will-change: transform;
-    backface-visibility: hidden;
-    -webkit-backface-visibility: hidden;
-    transform: translateZ(0);
   }
 
   &:hover .card-avatar {
-    transform: translateZ(0) scale(1.05);
+    transform: scale(1.05);
   }
 }
 
-// Audio card with checkbox
+.audio-card {
+  .card-base();
+  padding: 8px;
+}
+
+.playlist-card {
+  .card-base();
+}
+
 .audio-card-selectable {
-  padding: 12px;
-  background: var(--bg-card);
-  border-radius: @radius-sm;
-  border: 1px solid var(--border-color);
-  transition: all @transition-fast @ease-out;
-  touch-action: manipulation;
+  .card-base();
 
   &:hover {
     border-color: var(--primary-color);
-  }
-}
-
-// Playlist card
-.playlist-card {
-  background: var(--bg-card);
-  border-radius: @radius-sm;
-  border: 1px solid var(--border-color);
-  cursor: pointer;
-  padding: 12px;
-  touch-action: manipulation;
-  .card-hover-effect(-2px);
-
-  .card-avatar {
-    transition: transform @transition-normal @ease-out;
-    will-change: transform;
-    backface-visibility: hidden;
-    -webkit-backface-visibility: hidden;
-    transform: translateZ(0);
-  }
-
-  &:hover .card-avatar {
-    transform: translateZ(0) scale(1.05);
-  }
-}
-
-// Audio list (used by both MusicPage and PlaylistsPage)
-.audio-list {
-  overflow: hidden;
-  height: 100%;
-  width: 100%;
-
-  // Styled scrollbar for the virtual list internal container
-  &>div {
-    .custom-scrollbar(6px);
-    overflow-x: hidden !important;
   }
 }
 
@@ -215,61 +139,47 @@ body {
   height: @player-bar-height;
   background: var(--bg-card);
   border-top: 1px solid var(--border-color);
-  padding: 12px 16px;
-  z-index: 30;
-  touch-action: manipulation;
-  .safe-area-padding(padding-bottom, 12px);
+  padding: 0 16px;
+  padding-bottom: @safe-area-bottom;
+  display: flex;
+  align-items: center;
+  z-index: 100;
   box-shadow: 0 -2px 12px var(--shadow-color);
 
-  // Mini player buttons
   .mini-player-btn {
     .control-btn-base(@btn-size-sm, 20px, @radius-sm);
-    transform: none; // Override default hover transform
-    touch-action: manipulation;
-
-    &:hover {
-      transform: translateY(-2px) scale(1.05);
-      box-shadow: 0 4px 12px var(--primary-alpha-20);
-    }
 
     &.play {
-      font-size: 32px;
-      width: @btn-size-md;
-      height: @btn-size-md;
-      min-width: @btn-size-md;
-
-      .anticon {
-        font-size: 32px;
-      }
-    }
-
-    [data-prefers-color-scheme='dark'] & {
-      &:hover {
-        box-shadow: 0 4px 16px var(--primary-alpha-30);
-      }
+      .control-btn-base(@btn-size-md, 24px, @radius-md);
     }
   }
 }
 
-// Settings page
-.settings-page {
-  .section-title {
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--text-secondary);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+// Audio list container
+.audio-list {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+
+  &>div {
+    flex: 1;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    -webkit-overflow-scrolling: touch;
+    .custom-scrollbar(6px);
   }
 }
 
-// Message notification styling
+// Ant components overrides
 .ant-message {
-  z-index: 50;
-  top: max(100px, calc(100px + env(safe-area-inset-top))) !important;
+  top: max(80px, calc(80px + env(safe-area-inset-top))) !important;
 
   .ant-message-notice-content {
-    border-radius: @radius-sm;
-    box-shadow: 0 4px 12px var(--shadow-color);
+    border-radius: @radius-md;
+    background: var(--bg-card) !important;
+    color: var(--text-primary) !important;
     backdrop-filter: blur(8px);
   }
 }

@@ -228,7 +228,9 @@ export const AppLayout: FC = memo(() => {
           : antdTheme.defaultAlgorithm,
         token: {
           colorPrimary: "#6366f1",
-          borderRadius: 12,
+          borderRadius: 8,
+          colorBgContainer: isDark ? "#1e293b" : "#ffffff",
+          colorBgLayout: isDark ? "#0f172a" : "#f8fafc",
         },
       }}
     >
@@ -247,8 +249,8 @@ export const AppLayout: FC = memo(() => {
                 {/* Tab bar - hide on special pages */}
                 {!routeHandle.isSpecial && (
                   <Tabs
-                    activeKey={currentTab || "playlists"}
-                    onChange={handleTabChange}
+                    activeKey={currentTab}
+                    onTabClick={handleTabChange}
                     centered
                     tabBarGutter={0}
                     className="top-tabs"

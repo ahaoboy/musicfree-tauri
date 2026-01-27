@@ -1,9 +1,10 @@
 import { FC } from "react"
-import { Result, Button, Flex } from "antd"
+import { Result, Flex } from "antd"
 import ReloadOutlined from "@ant-design/icons/ReloadOutlined"
 import HomeOutlined from "@ant-design/icons/HomeOutlined"
 import { useNavigate } from "react-router-dom"
 import { ErrorBoundary } from "../ErrorBoundary"
+import { AdaptiveButton } from "../AdaptiveButton"
 
 interface PageErrorFallbackProps {
   error: Error
@@ -27,21 +28,21 @@ const PageErrorFallback: FC<PageErrorFallbackProps> = ({ error, onReset }) => {
         title="Page Error"
         subTitle={error.message || "Failed to load this page"}
         extra={[
-          <Button
+          <AdaptiveButton
             key="retry"
             type="primary"
             icon={<ReloadOutlined />}
             onClick={onReset}
           >
             Retry
-          </Button>,
-          <Button
+          </AdaptiveButton>,
+          <AdaptiveButton
             key="home"
             icon={<HomeOutlined />}
             onClick={() => navigate("/playlists")}
           >
             Go Home
-          </Button>,
+          </AdaptiveButton>,
         ]}
       />
     </Flex>

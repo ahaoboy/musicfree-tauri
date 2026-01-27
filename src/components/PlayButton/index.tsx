@@ -1,8 +1,8 @@
 import { FC, useCallback, MouseEvent } from "react"
-import { Button } from "antd"
 import PlayCircleFilled from "@ant-design/icons/PlayCircleFilled"
 import PauseCircleFilled from "@ant-design/icons/PauseCircleFilled"
 import { useAppStore } from "../../store"
+import { AdaptiveButton } from "../AdaptiveButton"
 
 interface PlayButtonProps {
   /** Button type */
@@ -11,36 +11,18 @@ interface PlayButtonProps {
   className?: string
   /** Button size */
   size?: "small" | "middle" | "large"
-  /** Stop event propagation (useful when inside clickable containers) */
+  /** Stop event propagation */
   stopPropagation?: boolean
   /** Icon font size */
   iconSize?: number
-  /** Custom onClick handler (called after toggle) */
-  onClick?: (e: MouseEvent, isPlaying: boolean) => void
+  /** Custom onClick handler */
+  onClick?: (e: MouseEvent, isisPlaying: boolean) => void
   /** Disabled state */
   disabled?: boolean
 }
 
 /**
- * PlayButton - A reusable button for play/pause control
- *
- * @example
- * // Basic usage
- * <PlayButton />
- *
- * @example
- * // In a card (stop propagation)
- * <PlayButton
- *   stopPropagation
- *   className="mini-player-btn play"
- * />
- *
- * @example
- * // Large play button
- * <PlayButton
- *   className="player-control-btn play"
- *   size="large"
- * />
+ * PlayButton - Uses AdaptiveButton for cross-platform reliability.
  */
 export const PlayButton: FC<PlayButtonProps> = ({
   type = "text",
@@ -56,22 +38,16 @@ export const PlayButton: FC<PlayButtonProps> = ({
 
   const handleClick = useCallback(
     (e: MouseEvent<HTMLElement>) => {
-      if (stopPropagation) {
-        e.stopPropagation()
-      }
-
-      if (!disabled) {
-        togglePlay()
-        onClick?.(e, !isPlaying)
-      }
+      togglePlay()
+      onClick?.(e as any, !isPlaying)
     },
-    [stopPropagation, disabled, togglePlay, isPlaying, onClick],
+    [togglePlay, isPlaying, onClick],
   )
 
   const iconStyle = iconSize ? { fontSize: iconSize } : undefined
 
   return (
-    <Button
+    <AdaptiveButton
       type={type}
       icon={
         isPlaying ? (
@@ -84,6 +60,8 @@ export const PlayButton: FC<PlayButtonProps> = ({
       className={className}
       size={size}
       disabled={disabled}
+      stopPropagation={stopPropagation}
+      iconSize={iconSize}
       aria-label={isPlaying ? "Pause" : "Play"}
     />
   )

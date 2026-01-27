@@ -1,7 +1,7 @@
 import { FC, ReactNode } from "react"
-import { Checkbox, Button, Typography, Flex } from "antd"
+import { Checkbox, Typography, Flex } from "antd"
 import ClearOutlined from "@ant-design/icons/ClearOutlined"
-import { AudioCard } from "../../components"
+import { AudioCard, AdaptiveButton } from "../../components"
 import { Platform } from "../../api"
 
 const { Text } = Typography
@@ -61,11 +61,11 @@ export const SearchBottomBar: FC<SearchBottomBarProps> = ({
             />
 
             {showClearButton && (
-              <Button
+              <AdaptiveButton
                 icon={<ClearOutlined />}
                 onClick={onClear}
                 disabled={isDownloadingAll}
-                title="Clear failed/long pending"
+                aria-label="Clear failed/long pending"
               >
                 {longPendingCount > 0 && (
                   <Text
@@ -78,18 +78,17 @@ export const SearchBottomBar: FC<SearchBottomBarProps> = ({
                     {longPendingCount}
                   </Text>
                 )}
-              </Button>
+              </AdaptiveButton>
             )}
 
-            <Button
+            <AdaptiveButton
               type="primary"
               icon={downloadButtonIcon}
               onClick={onDownloadAll}
-              loading={isDownloadingAll}
-              disabled={isSelectedEmpty}
+              disabled={isSelectedEmpty || isDownloadingAll}
             >
               {downloadButtonText}
-            </Button>
+            </AdaptiveButton>
           </Flex>
         }
       />

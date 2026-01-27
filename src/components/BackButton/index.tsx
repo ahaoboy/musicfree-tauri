@@ -1,7 +1,7 @@
 import { FC, useCallback, MouseEvent } from "react"
 import { useNavigate } from "react-router-dom"
-import { Button } from "antd"
 import LeftOutlined from "@ant-design/icons/LeftOutlined"
+import { AdaptiveButton } from "../AdaptiveButton"
 
 interface BackButtonProps {
   /** Custom navigation path (default: go back -1) */
@@ -12,9 +12,9 @@ interface BackButtonProps {
   className?: string
   /** Button size */
   size?: "small" | "middle" | "large"
-  /** Custom icon (default: LeftOutlined) */
+  /** Custom icon */
   icon?: React.ReactNode
-  /** Custom onClick handler (called before navigation) */
+  /** Custom onClick handler */
   onClick?: (e: MouseEvent<HTMLElement>) => undefined | boolean
   /** Disabled state */
   disabled?: boolean
@@ -23,33 +23,7 @@ interface BackButtonProps {
 }
 
 /**
- * BackButton - A reusable back navigation button
- *
- * @example
- * // Basic usage (go back)
- * <BackButton />
- *
- * @example
- * // Navigate to specific path
- * <BackButton to="/home" />
- *
- * @example
- * // Go back multiple steps
- * <BackButton to={-2} />
- *
- * @example
- * // Custom styling
- * <BackButton className="icon-btn" />
- *
- * @example
- * // Custom handler
- * <BackButton
- *   onClick={(e) => {
- *     console.log('Going back')
- *     // Return false to prevent navigation
- *     return true
- *   }}
- * />
+ * BackButton - USes AdaptiveButton for reliable navigation.
  */
 export const BackButton: FC<BackButtonProps> = ({
   to = -1,
@@ -65,27 +39,22 @@ export const BackButton: FC<BackButtonProps> = ({
 
   const handleClick = useCallback(
     (e: MouseEvent<HTMLElement>) => {
-      if (disabled) return
-
-      // Call custom onClick handler if provided
       if (onClick) {
         const result = onClick(e)
-        // If onClick returns false, prevent navigation
         if (result === false) return
       }
 
-      // Navigate
       if (typeof to === "string") {
         navigate(to)
       } else {
-        navigate(to)
+        navigate(to as any)
       }
     },
-    [disabled, onClick, to, navigate],
+    [onClick, to, navigate],
   )
 
   return (
-    <Button
+    <AdaptiveButton
       type={type}
       icon={icon}
       onClick={handleClick}

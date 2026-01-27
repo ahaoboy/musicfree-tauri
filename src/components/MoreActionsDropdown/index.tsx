@@ -1,5 +1,5 @@
 import { FC, useCallback, useMemo } from "react"
-import { Button, Dropdown, App } from "antd"
+import { Dropdown, App } from "antd"
 import type { MenuProps } from "antd"
 import MoreOutlined from "@ant-design/icons/MoreOutlined"
 import SendOutlined from "@ant-design/icons/SendOutlined"
@@ -7,6 +7,7 @@ import ShareAltOutlined from "@ant-design/icons/ShareAltOutlined"
 import DeleteOutlined from "@ant-design/icons/DeleteOutlined"
 import { writeText } from "@tauri-apps/plugin-clipboard-manager"
 import { openUrl } from "@tauri-apps/plugin-opener"
+import { AdaptiveButton } from "../AdaptiveButton"
 
 // MenuInfo type from Ant Design
 interface MenuInfo {
@@ -17,9 +18,9 @@ interface MenuInfo {
 
 export interface MoreActionsDropdownProps {
   url?: string
-  onDelete?: () => void // Made optional for PlayerPage use case
+  onDelete?: () => void
   disabled?: boolean
-  className?: string // Allow custom styling
+  className?: string
 }
 
 export const MoreActionsDropdown: FC<MoreActionsDropdownProps> = ({
@@ -32,7 +33,6 @@ export const MoreActionsDropdown: FC<MoreActionsDropdownProps> = ({
 
   const handleCopyUrl = useCallback(
     async (info: MenuInfo) => {
-      // Stop event propagation to prevent triggering AudioCard click
       info.domEvent.stopPropagation()
       info.domEvent.preventDefault()
 
@@ -51,7 +51,6 @@ export const MoreActionsDropdown: FC<MoreActionsDropdownProps> = ({
 
   const handleOpenInBrowser = useCallback(
     async (info: MenuInfo) => {
-      // Stop event propagation to prevent triggering AudioCard click
       info.domEvent.stopPropagation()
       info.domEvent.preventDefault()
 
@@ -69,16 +68,13 @@ export const MoreActionsDropdown: FC<MoreActionsDropdownProps> = ({
 
   const handleDelete = useCallback(
     (info: MenuInfo) => {
-      // Stop event propagation to prevent triggering AudioCard click
       info.domEvent.stopPropagation()
       info.domEvent.preventDefault()
-
       onDelete?.()
     },
     [onDelete],
   )
 
-  // Build menu items dynamically based on whether onDelete is provided
   const items: MenuProps["items"] = useMemo(() => {
     const baseItems: MenuProps["items"] = [
       {
@@ -97,12 +93,9 @@ export const MoreActionsDropdown: FC<MoreActionsDropdownProps> = ({
       },
     ]
 
-    // Only add delete option if onDelete is provided
     if (onDelete) {
       baseItems.push(
-        {
-          type: "divider",
-        },
+        { type: "divider" },
         {
           key: "delete",
           label: "Delete",
@@ -123,18 +116,14 @@ export const MoreActionsDropdown: FC<MoreActionsDropdownProps> = ({
       placement="bottomRight"
       disabled={disabled}
       styles={{
-        root: {
-          zIndex: 30,
-        },
+        root: { zIndex: 30 },
       }}
     >
-      <Button
+      <AdaptiveButton
         type="text"
         icon={<MoreOutlined />}
         className={className}
-        onClick={(e) => {
-          e.stopPropagation()
-        }}
+        stopPropagation
       />
     </Dropdown>
   )

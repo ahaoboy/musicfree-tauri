@@ -1,9 +1,9 @@
 import { FC, useCallback, MouseEvent } from "react"
-import { Button } from "antd"
 import HeartOutlined from "@ant-design/icons/HeartOutlined"
 import HeartFilled from "@ant-design/icons/HeartFilled"
 import { LocalAudio } from "../../api"
 import { useAppStore } from "../../store"
+import { AdaptiveButton } from "../AdaptiveButton"
 
 interface FavoriteButtonProps {
   /** Audio to favorite/unfavorite */
@@ -16,37 +16,16 @@ interface FavoriteButtonProps {
   size?: "small" | "middle" | "large"
   /** Icon font size */
   iconSize?: number
-  /** Stop event propagation (useful when inside clickable containers) */
+  /** Stop event propagation */
   stopPropagation?: boolean
-  /** Custom onClick handler (called after toggle) */
+  /** Custom onClick handler */
   onClick?: (e: MouseEvent, isFavorited: boolean) => void
   /** Disabled state */
   disabled?: boolean
 }
 
 /**
- * FavoriteButton - A reusable button for favoriting/unfavoriting audio
- *
- * @example
- * // Basic usage
- * <FavoriteButton audio={currentAudio} />
- *
- * @example
- * // In a card (stop propagation)
- * <FavoriteButton
- *   audio={audio}
- *   stopPropagation
- *   className="mini-player-btn"
- * />
- *
- * @example
- * // Custom handler
- * <FavoriteButton
- *   audio={audio}
- *   onClick={(e, isFavorited) => {
- *     console.log('Favorited:', isFavorited)
- *   }}
- * />
+ * FavoriteButton - Uses AdaptiveButton for cross-platform reliability.
  */
 export const FavoriteButton: FC<FavoriteButtonProps> = ({
   audio,
@@ -65,16 +44,12 @@ export const FavoriteButton: FC<FavoriteButtonProps> = ({
 
   const handleClick = useCallback(
     (e: MouseEvent<HTMLElement>) => {
-      if (stopPropagation) {
-        e.stopPropagation()
-      }
-
-      if (audio && !disabled) {
+      if (audio) {
         toggleFavorite(audio)
-        onClick?.(e, !isFavorited)
+        onClick?.(e as any, !isFavorited)
       }
     },
-    [audio, disabled, stopPropagation, toggleFavorite, isFavorited, onClick],
+    [audio, toggleFavorite, isFavorited, onClick],
   )
 
   if (!audio) {
@@ -84,7 +59,7 @@ export const FavoriteButton: FC<FavoriteButtonProps> = ({
   const iconStyle = iconSize ? { fontSize: iconSize } : undefined
 
   return (
-    <Button
+    <AdaptiveButton
       type={type}
       icon={
         isFavorited ? (
@@ -97,6 +72,8 @@ export const FavoriteButton: FC<FavoriteButtonProps> = ({
       className={className}
       size={size}
       disabled={disabled}
+      stopPropagation={stopPropagation}
+      iconSize={iconSize}
       aria-label={isFavorited ? "Remove from favorites" : "Add to favorites"}
     />
   )

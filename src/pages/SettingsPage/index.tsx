@@ -1,5 +1,5 @@
 import { FC, useCallback, useMemo, useState, useEffect } from "react"
-import { Button, App, Typography, Flex, Select, Divider } from "antd"
+import { App, Typography, Flex, Select, Divider } from "antd"
 import BulbOutlined from "@ant-design/icons/BulbOutlined"
 import MoonOutlined from "@ant-design/icons/MoonOutlined"
 import DesktopOutlined from "@ant-design/icons/DesktopOutlined"
@@ -17,7 +17,7 @@ import {
   CurrentPlatform,
 } from "../../api"
 import { useConfirm } from "../../hooks"
-import { CopyButton } from "../../components"
+import { CopyButton, AdaptiveButton } from "../../components"
 import LoadingOutlined from "@ant-design/icons/LoadingOutlined"
 import prettyBytes from "pretty-bytes"
 
@@ -214,11 +214,11 @@ export const SettingsPage: FC = () => {
           <Flex align="center" justify="space-between">
             <Text>Repository</Text>
             <Flex gap="small">
-              <Button
+              <AdaptiveButton
                 type="text"
                 icon={<GithubOutlined />}
                 onClick={() => openUrl(REPO_URL)}
-                title="Open in Browser"
+                aria-label="Open in Browser"
               />
               <CopyButton
                 text={REPO_URL}
@@ -232,12 +232,12 @@ export const SettingsPage: FC = () => {
             <Text>App Directory</Text>
             <Flex gap="small">
               {CurrentPlatform !== "android" && (
-                <Button
+                <AdaptiveButton
                   type="text"
                   icon={<FolderOpenOutlined />}
                   onClick={() => appDir && openPath(appDir)}
                   disabled={!appDir}
-                  title="Open Directory"
+                  aria-label="Open Directory"
                 />
               )}
               <CopyButton
@@ -270,12 +270,12 @@ export const SettingsPage: FC = () => {
               <Text>Backup & Restore</Text>
             </Flex>
             <Flex gap="small">
-              <Button onClick={handleExport} loading={exporting}>
+              <AdaptiveButton onClick={handleExport} disabled={exporting}>
                 Export
-              </Button>
-              <Button onClick={handleImport} loading={importing}>
+              </AdaptiveButton>
+              <AdaptiveButton onClick={handleImport} disabled={importing}>
                 Import
-              </Button>
+              </AdaptiveButton>
             </Flex>
           </Flex>
           <Divider style={{ margin: "16px 0" }} />
@@ -283,14 +283,18 @@ export const SettingsPage: FC = () => {
             <Flex vertical gap={4}>
               <Text>Clear Storage</Text>
             </Flex>
-            <Button danger type="primary" onClick={handleClearData}>
+            <AdaptiveButton
+              type="primary"
+              onClick={handleClearData}
+              style={{ background: "#ff4d4f", borderColor: "#ff4d4f" }}
+            >
               Clear
               {loadingStorage ? (
                 <LoadingOutlined />
               ) : (
                 ` ${prettyBytes(storageSize)}`
               )}
-            </Button>
+            </AdaptiveButton>
           </Flex>
         </Flex>
       </Flex>

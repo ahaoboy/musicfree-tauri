@@ -1,45 +1,30 @@
 import { FC, useCallback, MouseEvent } from "react"
-import { Button } from "antd"
 import StepBackwardOutlined from "@ant-design/icons/StepBackwardOutlined"
 import StepForwardOutlined from "@ant-design/icons/StepForwardOutlined"
 import { useAppStore } from "../../store"
+import { AdaptiveButton } from "../AdaptiveButton"
 
 interface SkipButtonProps {
   /** Direction to skip */
-  direction: "prev" | "next"
-  /** Button type */
-  type?: "text" | "link" | "default" | "primary" | "dashed"
+  direction: "next" | "prev"
   /** Additional className */
   className?: string
   /** Button size */
   size?: "small" | "middle" | "large"
   /** Icon font size */
   iconSize?: number
-  /** Stop event propagation (useful when inside clickable containers) */
+  /** Stop event propagation */
   stopPropagation?: boolean
-  /** Custom onClick handler (called after skip) */
-  onClick?: (e: MouseEvent, direction: "prev" | "next") => void
-  /** Disabled state (overrides auto-disable for prev) */
+  /** Button type */
+  type?: "text" | "link" | "default" | "primary" | "dashed"
+  /** Custom onClick handler */
+  onClick?: (e: MouseEvent, direction: "next" | "prev") => void
+  /** Disabled state */
   disabled?: boolean
 }
 
 /**
- * SkipButton - A reusable button for skipping to previous/next track
- *
- * @example
- * // Previous track
- * <SkipButton direction="prev" />
- *
- * @example
- * // Next track
- * <SkipButton direction="next" />
- *
- * @example
- * // In player controls
- * <SkipButton
- *   direction="prev"
- *   className="player-control-btn"
- * />
+ * SkipButton - Uses AdaptiveButton for consistent skip behavior.
  */
 export const SkipButton: FC<SkipButtonProps> = ({
   direction,
@@ -53,33 +38,26 @@ export const SkipButton: FC<SkipButtonProps> = ({
 }) => {
   const playNext = useAppStore((state) => state.playNext)
   const playPrev = useAppStore((state) => state.playPrev)
-  const canPlayPrev = useAppStore((state) => state.canPlayPrev)
-
-  // Auto-disable prev button if can't play previous
-  // const isDisabled = disabled || (direction === "prev" && !canPlayPrev())
+  const canPlayPrevValue = useAppStore((state) => state.canPlayPrev())
 
   const handleClick = useCallback(
     (e: MouseEvent<HTMLElement>) => {
-      if (stopPropagation) {
-        e.stopPropagation()
-      }
-
       if (direction === "prev") {
-        if (canPlayPrev()) {
+        if (canPlayPrevValue) {
           playPrev()
         }
       } else {
         playNext()
       }
-      onClick?.(e, direction)
+      onClick?.(e as any, direction)
     },
-    [stopPropagation, direction, playPrev, playNext, onClick],
+    [direction, playPrev, playNext, canPlayPrevValue, onClick],
   )
 
   const iconStyle = iconSize ? { fontSize: iconSize } : undefined
 
   return (
-    <Button
+    <AdaptiveButton
       type={type}
       icon={
         direction === "prev" ? (
@@ -92,6 +70,8 @@ export const SkipButton: FC<SkipButtonProps> = ({
       className={className}
       size={size}
       disabled={disabled}
+      stopPropagation={stopPropagation}
+      iconSize={iconSize}
       aria-label={direction === "prev" ? "Previous track" : "Next track"}
     />
   )

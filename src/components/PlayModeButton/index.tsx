@@ -1,10 +1,11 @@
 import { FC, useCallback, useMemo, MouseEvent } from "react"
-import { Button, Typography, Flex } from "antd"
+import { Typography, Flex } from "antd"
 import RetweetOutlined from "@ant-design/icons/RetweetOutlined"
 import QuestionOutlined from "@ant-design/icons/QuestionOutlined"
 import BarsOutlined from "@ant-design/icons/BarsOutlined"
 import { useAppStore } from "../../store"
 import type { PlayMode } from "../../api"
+import { AdaptiveButton } from "../AdaptiveButton"
 
 const { Text } = Typography
 
@@ -17,30 +18,16 @@ interface PlayModeButtonProps {
   size?: "small" | "middle" | "large"
   /** Icon font size */
   iconSize?: number
-  /** Stop event propagation (useful when inside clickable containers) */
+  /** Stop event propagation */
   stopPropagation?: boolean
-  /** Custom onClick handler (called after toggle) */
+  /** Custom onClick handler */
   onClick?: (e: MouseEvent, newMode: PlayMode) => void
   /** Disabled state */
   disabled?: boolean
 }
 
 /**
- * PlayModeButton - A reusable button for cycling through play modes
- *
- * Play modes:
- * - sequence: Play in order
- * - list-loop: Loop the playlist
- * - single-loop: Loop current track
- * - shuffle: Random order
- *
- * @example
- * // Basic usage
- * <PlayModeButton />
- *
- * @example
- * // In player controls
- * <PlayModeButton className="player-control-btn" />
+ * PlayModeButton - Uses AdaptiveButton for consistent interaction.
  */
 export const PlayModeButton: FC<PlayModeButtonProps> = ({
   type = "text",
@@ -56,32 +43,24 @@ export const PlayModeButton: FC<PlayModeButtonProps> = ({
 
   const handleClick = useCallback(
     (e: MouseEvent<HTMLElement>) => {
-      if (stopPropagation) {
-        e.stopPropagation()
-      }
+      togglePlayMode()
 
-      if (!disabled) {
-        togglePlayMode()
-        // Get the new mode after toggle
-        const modes: PlayMode[] = [
-          "sequence",
-          "list-loop",
-          "single-loop",
-          "shuffle",
-        ]
-        // Use a safe default for index calculation
-        const currentMode = currentPlayMode || "sequence"
-        const currentIndex = modes.indexOf(currentMode)
-        const newMode = modes[(currentIndex + 1) % modes.length]
-        onClick?.(e, newMode)
-      }
+      const modes: PlayMode[] = [
+        "sequence",
+        "list-loop",
+        "single-loop",
+        "shuffle",
+      ]
+      const currentMode = currentPlayMode || "sequence"
+      const currentIndex = modes.indexOf(currentMode)
+      const newMode = modes[(currentIndex + 1) % modes.length]
+      onClick?.(e as any, newMode)
     },
-    [stopPropagation, disabled, togglePlayMode, currentPlayMode, onClick],
+    [togglePlayMode, currentPlayMode, onClick],
   )
 
   const iconStyle = iconSize ? { fontSize: iconSize } : undefined
 
-  // Memoize mode icon
   const modeIcon = useMemo(() => {
     switch (currentPlayMode) {
       case "sequence":
@@ -117,7 +96,6 @@ export const PlayModeButton: FC<PlayModeButtonProps> = ({
     }
   }, [currentPlayMode, iconStyle, iconSize])
 
-  // Memoize aria-label
   const ariaLabel = useMemo(() => {
     switch (currentPlayMode) {
       case "sequence":
@@ -134,13 +112,15 @@ export const PlayModeButton: FC<PlayModeButtonProps> = ({
   }, [currentPlayMode])
 
   return (
-    <Button
+    <AdaptiveButton
       type={type}
       icon={modeIcon}
       onClick={handleClick}
       className={className}
       size={size}
       disabled={disabled}
+      stopPropagation={stopPropagation}
+      iconSize={iconSize}
       aria-label={ariaLabel}
     />
   )
