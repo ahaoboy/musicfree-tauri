@@ -1,6 +1,6 @@
 import { FC, useCallback, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
-import { Flex, Avatar } from "antd"
+import { Stack, Avatar } from "@mui/material"
 import { useAppStore } from "../../store"
 import { LocalAudio, DEFAULT_COVER_URL } from "../../api"
 import { AudioCard, AudioList, MoreActionsDropdown } from "../../components"
@@ -112,44 +112,42 @@ export const PlaylistDetail: FC = () => {
   // Playlist not found
   if (!playlist) {
     return (
-      <Flex vertical className="page" flex={1}>
-        <Flex flex={1} align="center" justify="center">
+      <Stack className="page" flex={1}>
+        <Stack flex={1} alignItems="center" justifyContent="center">
           <Avatar
             src={DEFAULT_COVER_URL}
-            size={256}
-            shape="square"
-            style={{ opacity: 0.5 }}
+            variant="rounded"
+            sx={{ width: 256, height: 256, opacity: 0.5 }}
             alt="Playlist Not Found"
           />
-        </Flex>
-      </Flex>
+        </Stack>
+      </Stack>
     )
   }
 
   // Empty playlist
   if (playlist.audios.length === 0) {
     return (
-      <Flex vertical className="page" flex={1}>
-        <Flex flex={1} align="center" justify="center">
+      <Stack className="page" flex={1}>
+        <Stack flex={1} alignItems="center" justifyContent="center">
           <Avatar
             src={DEFAULT_COVER_URL}
-            size={256}
-            shape="square"
-            style={{ opacity: 0.5 }}
+            variant="rounded"
+            sx={{ width: 256, height: 256, opacity: 0.5 }}
             alt="No Audio"
           />
-        </Flex>
-      </Flex>
+        </Stack>
+      </Stack>
     )
   }
 
   return (
-    <Flex vertical className="page" style={{ flex: 1, overflow: "hidden" }}>
+    <Stack className="page" sx={{ flex: 1, overflow: "hidden" }}>
       <AudioList
         items={playlist.audios}
         getItemId={getAudioId}
         renderItem={renderAudioItem}
       />
-    </Flex>
+    </Stack>
   )
 }

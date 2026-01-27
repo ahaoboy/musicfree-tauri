@@ -1,20 +1,28 @@
-import { FC, useCallback, MouseEvent } from "react"
-import PlayCircleFilled from "@ant-design/icons/PlayCircleFilled"
-import PauseCircleFilled from "@ant-design/icons/PauseCircleFilled"
+import { FC, useCallback, MouseEvent, useMemo } from "react"
+import { Button } from "@mui/material"
+import { PlayCircle, PauseCircle } from "@mui/icons-material"
 import { useAppStore } from "../../store"
-import { AdaptiveButton } from "../AdaptiveButton"
 
 interface PlayButtonProps {
-  /** Button type */
-  type?: "text" | "link" | "default" | "primary" | "dashed"
+  variant?: "text" | "outlined" | "contained"
+  color?:
+    | "inherit"
+    | "primary"
+    | "secondary"
+    | "success"
+    | "error"
+    | "info"
+    | "warning"
   /** Additional className */
   className?: string
   /** Button size */
-  size?: "small" | "middle" | "large"
+  size?: "small" | "medium" | "large"
   /** Stop event propagation */
   stopPropagation?: boolean
   /** Icon font size */
   iconSize?: number
+  /** Override button box size (width/height) in px */
+  boxSize?: number
   /** Custom onClick handler */
   onClick?: (e: MouseEvent, isisPlaying: boolean) => void
   /** Disabled state */
@@ -25,11 +33,13 @@ interface PlayButtonProps {
  * PlayButton - Uses AdaptiveButton for cross-platform reliability.
  */
 export const PlayButton: FC<PlayButtonProps> = ({
-  type = "text",
+  variant = "text",
+  color = "inherit",
   className,
   size,
   stopPropagation = false,
   iconSize,
+  boxSize,
   onClick,
   disabled,
 }) => {
@@ -38,32 +48,46 @@ export const PlayButton: FC<PlayButtonProps> = ({
 
   const handleClick = useCallback(
     (e: MouseEvent<HTMLElement>) => {
+      if (stopPropagation) {
+        e.stopPropagation()
+      }
       togglePlay()
       onClick?.(e as any, !isPlaying)
     },
-    [togglePlay, isPlaying, onClick],
+    [togglePlay, isPlaying, onClick, stopPropagation],
   )
 
   const iconStyle = iconSize ? { fontSize: iconSize } : undefined
 
+  const buttonSize = useMemo(() => {
+    if (size === "small") return 28
+    if (size === "large") return 40
+    return 32
+  }, [size])
+
   return (
-    <AdaptiveButton
-      type={type}
-      icon={
-        isPlaying ? (
-          <PauseCircleFilled style={iconStyle} />
-        ) : (
-          <PlayCircleFilled style={iconStyle} />
-        )
-      }
+    <Button
+      variant={variant}
+      color={color}
       onClick={handleClick}
       className={className}
       size={size}
       disabled={disabled}
-      stopPropagation={stopPropagation}
-      iconSize={iconSize}
       aria-label={isPlaying ? "Pause" : "Play"}
-    />
+      sx={{
+        minWidth: 0,
+        p: 0,
+        width: boxSize ?? buttonSize,
+        height: boxSize ?? buttonSize,
+        borderRadius: 1,
+      }}
+    >
+      {isPlaying ? (
+        <PauseCircle style={iconStyle} />
+      ) : (
+        <PlayCircle style={iconStyle} />
+      )}
+    </Button>
   )
 }
 

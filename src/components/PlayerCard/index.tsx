@@ -28,8 +28,9 @@ export const PlayerCard: FC<PlayerCardProps> = memo(({ audio }) => {
       platform={audio.audio.platform}
       title={audio.audio.title}
       // Mini player specific: show platform text as subtitle
-      subtitle={audio.audio.platform}
-      showPlatformIcon={false}
+      // subtitle={audio.audio.platform}
+      duration={audio.audio.duration}
+      showPlatformIcon={true}
       avatarSize={60}
       showBorder={false}
       onClick={handleCardClick}
@@ -40,7 +41,7 @@ export const PlayerCard: FC<PlayerCardProps> = memo(({ audio }) => {
           buttonClassName="mini-player-btn"
           buttonSize="large"
           iconSize={32}
-          gap={"small"}
+          gap={1}
         />
       }
     />

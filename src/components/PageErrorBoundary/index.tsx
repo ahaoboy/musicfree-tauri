@@ -1,10 +1,8 @@
 import { FC } from "react"
-import { Result, Flex } from "antd"
-import ReloadOutlined from "@ant-design/icons/ReloadOutlined"
-import HomeOutlined from "@ant-design/icons/HomeOutlined"
+import { Box, Typography, Button } from "@mui/material"
+import { ErrorOutline, Refresh, Home } from "@mui/icons-material"
 import { useNavigate } from "react-router-dom"
 import { ErrorBoundary } from "../ErrorBoundary"
-import { AdaptiveButton } from "../AdaptiveButton"
 
 interface PageErrorFallbackProps {
   error: Error
@@ -15,37 +13,51 @@ const PageErrorFallback: FC<PageErrorFallbackProps> = ({ error, onReset }) => {
   const navigate = useNavigate()
 
   return (
-    <Flex
-      vertical
-      flex={1}
-      align="center"
-      justify="center"
+    <Box
+      sx={{
+        flex: 1,
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        p: 3,
+        height: "100%",
+        textAlign: "center",
+      }}
       className="page"
-      style={{ padding: 24 }}
     >
-      <Result
-        status="error"
-        title="Page Error"
-        subTitle={error.message || "Failed to load this page"}
-        extra={[
-          <AdaptiveButton
-            key="retry"
-            type="primary"
-            icon={<ReloadOutlined />}
-            onClick={onReset}
-          >
-            Retry
-          </AdaptiveButton>,
-          <AdaptiveButton
-            key="home"
-            icon={<HomeOutlined />}
-            onClick={() => navigate("/playlists")}
-          >
-            Go Home
-          </AdaptiveButton>,
-        ]}
-      />
-    </Flex>
+      <ErrorOutline color="error" sx={{ fontSize: 64, mb: 2 }} />
+      <Typography variant="h5" gutterBottom>
+        Page Error
+      </Typography>
+      <Typography
+        variant="body1"
+        color="text.secondary"
+        paragraph
+        sx={{ mb: 4 }}
+      >
+        {error.message || "Failed to load this page"}
+      </Typography>
+      <Box sx={{ display: "flex", gap: 2 }}>
+        <Button
+          key="retry"
+          variant="contained"
+          color="primary"
+          startIcon={<Refresh />}
+          onClick={onReset}
+        >
+          Retry
+        </Button>
+        <Button
+          key="home"
+          variant="outlined"
+          startIcon={<Home />}
+          onClick={() => navigate("/playlists")}
+        >
+          Go Home
+        </Button>
+      </Box>
+    </Box>
   )
 }
 

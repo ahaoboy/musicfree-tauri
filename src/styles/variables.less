@@ -110,28 +110,6 @@
   --border-radius: @radius;
   --text-color: var(--text-primary);
 
-  .anticon {
-    font-size: @font-size;
-  }
-
-  // Native antd-mobile support
-  &.adm-button {
-    padding: 0;
-    font-size: @font-size;
-    border-radius: @radius;
-
-    &.adm-button-none {
-      --background-color: transparent;
-      --border-color: transparent;
-    }
-
-    &.adm-button-primary {
-      --background-color: var(--primary-color);
-      --border-color: var(--primary-color);
-      --text-color: #fff;
-    }
-  }
-
   &:hover {
     @media (hover: hover) {
       background: var(--primary-alpha-20);

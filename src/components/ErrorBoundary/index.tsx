@@ -1,6 +1,7 @@
 import { Component, ReactNode, ErrorInfo } from "react"
-import { Result } from "antd"
-import { AdaptiveButton } from "../AdaptiveButton"
+import { Box, Typography, Container, Paper } from "@mui/material"
+import { ErrorOutline } from "@mui/icons-material"
+import { Button } from "@mui/material"
 
 interface Props {
   children: ReactNode
@@ -42,16 +43,34 @@ export class ErrorBoundary extends Component<Props, State> {
       }
 
       return (
-        <Result
-          status="error"
-          title="Something went wrong"
-          subTitle={this.state.error?.message || "An unexpected error occurred"}
-          extra={
-            <AdaptiveButton type="primary" onClick={this.handleReset}>
-              Try Again
-            </AdaptiveButton>
-          }
-        />
+        <Container maxWidth="sm" sx={{ mt: 8, textAlign: "center" }}>
+          <Paper
+            sx={{
+              p: 4,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: 2,
+            }}
+          >
+            <ErrorOutline color="error" sx={{ fontSize: 64 }} />
+            <Typography variant="h5" component="h1" gutterBottom>
+              Something went wrong
+            </Typography>
+            <Typography variant="body1" color="text.secondary" paragraph>
+              {this.state.error?.message || "An unexpected error occurred"}
+            </Typography>
+            <Box>
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={this.handleReset}
+              >
+                Try Again
+              </Button>
+            </Box>
+          </Paper>
+        </Container>
       )
     }
 

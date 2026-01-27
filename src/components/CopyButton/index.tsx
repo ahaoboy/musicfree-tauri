@@ -1,16 +1,14 @@
-import { FC, useState, useCallback, ReactNode } from "react"
-import { App } from "antd"
-import CopyOutlined from "@ant-design/icons/CopyOutlined"
-import CheckOutlined from "@ant-design/icons/CheckOutlined"
+import { FC, useState, useCallback, ReactNode, useMemo } from "react"
+import { Snackbar, Alert, Button } from "@mui/material"
+import { ContentCopy, Check } from "@mui/icons-material"
 import { writeText } from "@tauri-apps/plugin-clipboard-manager"
-import { AdaptiveButton } from "../AdaptiveButton"
 
 interface CopyButtonProps {
   /** Text to copy to clipboard */
   text: string
-  /** Custom icon to display (default: CopyOutlined) */
+  /** Custom icon to display (default: ContentCopy) */
   icon?: ReactNode
-  /** Icon to show when copied (default: CheckOutlined) */
+  /** Icon to show when copied (default: Check) */
   copiedIcon?: ReactNode
   /** Success message (default: "Copied to clipboard") */
   successMessage?: string
@@ -18,12 +16,19 @@ interface CopyButtonProps {
   errorMessage?: string
   /** Duration to show copied state in ms (default: 2000) */
   copiedDuration?: number
-  /** Button type */
-  type?: "text" | "link" | "default" | "primary" | "dashed"
+  variant?: "text" | "outlined" | "contained"
+  color?:
+    | "inherit"
+    | "primary"
+    | "secondary"
+    | "success"
+    | "error"
+    | "info"
+    | "warning"
   /** Additional className */
   className?: string
   /** Button size */
-  size?: "small" | "middle" | "large"
+  size?: "small" | "medium" | "large"
   /** Disabled state */
   disabled?: boolean
 }
@@ -33,18 +38,27 @@ interface CopyButtonProps {
  */
 export const CopyButton: FC<CopyButtonProps> = ({
   text,
-  icon = <CopyOutlined />,
-  copiedIcon = <CheckOutlined />,
+  icon = <ContentCopy />,
+  copiedIcon = <Check />,
   successMessage = "Copied to clipboard",
   errorMessage = "Failed to copy",
   copiedDuration = 2000,
-  type = "text",
+  variant = "text",
+  color = "inherit",
   className,
   size,
   disabled,
 }) => {
   const [copied, setCopied] = useState(false)
-  const { message } = App.useApp()
+  const [snackbarOpen, setSnackbarOpen] = useState(false)
+  const [snackbarMessage, setSnackbarMessage] = useState("")
+  const [snackbarSeverity, setSnackbarSeverity] = useState<"success" | "error">(
+    "success",
+  )
+
+  const handleClose = () => {
+    setSnackbarOpen(false)
+  }
 
   const handleCopy = useCallback(async () => {
     if (!text || disabled) return
@@ -52,23 +66,58 @@ export const CopyButton: FC<CopyButtonProps> = ({
     try {
       await writeText(text)
       setCopied(true)
-      message.success(successMessage)
+      setSnackbarMessage(successMessage)
+      setSnackbarSeverity("success")
+      setSnackbarOpen(true)
       setTimeout(() => setCopied(false), copiedDuration)
     } catch (e) {
       console.error("Copy failed:", e)
-      message.error(errorMessage)
+      setSnackbarMessage(errorMessage)
+      setSnackbarSeverity("error")
+      setSnackbarOpen(true)
     }
-  }, [text, disabled, successMessage, errorMessage, copiedDuration, message])
+  }, [text, disabled, successMessage, errorMessage, copiedDuration])
+
+  const buttonSize = useMemo(() => {
+    if (size === "small") return 28
+    if (size === "large") return 40
+    return 32
+  }, [size])
 
   return (
-    <AdaptiveButton
-      type={type}
-      icon={copied ? copiedIcon : icon}
-      onClick={handleCopy}
-      className={className}
-      size={size}
-      disabled={disabled}
-    />
+    <>
+      <Button
+        variant={variant}
+        color={color}
+        onClick={handleCopy}
+        className={className}
+        size={size}
+        disabled={disabled}
+        sx={{
+          minWidth: 0,
+          p: 0,
+          width: buttonSize,
+          height: buttonSize,
+          borderRadius: 1,
+        }}
+      >
+        {copied ? copiedIcon : icon}
+      </Button>
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={copiedDuration}
+        onClose={handleClose}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      >
+        <Alert
+          onClose={handleClose}
+          severity={snackbarSeverity}
+          sx={{ width: "100%" }}
+        >
+          {snackbarMessage}
+        </Alert>
+      </Snackbar>
+    </>
   )
 }
 

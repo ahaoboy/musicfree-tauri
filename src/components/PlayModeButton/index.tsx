@@ -1,21 +1,25 @@
 import { FC, useCallback, useMemo, MouseEvent } from "react"
-import { Typography, Flex } from "antd"
-import RetweetOutlined from "@ant-design/icons/RetweetOutlined"
-import QuestionOutlined from "@ant-design/icons/QuestionOutlined"
-import BarsOutlined from "@ant-design/icons/BarsOutlined"
+import { Button } from "@mui/material"
+import { Repeat, RepeatOne, Shuffle, QueueMusic } from "@mui/icons-material"
 import { useAppStore } from "../../store"
 import type { PlayMode } from "../../api"
-import { AdaptiveButton } from "../AdaptiveButton"
-
-const { Text } = Typography
 
 interface PlayModeButtonProps {
-  /** Button type */
-  type?: "text" | "link" | "default" | "primary" | "dashed"
+  /** Button variant */
+  variant?: "text" | "outlined" | "contained"
+  /** Button color */
+  color?:
+    | "inherit"
+    | "primary"
+    | "secondary"
+    | "success"
+    | "error"
+    | "info"
+    | "warning"
   /** Additional className */
   className?: string
   /** Button size */
-  size?: "small" | "middle" | "large"
+  size?: "small" | "medium" | "large"
   /** Icon font size */
   iconSize?: number
   /** Stop event propagation */
@@ -30,7 +34,8 @@ interface PlayModeButtonProps {
  * PlayModeButton - Uses AdaptiveButton for consistent interaction.
  */
 export const PlayModeButton: FC<PlayModeButtonProps> = ({
-  type = "text",
+  variant = "text",
+  color = "inherit",
   className,
   size,
   iconSize,
@@ -43,6 +48,10 @@ export const PlayModeButton: FC<PlayModeButtonProps> = ({
 
   const handleClick = useCallback(
     (e: MouseEvent<HTMLElement>) => {
+      if (stopPropagation) {
+        e.stopPropagation()
+      }
+
       togglePlayMode()
 
       const modes: PlayMode[] = [
@@ -56,7 +65,7 @@ export const PlayModeButton: FC<PlayModeButtonProps> = ({
       const newMode = modes[(currentIndex + 1) % modes.length]
       onClick?.(e as any, newMode)
     },
-    [togglePlayMode, currentPlayMode, onClick],
+    [togglePlayMode, currentPlayMode, onClick, stopPropagation],
   )
 
   const iconStyle = iconSize ? { fontSize: iconSize } : undefined
@@ -64,37 +73,17 @@ export const PlayModeButton: FC<PlayModeButtonProps> = ({
   const modeIcon = useMemo(() => {
     switch (currentPlayMode) {
       case "sequence":
-        return <BarsOutlined style={iconStyle} />
+        return <QueueMusic style={iconStyle} />
       case "list-loop":
-        return <RetweetOutlined style={iconStyle} />
+        return <Repeat style={iconStyle} />
       case "single-loop":
-        return (
-          <Flex
-            style={{ position: "relative" }}
-            align="center"
-            justify="center"
-          >
-            <RetweetOutlined style={iconStyle} />
-            <Text
-              style={{
-                position: "absolute",
-                fontSize: iconSize ? iconSize * 0.3 : 10,
-                right: iconSize ? -iconSize * 0.2 : -6,
-                top: iconSize ? -iconSize * 0.1 : -4,
-                fontWeight: "bold",
-                color: "currentColor",
-              }}
-            >
-              1
-            </Text>
-          </Flex>
-        )
+        return <RepeatOne style={iconStyle} />
       case "shuffle":
-        return <QuestionOutlined style={iconStyle} />
+        return <Shuffle style={iconStyle} />
       default:
-        return <BarsOutlined style={iconStyle} />
+        return <QueueMusic style={iconStyle} />
     }
-  }, [currentPlayMode, iconStyle, iconSize])
+  }, [currentPlayMode, iconStyle])
 
   const ariaLabel = useMemo(() => {
     switch (currentPlayMode) {
@@ -111,18 +100,31 @@ export const PlayModeButton: FC<PlayModeButtonProps> = ({
     }
   }, [currentPlayMode])
 
+  const buttonSize = useMemo(() => {
+    if (size === "small") return 28
+    if (size === "large") return 40
+    return 32
+  }, [size])
+
   return (
-    <AdaptiveButton
-      type={type}
-      icon={modeIcon}
+    <Button
+      variant={variant}
+      color={color}
       onClick={handleClick}
       className={className}
       size={size}
       disabled={disabled}
-      stopPropagation={stopPropagation}
-      iconSize={iconSize}
       aria-label={ariaLabel}
-    />
+      sx={{
+        minWidth: 0,
+        p: 0,
+        width: buttonSize,
+        height: buttonSize,
+        borderRadius: 1,
+      }}
+    >
+      {modeIcon}
+    </Button>
   )
 }
 

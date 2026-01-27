@@ -1,19 +1,25 @@
-import { FC, useCallback, MouseEvent } from "react"
-import HeartOutlined from "@ant-design/icons/HeartOutlined"
-import HeartFilled from "@ant-design/icons/HeartFilled"
+import { FC, useCallback, MouseEvent, useMemo } from "react"
+import { Button } from "@mui/material"
+import { Favorite, FavoriteBorder } from "@mui/icons-material"
 import { LocalAudio } from "../../api"
 import { useAppStore } from "../../store"
-import { AdaptiveButton } from "../AdaptiveButton"
 
 interface FavoriteButtonProps {
   /** Audio to favorite/unfavorite */
   audio: LocalAudio | null | undefined
-  /** Button type */
-  type?: "text" | "link" | "default" | "primary" | "dashed"
+  variant?: "text" | "outlined" | "contained"
+  color?:
+    | "inherit"
+    | "primary"
+    | "secondary"
+    | "success"
+    | "error"
+    | "info"
+    | "warning"
   /** Additional className */
   className?: string
   /** Button size */
-  size?: "small" | "middle" | "large"
+  size?: "small" | "medium" | "large"
   /** Icon font size */
   iconSize?: number
   /** Stop event propagation */
@@ -29,7 +35,8 @@ interface FavoriteButtonProps {
  */
 export const FavoriteButton: FC<FavoriteButtonProps> = ({
   audio,
-  type = "text",
+  variant = "text",
+  color = "inherit",
   className,
   size,
   iconSize,
@@ -44,38 +51,52 @@ export const FavoriteButton: FC<FavoriteButtonProps> = ({
 
   const handleClick = useCallback(
     (e: MouseEvent<HTMLElement>) => {
+      if (stopPropagation) {
+        e.stopPropagation()
+      }
       if (audio) {
         toggleFavorite(audio)
         onClick?.(e as any, !isFavorited)
       }
     },
-    [audio, toggleFavorite, isFavorited, onClick],
+    [audio, toggleFavorite, isFavorited, onClick, stopPropagation],
   )
+
+  const iconStyle = iconSize ? { fontSize: iconSize } : undefined
+
+  const buttonSize = useMemo(() => {
+    if (size === "small") return 28
+    if (size === "large") return 40
+    return 32
+  }, [size])
 
   if (!audio) {
     return null
   }
 
-  const iconStyle = iconSize ? { fontSize: iconSize } : undefined
-
   return (
-    <AdaptiveButton
-      type={type}
-      icon={
-        isFavorited ? (
-          <HeartFilled style={{ ...iconStyle, color: "#ff4d4f" }} />
-        ) : (
-          <HeartOutlined style={iconStyle} />
-        )
-      }
+    <Button
+      variant={variant}
+      color={color}
       onClick={handleClick}
       className={className}
       size={size}
       disabled={disabled}
-      stopPropagation={stopPropagation}
-      iconSize={iconSize}
       aria-label={isFavorited ? "Remove from favorites" : "Add to favorites"}
-    />
+      sx={{
+        minWidth: 0,
+        p: 0,
+        width: buttonSize,
+        height: buttonSize,
+        borderRadius: 1,
+      }}
+    >
+      {isFavorited ? (
+        <Favorite style={{ ...iconStyle, color: "#ff4d4f" }} />
+      ) : (
+        <FavoriteBorder style={iconStyle} />
+      )}
+    </Button>
   )
 }
 

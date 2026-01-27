@@ -1,45 +1,13 @@
-import { App } from "antd"
-import ExclamationCircleOutlined from "@ant-design/icons/ExclamationCircleOutlined"
-import { useCallback } from "react"
-
-interface ConfirmOptions {
-  title: string
-  content: string
-  onOk: () => void | Promise<void>
-  okText?: string
-  okType?: "primary" | "danger"
-  cancelText?: string
-}
+import { useConfirmContext, ConfirmOptions } from "../contexts/ConfirmContext"
 
 /**
  * Custom hook for showing consistent confirmation dialogs across the app
- * All confirmation dialogs will have the same style: centered with an exclamation icon
+ * All confirmation dialogs will have the same style
  */
 export const useConfirm = () => {
-  const { modal } = App.useApp()
-
-  const showConfirm = useCallback(
-    ({
-      title,
-      content,
-      onOk,
-      okText = "OK",
-      okType = "primary",
-      cancelText = "Cancel",
-    }: ConfirmOptions) => {
-      modal.confirm({
-        title,
-        content,
-        centered: true,
-        icon: <ExclamationCircleOutlined />,
-        okText,
-        okType,
-        cancelText,
-        onOk,
-      })
-    },
-    [modal],
-  )
+  const { showConfirm } = useConfirmContext()
 
   return { showConfirm }
 }
+
+export type { ConfirmOptions }

@@ -1,5 +1,5 @@
 import { FC } from "react"
-import { Flex } from "antd"
+import { Stack } from "@mui/material"
 import { LocalAudio } from "../../api"
 import { PlayButton } from "../PlayButton"
 import { FavoriteButton } from "../FavoriteButton"
@@ -22,16 +22,22 @@ interface PlayerControlsProps {
   /** Button className */
   buttonClassName?: string
   /** Button size */
-  buttonSize?: "small" | "middle" | "large"
+  buttonSize?: "small" | "medium" | "large"
   /** Icon font size */
   iconSize?: number
+  /** Emphasized play button size (only for full layout) */
+  playButtonSize?: "small" | "medium" | "large"
+  /** Emphasized play icon size (only for full layout) */
+  playIconSize?: number
+  /** Emphasized play button box size (px, only for play) */
+  playBoxSize?: number
   /** Gap between buttons */
-  gap?: "small" | "middle" | "large" | number
+  gap?: number | string
   /** Alignment */
   align?:
-    | "start"
+    | "flex-start"
     | "center"
-    | "end"
+    | "flex-end"
     | "space-between"
     | "space-around"
     | "space-evenly"
@@ -39,32 +45,6 @@ interface PlayerControlsProps {
 
 /**
  * PlayerControls - A complete set of player control buttons
- *
- * @example
- * // Full player controls
- * <PlayerControls
- *   audio={currentAudio}
- *   layout="full"
- *   className="main-controls"
- *   buttonClassName="player-control-btn"
- * />
- *
- * @example
- * // Mini player controls (play + favorite)
- * <PlayerControls
- *   audio={currentAudio}
- *   layout="mini"
- *   buttonClassName="mini-player-btn"
- * />
- *
- * @example
- * // Custom controls
- * <PlayerControls
- *   audio={currentAudio}
- *   showPlayMode={false}
- *   showSkip={true}
- *   showFavorite={true}
- * />
  */
 export const PlayerControls: FC<PlayerControlsProps> = ({
   audio,
@@ -76,18 +56,27 @@ export const PlayerControls: FC<PlayerControlsProps> = ({
   buttonClassName,
   buttonSize,
   iconSize,
-  gap = "small",
+  playButtonSize,
+  playIconSize,
+  playBoxSize,
+  gap = 1,
   align = "space-between",
 }) => {
   // Mini layout: only play and favorite buttons
   if (layout === "mini") {
     return (
-      <Flex align="center" gap={gap} className={className}>
+      <Stack
+        direction="row"
+        alignItems="center"
+        spacing={gap}
+        className={className}
+      >
         <PlayButton
           stopPropagation
           className={`${buttonClassName} play`}
-          size={buttonSize}
-          iconSize={iconSize}
+          size={playButtonSize || buttonSize}
+          iconSize={playIconSize || iconSize}
+          boxSize={playBoxSize}
         />
         {showFavorite && (
           <FavoriteButton
@@ -98,15 +87,22 @@ export const PlayerControls: FC<PlayerControlsProps> = ({
             iconSize={iconSize}
           />
         )}
-      </Flex>
+      </Stack>
     )
   }
 
-  // Full layout: all controls
   return (
-    <Flex align="center" justify={align} gap={gap} className={className}>
+    <Stack
+      direction="row"
+      alignItems="center"
+      justifyContent={align}
+      spacing={gap}
+      className={className}
+      sx={{ width: "100%" }}
+    >
       {showPlayMode && (
         <PlayModeButton
+          stopPropagation
           className={buttonClassName}
           size={buttonSize}
           iconSize={iconSize}
@@ -116,6 +112,7 @@ export const PlayerControls: FC<PlayerControlsProps> = ({
       {showSkip && (
         <SkipButton
           direction="prev"
+          stopPropagation
           className={buttonClassName}
           size={buttonSize}
           iconSize={iconSize}
@@ -123,14 +120,17 @@ export const PlayerControls: FC<PlayerControlsProps> = ({
       )}
 
       <PlayButton
+        stopPropagation
         className={`${buttonClassName} play`}
-        size={buttonSize}
-        iconSize={iconSize}
+        size={playButtonSize || buttonSize}
+        iconSize={playIconSize || iconSize}
+        boxSize={playBoxSize}
       />
 
       {showSkip && (
         <SkipButton
           direction="next"
+          stopPropagation
           className={buttonClassName}
           size={buttonSize}
           iconSize={iconSize}
@@ -140,12 +140,13 @@ export const PlayerControls: FC<PlayerControlsProps> = ({
       {showFavorite && (
         <FavoriteButton
           audio={audio}
+          stopPropagation
           className={buttonClassName}
           size={buttonSize}
           iconSize={iconSize}
         />
       )}
-    </Flex>
+    </Stack>
   )
 }
 

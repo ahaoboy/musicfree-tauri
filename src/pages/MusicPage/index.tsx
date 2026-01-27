@@ -1,6 +1,6 @@
 import { FC, useCallback } from "react"
 import { useSearchParams } from "react-router-dom"
-import { Spin, Flex, Avatar } from "antd"
+import { CircularProgress, Stack, Avatar } from "@mui/material"
 import { useAppStore, useAudios } from "../../store"
 import { AudioCard, AudioList, MoreActionsDropdown } from "../../components"
 import { useConfirm } from "../../hooks"
@@ -101,37 +101,41 @@ export const MusicPage: FC = () => {
 
   if (isConfigLoading) {
     return (
-      <Flex flex={1} align="center" justify="center" className="page">
-        <Spin fullscreen size="large" />
-      </Flex>
+      <Stack
+        flex={1}
+        alignItems="center"
+        justifyContent="center"
+        className="page"
+      >
+        <CircularProgress size={40} />
+      </Stack>
     )
   }
 
   if (audios.length === 0) {
     return (
-      <Flex vertical className="page" flex={1}>
-        <Flex flex={1} align="center" justify="center">
+      <Stack className="page" flex={1}>
+        <Stack flex={1} alignItems="center" justifyContent="center">
           <Avatar
             src={DEFAULT_COVER_URL}
-            size={256}
-            shape="square"
-            style={{ opacity: 0.5 }}
+            variant="rounded"
+            sx={{ width: 256, height: 256, opacity: 0.5 }}
             alt="No Music"
           />
-        </Flex>
-      </Flex>
+        </Stack>
+      </Stack>
     )
   }
 
   return (
-    <Flex vertical className="page" style={{ flex: 1, overflow: "hidden" }}>
+    <Stack className="page" sx={{ flex: 1, overflow: "hidden" }}>
       <AudioList
         items={audios}
         getItemId={getAudioId}
         highlightId={highlightId}
         renderItem={renderAudioItem}
       />
-    </Flex>
+    </Stack>
   )
 }
 

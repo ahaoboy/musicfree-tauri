@@ -234,7 +234,9 @@ export const createPlaybackSlice: StateCreator<
 
   getNextAudio: () => {
     const { currentAudio, currentPlayMode, config, currentPlaylistId } = get()
-    if (!currentAudio || !currentPlaylistId || !currentPlayMode) return null
+    if (!currentAudio || !currentPlaylistId) return null
+
+    const mode: PlayMode = currentPlayMode || storage.getPlayMode()
 
     // Get current playlist
     const playlist = config.playlists.find((p) => p.id === currentPlaylistId)
@@ -246,7 +248,7 @@ export const createPlaybackSlice: StateCreator<
 
     let nextAudio: LocalAudio | null = null
 
-    switch (currentPlayMode) {
+    switch (mode) {
       case "sequence":
         // Play next in sequence, stop at end
         if (currentIndex < playlist.audios.length - 1) {

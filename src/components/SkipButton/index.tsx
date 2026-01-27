@@ -1,8 +1,7 @@
-import { FC, useCallback, MouseEvent } from "react"
-import StepBackwardOutlined from "@ant-design/icons/StepBackwardOutlined"
-import StepForwardOutlined from "@ant-design/icons/StepForwardOutlined"
+import { FC, useCallback, MouseEvent, useMemo } from "react"
+import { Button } from "@mui/material"
+import { SkipPrevious, SkipNext } from "@mui/icons-material"
 import { useAppStore } from "../../store"
-import { AdaptiveButton } from "../AdaptiveButton"
 
 interface SkipButtonProps {
   /** Direction to skip */
@@ -10,13 +9,20 @@ interface SkipButtonProps {
   /** Additional className */
   className?: string
   /** Button size */
-  size?: "small" | "middle" | "large"
+  size?: "small" | "medium" | "large"
   /** Icon font size */
   iconSize?: number
   /** Stop event propagation */
   stopPropagation?: boolean
-  /** Button type */
-  type?: "text" | "link" | "default" | "primary" | "dashed"
+  variant?: "text" | "outlined" | "contained"
+  color?:
+    | "inherit"
+    | "primary"
+    | "secondary"
+    | "success"
+    | "error"
+    | "info"
+    | "warning"
   /** Custom onClick handler */
   onClick?: (e: MouseEvent, direction: "next" | "prev") => void
   /** Disabled state */
@@ -28,7 +34,8 @@ interface SkipButtonProps {
  */
 export const SkipButton: FC<SkipButtonProps> = ({
   direction,
-  type = "text",
+  variant = "text",
+  color = "inherit",
   className,
   size,
   iconSize,
@@ -42,6 +49,9 @@ export const SkipButton: FC<SkipButtonProps> = ({
 
   const handleClick = useCallback(
     (e: MouseEvent<HTMLElement>) => {
+      if (stopPropagation) {
+        e.stopPropagation()
+      }
       if (direction === "prev") {
         if (canPlayPrevValue) {
           playPrev()
@@ -51,29 +61,40 @@ export const SkipButton: FC<SkipButtonProps> = ({
       }
       onClick?.(e as any, direction)
     },
-    [direction, playPrev, playNext, canPlayPrevValue, onClick],
+    [direction, playPrev, playNext, canPlayPrevValue, onClick, stopPropagation],
   )
 
   const iconStyle = iconSize ? { fontSize: iconSize } : undefined
 
+  const buttonSize = useMemo(() => {
+    if (size === "small") return 28
+    if (size === "large") return 40
+    return 32
+  }, [size])
+
   return (
-    <AdaptiveButton
-      type={type}
-      icon={
-        direction === "prev" ? (
-          <StepBackwardOutlined style={iconStyle} />
-        ) : (
-          <StepForwardOutlined style={iconStyle} />
-        )
-      }
+    <Button
+      variant={variant}
+      color={color}
       onClick={handleClick}
       className={className}
       size={size}
       disabled={disabled}
-      stopPropagation={stopPropagation}
-      iconSize={iconSize}
       aria-label={direction === "prev" ? "Previous track" : "Next track"}
-    />
+      sx={{
+        minWidth: 0,
+        p: 0,
+        width: buttonSize,
+        height: buttonSize,
+        borderRadius: 1,
+      }}
+    >
+      {direction === "prev" ? (
+        <SkipPrevious style={iconStyle} />
+      ) : (
+        <SkipNext style={iconStyle} />
+      )}
+    </Button>
   )
 }
 

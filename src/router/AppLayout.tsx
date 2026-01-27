@@ -8,19 +8,11 @@ import {
   memo,
   useRef,
   Suspense,
+  SyntheticEvent,
 } from "react"
 import { useNavigate, useLocation, useMatches } from "react-router-dom"
-import {
-  ConfigProvider,
-  theme as antdTheme,
-  App as AntApp,
-  Tabs,
-  Flex,
-} from "antd"
-import UnorderedListOutlined from "@ant-design/icons/UnorderedListOutlined"
-import CustomerServiceOutlined from "@ant-design/icons/CustomerServiceOutlined"
-import SearchOutlined from "@ant-design/icons/SearchOutlined"
-import SettingOutlined from "@ant-design/icons/SettingOutlined"
+import { Box, Tabs, Tab as MuiTab, Paper } from "@mui/material"
+import { QueueMusic, LibraryMusic, Search, Settings } from "@mui/icons-material"
 
 import {
   PlayerCard,
@@ -36,23 +28,12 @@ import { Tab, TAB_TO_ROUTE, TAB_ORDER } from "./index"
 // Page imports for Keep-Alive
 import PlaylistsPage from "../pages/PlaylistsPage"
 import MusicPage from "../pages/MusicPage"
-import SearchPage from "../pages/SearchPage"
+import { SearchPage } from "../pages/SearchPage"
 import SettingsPage from "../pages/SettingsPage"
 import PlayerPage from "../pages/PlayerPage"
 import { PlaylistDetail } from "../pages/PlaylistsPage/PlaylistDetail"
 
 import "../styles/index.less"
-
-// Tab items configuration
-const TAB_ITEMS = [
-  {
-    key: "playlists",
-    label: <UnorderedListOutlined style={{ fontSize: 24 }} />,
-  },
-  { key: "music", label: <CustomerServiceOutlined style={{ fontSize: 24 }} /> },
-  { key: "search", label: <SearchOutlined style={{ fontSize: 24 }} /> },
-  { key: "settings", label: <SettingOutlined style={{ fontSize: 24 }} /> },
-]
 
 export const AppLayout: FC = memo(() => {
   const navigate = useNavigate()
@@ -73,7 +54,7 @@ export const AppLayout: FC = memo(() => {
   const currentAudio = useAppStore((state) => state.currentAudio)
   const isConfigLoading = useAppStore((state) => state.isConfigLoading)
   const loadConfig = useAppStore((state) => state.loadConfig)
-  const isDark = useAppStore((state) => state.isDark())
+  // const isDark = useAppStore((state) => state.isDark()) // Theme is handled by MUI ThemeProvider in App.tsx
 
   // Get route metadata
   const routeHandle = useMemo(() => {
@@ -166,8 +147,8 @@ export const AppLayout: FC = memo(() => {
 
   // Tab change handler
   const handleTabChange = useCallback(
-    (tab: string) => {
-      navigate(TAB_TO_ROUTE[tab as Tab])
+    (_event: SyntheticEvent, newValue: string) => {
+      navigate(TAB_TO_ROUTE[newValue as Tab])
     },
     [navigate],
   )
@@ -204,12 +185,12 @@ export const AppLayout: FC = memo(() => {
   const swipeHandlers = useSwipe(handleSwipe, {
     threshold: 50,
     excludeSelectors: [
-      ".ant-slider",
+      ".MuiSlider-root",
       ".player-controls-container",
       ".progress-bar",
       "button",
       "input",
-      ".ant-checkbox",
+      ".MuiCheckbox-root",
     ],
   })
 
@@ -221,105 +202,126 @@ export const AppLayout: FC = memo(() => {
   }
 
   return (
-    <ConfigProvider
-      theme={{
-        algorithm: isDark
-          ? antdTheme.darkAlgorithm
-          : antdTheme.defaultAlgorithm,
-        token: {
-          colorPrimary: "#6366f1",
-          borderRadius: 8,
-          colorBgContainer: isDark ? "#1e293b" : "#ffffff",
-          colorBgLayout: isDark ? "#0f172a" : "#f8fafc",
-        },
-      }}
-    >
-      <AntApp message={{ top: 100 }}>
-        <ErrorBoundary onReset={() => window.location.reload()}>
-          <NavigationContext.Provider value={navigationContextValue}>
-            {isConfigLoading ? (
-              <LoadingFallback fullscreen tip="Loading configuration..." />
-            ) : (
-              <Flex
-                vertical
-                className="app"
-                style={{ height: "100vh" }}
-                {...swipeHandlers}
+    <ErrorBoundary onReset={() => window.location.reload()}>
+      <NavigationContext.Provider value={navigationContextValue}>
+        {isConfigLoading ? (
+          <LoadingFallback fullscreen tip="Loading configuration..." />
+        ) : (
+          <Box
+            className="app"
+            sx={{
+              height: "100vh",
+              display: "flex",
+              flexDirection: "column",
+              bgcolor: "background.default",
+              color: "text.primary",
+            }}
+            {...swipeHandlers}
+          >
+            {/* Tab bar - hide on special pages */}
+            {!routeHandle.isSpecial && (
+              <Paper
+                elevation={0}
+                square
+                sx={{ borderBottom: 1, borderColor: "divider", zIndex: 1 }}
               >
-                {/* Tab bar - hide on special pages */}
-                {!routeHandle.isSpecial && (
-                  <Tabs
-                    activeKey={currentTab}
-                    onTabClick={handleTabChange}
-                    centered
-                    tabBarGutter={0}
-                    className="top-tabs"
-                    items={TAB_ITEMS}
-                  />
-                )}
-
-                <Flex
-                  vertical
-                  flex={1}
-                  component="main"
-                  className={`main-content ${showPlayerCard ? "has-player-card" : ""}`}
-                  style={{ overflow: "hidden" }}
+                <Tabs
+                  value={currentTab}
+                  onChange={handleTabChange}
+                  centered
+                  variant="fullWidth"
+                  indicatorColor="primary"
+                  textColor="primary"
+                  sx={{ minHeight: 48 }}
                 >
-                  <Suspense fallback={<LoadingFallback />}>
-                    <PageErrorBoundary>
-                      {/* Persistent tab pages */}
-                      <Activity
-                        mode={
-                          currentTab === "playlists" && !routeHandle.isDetail
-                            ? "visible"
-                            : "hidden"
-                        }
-                      >
-                        <PlaylistsPage />
-                      </Activity>
-                      <Activity
-                        mode={currentTab === "music" ? "visible" : "hidden"}
-                      >
-                        <MusicPage />
-                      </Activity>
-                      <Activity
-                        mode={currentTab === "search" ? "visible" : "hidden"}
-                      >
-                        <SearchPage />
-                      </Activity>
-                      <Activity
-                        mode={currentTab === "settings" ? "visible" : "hidden"}
-                      >
-                        <SettingsPage />
-                      </Activity>
-
-                      <Activity
-                        mode={routeHandle.isDetail ? "visible" : "hidden"}
-                      >
-                        <PlaylistDetail />
-                      </Activity>
-
-                      <Activity
-                        mode={routeHandle.isSpecial ? "visible" : "hidden"}
-                      >
-                        <PlayerPage />
-                      </Activity>
-                    </PageErrorBoundary>
-                  </Suspense>
-                </Flex>
-
-                {/* Player card */}
-                {showPlayerCard && (
-                  <Activity mode="visible">
-                    <PlayerCard audio={currentAudio} />
-                  </Activity>
-                )}
-              </Flex>
+                  <MuiTab
+                    value="playlists"
+                    icon={<QueueMusic sx={{ fontSize: 24 }} />}
+                    aria-label="Playlists"
+                    sx={{ minHeight: 48, p: 1 }}
+                  />
+                  <MuiTab
+                    value="music"
+                    icon={<LibraryMusic sx={{ fontSize: 24 }} />}
+                    aria-label="Music"
+                    sx={{ minHeight: 48, p: 1 }}
+                  />
+                  <MuiTab
+                    value="search"
+                    icon={<Search sx={{ fontSize: 24 }} />}
+                    aria-label="Search"
+                    sx={{ minHeight: 48, p: 1 }}
+                  />
+                  <MuiTab
+                    value="settings"
+                    icon={<Settings sx={{ fontSize: 24 }} />}
+                    aria-label="Settings"
+                    sx={{ minHeight: 48, p: 1 }}
+                  />
+                </Tabs>
+              </Paper>
             )}
-          </NavigationContext.Provider>
-        </ErrorBoundary>
-      </AntApp>
-    </ConfigProvider>
+
+            <Box
+              component="main"
+              className={`main-content ${showPlayerCard ? "has-player-card" : ""}`}
+              sx={{
+                flex: 1,
+                overflow: "hidden",
+                display: "flex",
+                flexDirection: "column",
+                position: "relative",
+              }}
+            >
+              <Suspense fallback={<LoadingFallback />}>
+                <PageErrorBoundary>
+                  {/* Persistent tab pages */}
+                  <Activity
+                    mode={
+                      currentTab === "playlists" && !routeHandle.isDetail
+                        ? "visible"
+                        : "hidden"
+                    }
+                  >
+                    <PlaylistsPage />
+                  </Activity>
+                  <Activity
+                    mode={currentTab === "music" ? "visible" : "hidden"}
+                  >
+                    <MusicPage />
+                  </Activity>
+                  <Activity
+                    mode={currentTab === "search" ? "visible" : "hidden"}
+                  >
+                    <SearchPage />
+                  </Activity>
+                  <Activity
+                    mode={currentTab === "settings" ? "visible" : "hidden"}
+                  >
+                    <SettingsPage />
+                  </Activity>
+
+                  <Activity mode={routeHandle.isDetail ? "visible" : "hidden"}>
+                    <PlaylistDetail />
+                  </Activity>
+
+                  <Activity mode={routeHandle.isSpecial ? "visible" : "hidden"}>
+                    <PlayerPage />
+                  </Activity>
+                </PageErrorBoundary>
+              </Suspense>
+            </Box>
+
+            {/* Player card */}
+            {showPlayerCard && (
+              <Activity mode="visible">
+                <PlayerCard audio={currentAudio} />
+              </Activity>
+            )}
+          </Box>
+        )}
+      </NavigationContext.Provider>
+    </ErrorBoundary>
   )
 })
 

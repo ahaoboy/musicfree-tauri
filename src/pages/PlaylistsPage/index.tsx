@@ -1,7 +1,7 @@
 import { FC, useCallback } from "react"
 import { useNavigate, useSearchParams } from "react-router-dom"
-import { Flex, Avatar } from "antd"
-import FolderOutlined from "@ant-design/icons/FolderOutlined"
+import { Stack, Avatar } from "@mui/material"
+import { FolderOpen } from "@mui/icons-material"
 import { useAppStore, usePlaylistsPageData } from "../../store"
 import {
   LocalPlaylist,
@@ -78,7 +78,7 @@ export const PlaylistsPage: FC = () => {
           platform={playlist.platform}
           title={displayName}
           subtitle={formatAudioCount(audioCount)}
-          icon={<FolderOutlined />}
+          icon={<FolderOpen />}
           onClick={() => handlePlaylistClick(playlist)}
           active={isActive}
           isFavorite={playlist.id === FAVORITE_PLAYLIST_ID}
@@ -106,29 +106,28 @@ export const PlaylistsPage: FC = () => {
 
   if (playlists.length === 0) {
     return (
-      <Flex vertical className="page" flex={1}>
-        <Flex flex={1} align="center" justify="center">
+      <Stack className="page" flex={1}>
+        <Stack flex={1} alignItems="center" justifyContent="center">
           <Avatar
             src={DEFAULT_COVER_URL}
-            size={256}
-            shape="square"
-            style={{ opacity: 0.5 }}
+            variant="rounded"
+            sx={{ width: 256, height: 256, opacity: 0.5 }}
             alt="No Playlists"
           />
-        </Flex>
-      </Flex>
+        </Stack>
+      </Stack>
     )
   }
 
   return (
-    <Flex vertical className="page" style={{ flex: 1, overflow: "hidden" }}>
+    <Stack className="page" sx={{ flex: 1, overflow: "hidden" }}>
       <AudioList
         items={playlists}
         getItemId={getPlaylistId}
         highlightId={highlightId}
         renderItem={renderPlaylistItem}
       />
-    </Flex>
+    </Stack>
   )
 }
 

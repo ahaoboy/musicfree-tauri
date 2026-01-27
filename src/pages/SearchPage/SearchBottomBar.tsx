@@ -1,10 +1,8 @@
 import { FC, ReactNode } from "react"
-import { Checkbox, Typography, Flex } from "antd"
-import ClearOutlined from "@ant-design/icons/ClearOutlined"
-import { AudioCard, AdaptiveButton } from "../../components"
+import { Checkbox, Typography, Stack, Box, Button } from "@mui/material"
+import Clear from "@mui/icons-material/Clear"
+import { AudioCard } from "../../components"
 import { Platform } from "../../api"
-
-const { Text } = Typography
 
 interface SearchBottomBarProps {
   playlist: {
@@ -43,7 +41,7 @@ export const SearchBottomBar: FC<SearchBottomBarProps> = ({
 }) => {
   const audioCount = playlist.audios?.length || 0
   return (
-    <div className="search-bottom-bar">
+    <Box className="search-bottom-bar">
       <AudioCard
         coverPath={null}
         coverUrl={playlistCoverUrl || undefined}
@@ -52,7 +50,7 @@ export const SearchBottomBar: FC<SearchBottomBarProps> = ({
         subtitle={`${audioCount} ♪`}
         active={false}
         actions={
-          <Flex align="center" gap="small">
+          <Stack direction="row" alignItems="center" spacing={1}>
             <Checkbox
               checked={isAllSelected}
               indeterminate={isSomeSelected}
@@ -61,37 +59,56 @@ export const SearchBottomBar: FC<SearchBottomBarProps> = ({
             />
 
             {showClearButton && (
-              <AdaptiveButton
-                icon={<ClearOutlined />}
+              <Button
+                variant="text"
+                color="inherit"
                 onClick={onClear}
                 disabled={isDownloadingAll}
                 aria-label="Clear failed/long pending"
+                sx={{
+                  minWidth: 0,
+                  p: 0,
+                  width: 32,
+                  height: 32,
+                  borderRadius: 1,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
               >
+                <Clear />
                 {longPendingCount > 0 && (
-                  <Text
-                    style={{
-                      color: "#faad14",
-                      marginLeft: 4,
+                  <Typography
+                    component="span"
+                    sx={{
+                      color: "warning.main",
+                      ml: 0.5,
                       fontSize: "inherit",
                     }}
                   >
                     {longPendingCount}
-                  </Text>
+                  </Typography>
                 )}
-              </AdaptiveButton>
+              </Button>
             )}
 
-            <AdaptiveButton
-              type="primary"
-              icon={downloadButtonIcon}
+            <Button
+              variant="contained"
+              color="primary"
               onClick={onDownloadAll}
               disabled={isSelectedEmpty || isDownloadingAll}
+              sx={{
+                borderRadius: 1.5,
+              }}
             >
-              {downloadButtonText}
-            </AdaptiveButton>
-          </Flex>
+              {downloadButtonIcon}
+              <Typography component="span" sx={{ ml: 0.5 }}>
+                {downloadButtonText}
+              </Typography>
+            </Button>
+          </Stack>
         }
       />
-    </div>
+    </Box>
   )
 }

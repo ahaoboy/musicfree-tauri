@@ -1,11 +1,6 @@
 import { FC, useMemo } from "react"
-import { theme } from "antd"
-import BilibiliOutlined from "@ant-design/icons/BilibiliOutlined"
-import YoutubeOutlined from "@ant-design/icons/YoutubeOutlined"
-import GlobalOutlined from "@ant-design/icons/GlobalOutlined"
-import QuestionOutlined from "@ant-design/icons/QuestionOutlined"
-
-const { useToken } = theme
+import { useTheme } from "@mui/material/styles"
+import { YouTube, Public, Help, LiveTv } from "@mui/icons-material"
 
 export interface PlatformIconProps {
   platform: string
@@ -18,15 +13,14 @@ export const PlatformIcon: FC<PlatformIconProps> = ({
   platform,
   className,
   style,
-  size = 14,
+  size,
 }) => {
-  const { token } = useToken()
-  const isDark =
-    token.colorBgBase === "#000" || token.colorBgContainer.startsWith("#1")
+  const theme = useTheme()
 
   const iconStyle = useMemo(
     () => ({
-      fontSize: size,
+      fontSize: size ?? "inherit",
+      verticalAlign: "middle",
       ...style,
     }),
     [size, style],
@@ -35,40 +29,40 @@ export const PlatformIcon: FC<PlatformIconProps> = ({
   switch (platform.toLowerCase()) {
     case "bilibili":
       return (
-        <BilibiliOutlined
+        <LiveTv
           className={className}
           style={{ ...iconStyle, color: "#00a1d6" }}
-          title="Bilibili"
+          titleAccess="Bilibili"
         />
       )
     case "youtube":
       return (
-        <YoutubeOutlined
+        <YouTube
           className={className}
           style={{ ...iconStyle, color: "#ff0000" }}
-          title="YouTube"
+          titleAccess="YouTube"
         />
       )
     case "file":
       return (
-        <GlobalOutlined
+        <Public
           className={className}
           style={{
             ...iconStyle,
-            color: isDark ? token.colorTextSecondary : token.colorTextTertiary,
+            color: theme.palette.text.secondary,
           }}
-          title={platform}
+          titleAccess={platform}
         />
       )
     default:
       return (
-        <QuestionOutlined
+        <Help
           className={className}
           style={{
             ...iconStyle,
-            color: isDark ? token.colorTextSecondary : token.colorTextTertiary,
+            color: theme.palette.text.secondary,
           }}
-          title={platform || "Unknown"}
+          titleAccess={platform || "Unknown"}
         />
       )
   }

@@ -1,14 +1,10 @@
 import { FC, memo, useCallback, ReactNode } from "react"
-import { Flex, Typography, Avatar, Badge } from "antd"
-import AudioOutlined from "@ant-design/icons/AudioOutlined"
-import CheckOutlined from "@ant-design/icons/CheckOutlined"
-import HeartFilled from "@ant-design/icons/HeartFilled"
+import { Box, Typography, Avatar, Badge, Card } from "@mui/material"
+import { Audiotrack, Check, Favorite } from "@mui/icons-material"
 import { DEFAULT_COVER_URL } from "../../api"
 import { useCoverUrl } from "../../hooks"
 import { PlatformIcon } from "../PlatformIcon"
 import { isLongDuration } from "../../utils/audio"
-
-const { Text } = Typography
 
 /**
  * Format duration in seconds to MM:SS or HH:MM:SS
@@ -79,7 +75,7 @@ export const AudioCard: FC<AudioCardProps> = memo(
     platform,
     title,
     subtitle,
-    icon = <AudioOutlined />,
+    icon = <Audiotrack />,
     duration,
     warnLongDuration = false,
     showPlatformIcon = true,
@@ -110,30 +106,43 @@ export const AudioCard: FC<AudioCardProps> = memo(
     const avatarElement = (
       <Avatar
         src={finalCoverUrl}
-        icon={icon}
-        size={avatarSize}
-        shape="square"
+        variant="rounded"
+        sx={{ width: avatarSize, height: avatarSize }}
         alt={title}
         className="card-avatar"
-      />
+      >
+        {icon}
+      </Avatar>
     )
 
     const avatarWithBadge = badge?.show ? (
       <Badge
-        count={
+        badgeContent={
           badge.icon ?? (
-            <CheckOutlined
-              style={{
-                color: "#fff",
-                backgroundColor: "#52c41a",
+            <Box
+              sx={{
+                bgcolor: "#52c41a",
                 borderRadius: "50%",
-                padding: "4px",
-                fontSize: "12px",
+                p: 0.5,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: 20,
+                height: 20,
               }}
-            />
+            >
+              <Check sx={{ fontSize: 12, color: "#fff" }} />
+            </Box>
           )
         }
-        offset={badge.offset ?? [-56, 56]}
+        anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+        sx={{
+          "& .MuiBadge-badge": {
+            transform: badge.offset
+              ? `translate(${badge.offset[0]}px, ${badge.offset[1]}px)`
+              : "translate(-8px, 0px)",
+          },
+        }}
       >
         {avatarElement}
       </Badge>
@@ -142,7 +151,7 @@ export const AudioCard: FC<AudioCardProps> = memo(
     )
 
     return (
-      <Flex
+      <Card
         className={[
           badge?.show ? "audio-card-selectable" : "audio-card",
           className,
@@ -150,69 +159,97 @@ export const AudioCard: FC<AudioCardProps> = memo(
           .filter(Boolean)
           .join(" ")}
         onClick={onClick ? handleCardClick : undefined}
-        role={onClick ? "button" : undefined}
+        // role={onClick ? "button" : undefined}
         tabIndex={onClick ? 0 : undefined}
         onKeyDown={onClick ? handleCardClick : undefined}
-        align="center"
-        gap="middle"
-        style={{
+        elevation={0}
+        sx={{
           cursor: onClick ? "pointer" : "default",
-          border: showBorder
-            ? active
-              ? "2px solid #1890ff"
-              : "2px solid transparent"
-            : "none",
-          borderRadius: "8px",
-          padding: "4px",
+          border: (theme) =>
+            showBorder
+              ? active
+                ? `2px solid ${theme.palette.primary.main}`
+                : theme.palette.mode === "light"
+                  ? "2px solid rgba(0, 0, 0, 0.04)"
+                  : "2px solid transparent"
+              : "none",
+          borderRadius: 2,
+          p: 0.5,
           boxSizing: "border-box",
           transition: "all 0.3s ease",
         }}
       >
-        {avatarWithBadge}
+        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+          {avatarWithBadge}
 
-        <Flex vertical flex={1} style={{ minWidth: 0 }}>
-          <Text strong ellipsis>
-            {title}
-          </Text>
+          <Box
+            sx={{
+              flex: 1,
+              minWidth: 0,
+              display: "flex",
+              flexDirection: "column",
+            }}
+          >
+            <Typography
+              padding={"4px"}
+              variant="body1"
+              fontWeight="bold"
+              noWrap
+            >
+              {title}
+            </Typography>
 
-          <Flex align="center" gap="small">
-            {isFavorite ? (
-              <HeartFilled style={{ fontSize: 14, color: "#ff4d4f" }} />
-            ) : (
-              showPlatformIcon && <PlatformIcon platform={platform} size={14} />
-            )}
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 1,
+                fontSize: (theme) => theme.typography.caption.fontSize,
+                lineHeight: 1,
+                padding: "4px",
+              }}
+            >
+              {isFavorite ? (
+                <Favorite sx={{ fontSize: "inherit", color: "#ff4d4f" }} />
+              ) : (
+                showPlatformIcon && <PlatformIcon platform={platform} />
+              )}
 
-            {subtitle && (
-              <Text
-                type="secondary"
-                style={{
-                  fontSize: 12,
-                  fontFamily: "monospace",
-                  whiteSpace: "pre",
-                }}
-              >
-                {subtitle}
-              </Text>
-            )}
-            {formattedDuration && (
-              <Text
-                type="secondary"
-                style={{
-                  fontSize: 12,
-                  color: isLongDurationValue ? "#faad14" : undefined,
-                  fontFamily: "monospace",
-                  whiteSpace: "pre",
-                }}
-              >
-                {formattedDuration}
-              </Text>
-            )}
-            {extraInfo}
-          </Flex>
-        </Flex>
+              {subtitle && (
+                <Typography
+                  variant="caption"
+                  sx={{
+                    fontFamily: "monospace",
+                    whiteSpace: "pre",
+                    color: "text.secondary",
+                    lineHeight: 1,
+                  }}
+                >
+                  {subtitle}
+                </Typography>
+              )}
+              {formattedDuration && (
+                <Typography
+                  variant="caption"
+                  sx={{
+                    fontFamily: "monospace",
+                    whiteSpace: "pre",
+                    color: isLongDurationValue
+                      ? "warning.main"
+                      : "text.secondary",
+                    lineHeight: 1,
+                  }}
+                >
+                  {formattedDuration}
+                </Typography>
+              )}
+              {extraInfo}
+            </Box>
+          </Box>
 
-        {actions}
-      </Flex>
+          {actions}
+        </Box>
+      </Card>
     )
   },
 )

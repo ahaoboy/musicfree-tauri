@@ -1,10 +1,21 @@
-import { FC, useCallback, useMemo, useState, useEffect } from "react"
-import { App, Typography, Flex, Select, Divider } from "antd"
-import BulbOutlined from "@ant-design/icons/BulbOutlined"
-import MoonOutlined from "@ant-design/icons/MoonOutlined"
-import DesktopOutlined from "@ant-design/icons/DesktopOutlined"
-import GithubOutlined from "@ant-design/icons/GithubOutlined"
-import FolderOpenOutlined from "@ant-design/icons/FolderOpenOutlined"
+import { FC, useCallback, useState, useEffect } from "react"
+import {
+  Typography,
+  Box,
+  Stack,
+  Select,
+  MenuItem,
+  Divider,
+  Paper,
+  CircularProgress,
+  Button,
+  IconButton,
+} from "@mui/material"
+import LightMode from "@mui/icons-material/LightMode"
+import DarkMode from "@mui/icons-material/DarkMode"
+import SettingsSystemDaydream from "@mui/icons-material/SettingsSystemDaydream"
+import GitHub from "@mui/icons-material/GitHub"
+import FolderOpen from "@mui/icons-material/FolderOpen"
 import { openUrl, openPath } from "@tauri-apps/plugin-opener"
 import { useAppStore } from "../../store"
 import {
@@ -17,11 +28,9 @@ import {
   CurrentPlatform,
 } from "../../api"
 import { useConfirm } from "../../hooks"
-import { CopyButton, AdaptiveButton } from "../../components"
-import LoadingOutlined from "@ant-design/icons/LoadingOutlined"
+import { useMessage } from "../../contexts/MessageContext"
+import { CopyButton } from "../../components"
 import prettyBytes from "pretty-bytes"
-
-const { Title, Text } = Typography
 
 const REPO_URL = "https://github.com/ahaoboy/musicfree-tauri"
 
@@ -43,7 +52,7 @@ export const SettingsPage: FC = () => {
   const appDir = useAppStore((state) => state.app_dir)
   const version = useAppStore((state) => state.app_version)
 
-  const { message } = App.useApp()
+  const message = useMessage()
   const { showConfirm } = useConfirm()
 
   const [exporting, setExporting] = useState(false)
@@ -120,125 +129,113 @@ export const SettingsPage: FC = () => {
     }
   }, [message, loadConfig])
 
-  const themeOptions = useMemo(
-    () => [
-      {
-        value: "light" as ThemeMode,
-        label: (
-          <Flex align="center" gap={8}>
-            <BulbOutlined />
-            Light
-          </Flex>
-        ),
-      },
-      {
-        value: "dark" as ThemeMode,
-        label: (
-          <Flex align="center" gap={8}>
-            <MoonOutlined />
-            Dark
-          </Flex>
-        ),
-      },
-      {
-        value: "auto" as ThemeMode,
-        label: (
-          <Flex align="center" gap={8}>
-            <DesktopOutlined />
-            System
-          </Flex>
-        ),
-      },
-    ],
-    [],
-  )
-
   return (
-    <Flex vertical gap="large" className="page settings-page">
+    <Stack spacing={3} className="page settings-page" sx={{ p: 2 }}>
       {/* Theme Section */}
-      <Flex vertical gap="middle">
-        <Title level={5} style={{ margin: 0, fontSize: 12, opacity: 0.6 }}>
+      <Stack spacing={2}>
+        <Typography variant="caption" sx={{ opacity: 0.6, fontWeight: "bold" }}>
           THEME
-        </Title>
+        </Typography>
         <Select
           value={theme}
-          onChange={setThemeMode}
-          options={themeOptions}
-          style={{ width: "100%" }}
-          size="large"
-        />
-      </Flex>
+          onChange={(e) => setThemeMode(e.target.value as ThemeMode)}
+          fullWidth
+        >
+          <MenuItem value="light">
+            <Stack direction="row" spacing={1} alignItems="center">
+              <LightMode fontSize="small" />
+              <Typography>Light</Typography>
+            </Stack>
+          </MenuItem>
+          <MenuItem value="dark">
+            <Stack direction="row" spacing={1} alignItems="center">
+              <DarkMode fontSize="small" />
+              <Typography>Dark</Typography>
+            </Stack>
+          </MenuItem>
+          <MenuItem value="auto">
+            <Stack direction="row" spacing={1} alignItems="center">
+              <SettingsSystemDaydream fontSize="small" />
+              <Typography>System</Typography>
+            </Stack>
+          </MenuItem>
+        </Select>
+      </Stack>
 
       {/* Library Section */}
-      <Flex vertical gap="middle">
-        <Title level={5} style={{ margin: 0, fontSize: 12, opacity: 0.6 }}>
+      <Stack spacing={2}>
+        <Typography variant="caption" sx={{ opacity: 0.6, fontWeight: "bold" }}>
           LIBRARY
-        </Title>
-        <Flex
-          vertical
-          style={{
-            background: "var(--bg-card)",
-            borderRadius: 12,
-            border: "1px solid var(--border-color)",
-            padding: 16,
-          }}
-        >
-          <Flex align="center" justify="space-between">
-            <Text>Downloaded</Text>
-            <Text type="secondary">
+        </Typography>
+        <Paper variant="outlined" sx={{ p: 2, borderRadius: 3 }}>
+          <Stack
+            direction="row"
+            justifyContent="space-between"
+            alignItems="center"
+          >
+            <Typography>Downloaded</Typography>
+            <Typography color="text.secondary">
               ♪ {totalAudios} 🎶{userPlaylistsCount}
-            </Text>
-          </Flex>
-        </Flex>
-      </Flex>
+            </Typography>
+          </Stack>
+        </Paper>
+      </Stack>
 
       {/* About Section */}
-      <Flex vertical gap="middle">
-        <Title level={5} style={{ margin: 0, fontSize: 12, opacity: 0.6 }}>
+      <Stack spacing={2}>
+        <Typography variant="caption" sx={{ opacity: 0.6, fontWeight: "bold" }}>
           ABOUT
-        </Title>
-        <Flex
-          vertical
-          style={{
-            background: "var(--bg-card)",
-            borderRadius: 12,
-            border: "1px solid var(--border-color)",
-            padding: 16,
-          }}
-        >
-          <Flex align="center" justify="space-between">
-            <Text>Version</Text>
-            <Text type="secondary">{version || "Loading..."}</Text>
-          </Flex>
-          <Divider style={{ margin: "16px 0" }} />
-          <Flex align="center" justify="space-between">
-            <Text>Repository</Text>
-            <Flex gap="small">
-              <AdaptiveButton
-                type="text"
-                icon={<GithubOutlined />}
+        </Typography>
+        <Paper variant="outlined" sx={{ p: 2, borderRadius: 3 }}>
+          <Stack
+            direction="row"
+            justifyContent="space-between"
+            alignItems="center"
+          >
+            <Typography>Version</Typography>
+            <Typography color="text.secondary">
+              {version || "Loading..."}
+            </Typography>
+          </Stack>
+          <Divider sx={{ my: 2 }} />
+          <Stack
+            direction="row"
+            justifyContent="space-between"
+            alignItems="center"
+          >
+            <Typography>Repository</Typography>
+            <Stack direction="row" spacing={1}>
+              <IconButton
                 onClick={() => openUrl(REPO_URL)}
                 aria-label="Open in Browser"
-              />
+                size="small"
+              >
+                <GitHub />
+              </IconButton>
               <CopyButton
                 text={REPO_URL}
                 successMessage="Repository URL copied to clipboard"
                 errorMessage="Failed to copy URL"
               />
-            </Flex>
-          </Flex>
-          <Divider style={{ margin: "16px 0" }} />
-          <Flex align="center" justify="space-between">
-            <Text>App Directory</Text>
-            <Flex gap="small">
+            </Stack>
+          </Stack>
+          <Divider sx={{ my: 2 }} />
+          <Stack
+            direction="row"
+            justifyContent="space-between"
+            alignItems="center"
+          >
+            <Typography>App Directory</Typography>
+            <Stack direction="row" spacing={1}>
               {CurrentPlatform !== "android" && (
-                <AdaptiveButton
-                  type="text"
-                  icon={<FolderOpenOutlined />}
+                <IconButton
                   onClick={() => appDir && openPath(appDir)}
                   disabled={!appDir}
                   aria-label="Open Directory"
-                />
+                  size="small"
+                >
+                  <FolderOpen />
+                </IconButton>
               )}
               <CopyButton
                 text={appDir || ""}
@@ -246,59 +243,63 @@ export const SettingsPage: FC = () => {
                 errorMessage="Failed to copy path"
                 disabled={!appDir}
               />
-            </Flex>
-          </Flex>
-        </Flex>
-      </Flex>
+            </Stack>
+          </Stack>
+        </Paper>
+      </Stack>
 
       {/* Data Management Section */}
-      <Flex vertical gap="middle">
-        <Title level={5} style={{ margin: 0, fontSize: 12, opacity: 0.6 }}>
+      <Stack spacing={2}>
+        <Typography variant="caption" sx={{ opacity: 0.6, fontWeight: "bold" }}>
           DATA MANAGEMENT
-        </Title>
-        <Flex
-          vertical
-          style={{
-            background: "var(--bg-card)",
-            borderRadius: 12,
-            border: "1px solid var(--border-color)",
-            padding: 16,
-          }}
-        >
-          <Flex align="center" justify="space-between">
-            <Flex vertical>
-              <Text>Backup & Restore</Text>
-            </Flex>
-            <Flex gap="small">
-              <AdaptiveButton onClick={handleExport} disabled={exporting}>
+        </Typography>
+        <Paper variant="outlined" sx={{ p: 2, borderRadius: 3 }}>
+          <Stack
+            direction="row"
+            justifyContent="space-between"
+            alignItems="center"
+          >
+            <Box>
+              <Typography>Backup & Restore</Typography>
+            </Box>
+            <Stack direction="row" spacing={1}>
+              <Button
+                variant="outlined"
+                onClick={handleExport}
+                disabled={exporting}
+              >
                 Export
-              </AdaptiveButton>
-              <AdaptiveButton onClick={handleImport} disabled={importing}>
+              </Button>
+              <Button
+                variant="outlined"
+                onClick={handleImport}
+                disabled={importing}
+              >
                 Import
-              </AdaptiveButton>
-            </Flex>
-          </Flex>
-          <Divider style={{ margin: "16px 0" }} />
-          <Flex align="center" justify="space-between">
-            <Flex vertical gap={4}>
-              <Text>Clear Storage</Text>
-            </Flex>
-            <AdaptiveButton
-              type="primary"
-              onClick={handleClearData}
-              style={{ background: "#ff4d4f", borderColor: "#ff4d4f" }}
-            >
+              </Button>
+            </Stack>
+          </Stack>
+          <Divider sx={{ my: 2 }} />
+          <Stack
+            direction="row"
+            justifyContent="space-between"
+            alignItems="center"
+          >
+            <Box>
+              <Typography>Clear Storage</Typography>
+            </Box>
+            <Button variant="contained" color="error" onClick={handleClearData}>
               Clear
               {loadingStorage ? (
-                <LoadingOutlined />
+                <CircularProgress size={16} sx={{ ml: 1, color: "inherit" }} />
               ) : (
                 ` ${prettyBytes(storageSize)}`
               )}
-            </AdaptiveButton>
-          </Flex>
-        </Flex>
-      </Flex>
-    </Flex>
+            </Button>
+          </Stack>
+        </Paper>
+      </Stack>
+    </Stack>
   )
 }
 

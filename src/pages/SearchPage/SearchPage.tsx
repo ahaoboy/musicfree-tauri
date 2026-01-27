@@ -1,27 +1,33 @@
 import { FC, useCallback, useMemo, useEffect, useRef } from "react"
 import { useNavigate } from "react-router-dom"
-import { Input, Flex, Avatar } from "antd"
-import DownloadOutlined from "@ant-design/icons/DownloadOutlined"
-import ReloadOutlined from "@ant-design/icons/ReloadOutlined"
-import PlusOutlined from "@ant-design/icons/PlusOutlined"
-import StopOutlined from "@ant-design/icons/StopOutlined"
-import CheckOutlined from "@ant-design/icons/CheckOutlined"
-import EnvironmentOutlined from "@ant-design/icons/EnvironmentOutlined"
-import LoadingOutlined from "@ant-design/icons/LoadingOutlined"
+import {
+  Stack,
+  Box,
+  TextField,
+  InputAdornment,
+  IconButton,
+  CircularProgress,
+  Button,
+} from "@mui/material"
+import Download from "@mui/icons-material/Download"
+import Refresh from "@mui/icons-material/Refresh"
+import Add from "@mui/icons-material/Add"
+import Stop from "@mui/icons-material/Stop"
+import Check from "@mui/icons-material/Check"
+import LibraryMusic from "@mui/icons-material/LibraryMusic"
+import SearchIcon from "@mui/icons-material/Search"
+import Clear from "@mui/icons-material/Clear"
+
 import { SearchBottomBar } from "./SearchBottomBar"
 import {
-  DEFAULT_COVER_URL,
   LocalPlaylist,
   AUDIO_PLAYLIST_ID,
   download_cover,
   LocalAudio,
 } from "../../api"
 import { useAppStore } from "../../store"
-import { AudioCard, AudioList, AdaptiveButton } from "../../components"
+import { AudioCard, AudioList } from "../../components"
 import { isLongDuration } from "../../utils/audio"
-import "./index.less"
-
-const { Search } = Input
 
 export const SearchPage: FC = () => {
   const navigate = useNavigate()
@@ -207,13 +213,6 @@ export const SearchPage: FC = () => {
         !downloadedIds.has(id) && !failedIds.has(id) && !skippedIds.has(id),
     )
 
-    // Retry if we have failed/skipped and NO pending? Or Retry mixes with pending?
-    // Usually Retry is specific. If text is "Retry", we are in retry mode.
-    // Simplification:
-    // If we have pending items, we download them.
-    // If we have ONLY failed/skipped, we retry them.
-    // If we have ONLY downloaded, we add.
-
     const isRetryMode =
       (selectedFailedIds.length > 0 || selectedSkippedIds.length > 0) &&
       selectedPendingIds.length === 0
@@ -251,45 +250,8 @@ export const SearchPage: FC = () => {
         knownExisting,
         isRetryMode,
       )
-      // If failed/skipped > 0, do NOT auto-add.
-      // Note: skippedCount includes already downloaded ones skipped?
-      // downloadMultiple returns { failedCount ... }
+
       if (result.failedCount === 0) {
-        // If some were aborted during this batch, failedCount is 0, but they are now in skippedIds?
-        // Wait, startDownload adds to skippedIds if aborted.
-        // downloadMultiple doesn't count skipped as failed.
-        // We should check if we have any non-success that prevents adding.
-        // If user aborted, they probably don't want auto-add?
-        // Let's rely on user clicking "Add" after ensuring everything is green.
-        // So ONLY auto-add if EVERYTHING in selection is now downloaded.
-
-        // Check selection status after download
-        // We can't check store immediately if batch updates?
-        // But we can check result.
-
-        // Actually, safer to NOT auto-add if we just did a download batch,
-        // UNLESS it was a perfect run.
-        // User asked "When selected audios all downloaded... click executes add".
-        // This implies manual click for Add?
-        // "When (condition), download button becomes PlusOutlined".
-        // So I should validly just let the button state update, and user clicks again.
-        // But previously I had auto-add logic.
-        // Removing auto-add logic ensures consistent behavior ("Download" -> "Add").
-        // But seamless is better.
-        // Ref: "Clicking will execute add".
-        // If I make it auto, button doesn't become Plus.
-        // I will keep auto-add for seamlessness, BUT if skipped/failed, stop.
-
-        // Check if any selected items are NOT downloaded
-        // Since store updates are async in React but synchronous in Zustand vanilla,
-        // we can check if result.downloaded + existing covers all selected?
-        // Let's just trust `failedCount === 0`.
-        // If aborted, `failedCount` is 0 (it counts as skipped/failed in startDownload logic? No, startDownload returns null. downloadMultiple increments failedCount).
-        // My `downloadMultiple` in slice increments `failedCount` if `startDownload` returns null.
-        // `startDownload` returns null on ABORT.
-        // So failedCount INCLUDES skipped/aborted.
-        // So `if (result.failedCount === 0)` handles it.
-
         await processDownloadResult(result, playlist, isAddMode)
       }
     }
@@ -350,7 +312,7 @@ export const SearchPage: FC = () => {
         cover: currentPlaylist.cover,
         audios: finalAudios,
         platform: currentPlaylist.platform,
-        download_url: currentPlaylist.id,
+        download_url: currentPlaylist.download_url,
       }
 
       await addPlaylistToConfig(localPlaylist)
@@ -381,7 +343,6 @@ export const SearchPage: FC = () => {
   // UI States
   const showClearButton = useMemo(() => {
     if (!playlist || downloadingAll) return false
-    // Show if we have failed OR skipped items in selection OR long pending items
     return (
       Array.from(selectedIds).some(
         (id) => failedIds.has(id) || skippedIds.has(id),
@@ -409,17 +370,12 @@ export const SearchPage: FC = () => {
         !downloadedIds.has(id) && !failedIds.has(id) && !skippedIds.has(id),
     ).length
 
-    // Logic:
-    // All downloaded -> Add
-    // Failed/Skipped > 0 and Pending == 0 -> Retry
-    // Pending > 0 -> Download
-
     let text = ""
-    let icon = <DownloadOutlined />
+    let icon = <Download />
 
     if (pendingCount === 0 && (failedCount > 0 || skippedCount > 0)) {
       text = `${failedCount + skippedCount}`
-      icon = <ReloadOutlined />
+      icon = <Refresh />
     } else if (
       pendingCount === 0 &&
       failedCount === 0 &&
@@ -427,7 +383,7 @@ export const SearchPage: FC = () => {
       alreadyDownloadedCount > 0
     ) {
       text = `${alreadyDownloadedCount}`
-      icon = <PlusOutlined />
+      icon = <Add />
     } else if (pendingCount > 0) {
       text = `${pendingCount}`
     }
@@ -447,50 +403,48 @@ export const SearchPage: FC = () => {
 
       // Status badges
       const statusBadges = (
-        <Flex align="center" gap={"small"}>
+        <Stack direction="row" spacing={0.5} alignItems="center">
           {downloading && (
-            <LoadingOutlined
-              style={{
-                fontSize: 12,
-                color: "#1890ff",
-              }}
+            <CircularProgress
+              size={12}
+              sx={{ color: "primary.main" }}
               title="Downloading"
             />
           )}
           {downloaded && (
-            <div
-              style={{
+            <Box
+              sx={{
                 width: 8,
                 height: 8,
                 borderRadius: "50%",
-                background: "#52c41a",
+                bgcolor: "success.main",
               }}
               title="Downloaded"
             />
           )}
           {failed && (
-            <div
-              style={{
+            <Box
+              sx={{
                 width: 8,
                 height: 8,
                 borderRadius: "50%",
-                background: "#ff4d4f",
+                bgcolor: "error.main",
               }}
               title="Failed"
             />
           )}
           {skipped && (
-            <div
-              style={{
+            <Box
+              sx={{
                 width: 8,
                 height: 8,
                 borderRadius: "50%",
-                background: "#faad14",
+                bgcolor: "warning.main",
               }}
               title="Skipped"
             />
           )}
-        </Flex>
+        </Stack>
       )
 
       return (
@@ -510,13 +464,13 @@ export const SearchPage: FC = () => {
           badge={{
             show: true,
             icon: selected ? (
-              <CheckOutlined
-                style={{
+              <Check
+                sx={{
                   color: "#fff",
-                  background: "#52c41a",
+                  bgcolor: "success.main",
                   borderRadius: "50%",
-                  padding: 4,
-                  fontSize: 12,
+                  p: 0.5,
+                  fontSize: 20,
                 }}
               />
             ) : (
@@ -526,38 +480,63 @@ export const SearchPage: FC = () => {
           extraInfo={statusBadges}
           actions={
             downloading ? (
-              <AdaptiveButton
-                type="text"
-                className="action-btn"
-                style={{ color: "#ff4d4f" }}
-                icon={<StopOutlined />}
+              <Button
+                variant="text"
+                color="error"
                 onClick={(e) => {
                   e.stopPropagation()
                   abortDownload(audioId)
                 }}
                 aria-label="Stop download"
-              />
+                sx={{
+                  minWidth: 0,
+                  p: 0,
+                  width: 32,
+                  height: 32,
+                  borderRadius: 1,
+                }}
+              >
+                <Stop />
+              </Button>
             ) : inLibrary ? (
-              <AdaptiveButton
-                type="text"
-                icon={<EnvironmentOutlined />}
+              <Button
+                variant="text"
+                color="primary"
                 onClick={(e) => {
                   e.stopPropagation()
                   handleNavigateToAudio(audioId)
                 }}
                 aria-label="Go to audio"
-              />
+                sx={{
+                  minWidth: 0,
+                  p: 0,
+                  width: 32,
+                  height: 32,
+                  borderRadius: 1,
+                }}
+              >
+                <LibraryMusic />
+              </Button>
             ) : (
-              <AdaptiveButton
-                type="text"
-                icon={<DownloadOutlined />}
+              <Button
+                variant="text"
+                color="primary"
                 disabled={downloadingAll || downloaded}
                 onClick={(e) => {
                   e.stopPropagation()
                   handleDownloadSingle(audioId)
                 }}
                 aria-label="Download"
-              />
+                sx={{
+                  minWidth: 0,
+                  p: 0,
+                  width: 32,
+                  height: 32,
+                  borderRadius: 1,
+                }}
+              >
+                <Download />
+              </Button>
             )
           }
         />
@@ -579,60 +558,93 @@ export const SearchPage: FC = () => {
   )
 
   return (
-    <Flex vertical className="page search-page" gap="small">
-      <Search
-        placeholder="Input audio/playlist ID/URL"
-        allowClear
-        value={searchText}
-        onChange={(e) => setSearchText(e.target.value)}
-        onSearch={handleSearch}
-        loading={searching}
-        disabled={searching || downloadingAll}
-        size="large"
-      />
+    <Stack
+      spacing={1}
+      className="page search-page"
+      sx={{
+        height: "100%",
+        overflow: "hidden",
+      }}
+    >
+      <Box sx={{ p: 1 }}>
+        <TextField
+          fullWidth
+          placeholder="Input audio/playlist ID/URL"
+          value={searchText}
+          onChange={(e) => setSearchText(e.target.value)}
+          disabled={searching || downloadingAll}
+          onKeyPress={(e) => {
+            if (e.key === "Enter") {
+              handleSearch()
+            }
+          }}
+          InputProps={{
+            endAdornment: (
+              <InputAdornment position="end">
+                {searchText && !searching && (
+                  <IconButton
+                    onClick={() => setSearchText("")}
+                    edge="end"
+                    sx={{ mr: 0.5 }}
+                  >
+                    <Clear />
+                  </IconButton>
+                )}
+                <IconButton
+                  onClick={handleSearch}
+                  edge="end"
+                  disabled={searching || !searchText}
+                  color="primary"
+                >
+                  {searching ? <CircularProgress size={24} /> : <SearchIcon />}
+                </IconButton>
+              </InputAdornment>
+            ),
+          }}
+        />
+      </Box>
 
       {playlist && !searching && (
         <>
-          <AudioList
-            items={playlist.audios}
-            getItemId={getAudioId}
-            renderItem={renderSearchItem}
-          />
+          <Box className="audio-list" sx={{ flex: 1, overflow: "hidden" }}>
+            <AudioList
+              items={playlist.audios}
+              getItemId={getAudioId}
+              renderItem={renderSearchItem}
+            />
+          </Box>
 
-          {/* // ... (inside the component return, Replace the bottom bar Flex with:) */}
-          <SearchBottomBar
-            playlist={playlist}
-            playlistCoverUrl={playlistCoverUrl}
-            isAllSelected={isAllSelected}
-            isSomeSelected={isSomeSelected}
-            onToggleSelectAll={(checked: boolean) =>
-              toggleSelectAll(playlist.audios, checked)
-            }
-            showClearButton={showClearButton}
-            longPendingCount={longPendingSelectedIds.size}
-            onClear={handleClearSpecial}
-            downloadButtonIcon={downloadButtonIcon}
-            downloadButtonText={downloadButtonText}
-            isDownloadingAll={downloadingAll}
-            isSelectedEmpty={selectedIds.size === 0}
-            onDownloadAll={handleDownloadAll}
-          />
+          <Box
+            className="search-bottom-bar"
+            sx={{
+              flex: "none",
+              bgcolor: "background.paper",
+              borderTop: 1,
+              borderColor: "divider",
+              boxShadow: 4,
+              borderRadius: 2,
+            }}
+          >
+            <SearchBottomBar
+              playlist={playlist}
+              playlistCoverUrl={playlistCoverUrl}
+              isAllSelected={isAllSelected}
+              isSomeSelected={isSomeSelected}
+              onToggleSelectAll={(checked: boolean) =>
+                toggleSelectAll(playlist.audios, checked)
+              }
+              showClearButton={showClearButton}
+              longPendingCount={longPendingSelectedIds.size}
+              onClear={handleClearSpecial}
+              downloadButtonIcon={downloadButtonIcon}
+              downloadButtonText={downloadButtonText}
+              isDownloadingAll={downloadingAll}
+              isSelectedEmpty={selectedIds.size === 0}
+              onDownloadAll={handleDownloadAll}
+            />
+          </Box>
         </>
       )}
-
-      {!playlist && !searching && (
-        <Flex flex={1} align="center" justify="center">
-          <Avatar
-            src={DEFAULT_COVER_URL}
-            size={256}
-            shape="square"
-            style={{ opacity: 0.5 }}
-            alt="Search"
-          />
-        </Flex>
-      )}
-    </Flex>
+    </Stack>
   )
 }
-
-export default SearchPage
