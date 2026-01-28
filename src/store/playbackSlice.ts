@@ -18,6 +18,7 @@ export interface PlaybackSliceState {
   playbackHistory: LocalAudio[]
   duration: number
   currentTime: number
+  canSeek: boolean
 
   // Audio element reference
   audioElement: HTMLAudioElement
@@ -70,6 +71,7 @@ export const createPlaybackSlice: StateCreator<
   playbackHistory: [],
   duration: 0,
   currentTime: 0,
+  canSeek: false,
   audioElement: new Audio(),
   listenersInitialized: false,
 
@@ -91,6 +93,10 @@ export const createPlaybackSlice: StateCreator<
       })
     })
 
+    audioElement.addEventListener("canplaythrough", () => {
+      set({ canSeek: true })
+    })
+
     // Audio ended - auto play next
     audioElement.addEventListener("ended", () => {
       get().playNext()
@@ -99,7 +105,7 @@ export const createPlaybackSlice: StateCreator<
     // Error handling
     audioElement.addEventListener("error", (e) => {
       console.error("Audio playback error:", e)
-      set({ isPlaying: false })
+      set({ isPlaying: false, canSeek: false })
     })
   },
 
@@ -132,6 +138,7 @@ export const createPlaybackSlice: StateCreator<
         audioUrl: url,
         duration: audio.audio.duration || 0,
         isPlaying: false,
+        canSeek: false,
       })
 
       // Save to localStorage

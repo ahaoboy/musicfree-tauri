@@ -39,6 +39,7 @@ export const PlayerPage: FC = () => {
   const isPlaying = useAppStore((state) => state.isPlaying)
   const audioElement = useAppStore((state) => state.audioElement)
   const deleteAudio = useAppStore((state) => state.deleteAudio)
+  const canSeek = useAppStore((state) => state.canSeek)
 
   const coverUrl = useCoverUrl(
     currentAudio?.cover_path,
@@ -55,10 +56,11 @@ export const PlayerPage: FC = () => {
   // Handle slider interaction (UI only)
   const handleSliderChange = useCallback(
     (_: Event, value: number | number[]) => {
+      if (!canSeek) return
       setIsDragging(true)
       setDragTime(value as number)
     },
-    [],
+    [canSeek],
   )
 
   // Commit seek operation when user releases slider
@@ -67,6 +69,7 @@ export const PlayerPage: FC = () => {
       _event: Event | React.SyntheticEvent | undefined,
       value: number | number[],
     ) => {
+      if (!canSeek) return
       const seekTime = value as number
       if (audioElement && Number.isFinite(seekTime)) {
         audioElement.currentTime = seekTime
@@ -88,7 +91,7 @@ export const PlayerPage: FC = () => {
         }
       }
     },
-    [audioElement, isPlaying, currentAudio],
+    [audioElement, isPlaying, currentAudio, canSeek],
   )
 
   // Handle delete with navigation logic
@@ -283,7 +286,7 @@ export const PlayerPage: FC = () => {
             value={isDragging ? dragTime : currentTime}
             onChange={handleSliderChange}
             onChangeCommitted={handleAfterChange}
-            disabled={!duration || duration === 0}
+            disabled={!duration || duration === 0 || !canSeek}
             valueLabelDisplay="off"
             sx={{
               flex: 1,
