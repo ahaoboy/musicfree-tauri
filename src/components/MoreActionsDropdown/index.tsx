@@ -6,7 +6,6 @@ import {
   ListItemText,
   Snackbar,
   Alert,
-  Divider,
   Button,
 } from "@mui/material"
 import {
@@ -120,38 +119,49 @@ export const MoreActionsDropdown: FC<MoreActionsDropdownProps> = ({
         sx={{
           minWidth: 0,
           p: 0,
-          width: 32,
-          height: 32,
+          width: 24,
+          height: 24,
           borderRadius: 1,
         }}
       >
-        <MoreVert />
+        <MoreVert sx={{ fontSize: 18 }} />
       </Button>
       <Menu
         anchorEl={anchorEl}
         open={open}
         onClose={handleClose}
         onClick={(e) => e.stopPropagation()}
+        slotProps={{
+          list: {
+            dense: true,
+            sx: { py: 0.5 },
+          },
+        }}
       >
         <MenuItem onClick={handleCopyUrl} disabled={!url}>
-          <ListItemIcon>
-            <ContentCopy fontSize="small" />
+          <ListItemIcon sx={{ minWidth: "24px !important" }}>
+            <ContentCopy sx={{ fontSize: 18 }} />
           </ListItemIcon>
-          <ListItemText>Copy</ListItemText>
+          <ListItemText slotProps={{ primary: { fontSize: 13 } }}>
+            Copy
+          </ListItemText>
         </MenuItem>
         <MenuItem onClick={handleOpenInBrowser} disabled={!url}>
-          <ListItemIcon>
-            <OpenInBrowser fontSize="small" />
+          <ListItemIcon sx={{ minWidth: "24px !important" }}>
+            <OpenInBrowser sx={{ fontSize: 18 }} />
           </ListItemIcon>
-          <ListItemText>Open</ListItemText>
+          <ListItemText slotProps={{ primary: { fontSize: 13 } }}>
+            Open
+          </ListItemText>
         </MenuItem>
-        {onDelete && <Divider />}
         {onDelete && (
           <MenuItem onClick={handleDelete} sx={{ color: "error.main" }}>
-            <ListItemIcon>
-              <Delete fontSize="small" color="error" />
+            <ListItemIcon sx={{ minWidth: "24px !important" }}>
+              <Delete sx={{ fontSize: 18 }} color="error" />
             </ListItemIcon>
-            <ListItemText>Delete</ListItemText>
+            <ListItemText slotProps={{ primary: { fontSize: 13 } }}>
+              Delete
+            </ListItemText>
           </MenuItem>
         )}
       </Menu>
