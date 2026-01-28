@@ -271,6 +271,9 @@ export const AppLayout: FC = memo(() => {
                 display: "flex",
                 flexDirection: "column",
                 position: "relative",
+                paddingTop: routeHandle.isSpecial
+                  ? "env(safe-area-inset-top)"
+                  : 0,
               }}
             >
               <Suspense fallback={<LoadingFallback />}>
