@@ -1,4 +1,4 @@
-import { FC, useCallback, useMemo, useEffect, useRef } from "react"
+import { FC, useCallback, useMemo, useEffect, useRef, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import {
   Stack,
@@ -34,6 +34,9 @@ export const SearchPage: FC = () => {
 
   // Ref to track previous downloading IDs for auto-scroll
   const prevDownloadingIdsRef = useRef<Set<string>>(new Set())
+
+  // State for auto-scroll target
+  const [scrollToId, setScrollToId] = useState<string | null>(null)
 
   // Store State
   const searchText = useAppStore((state) => state.searchText)
@@ -98,18 +101,22 @@ export const SearchPage: FC = () => {
     // Scroll to the first newly downloading audio
     if (newDownloadingIds.length > 0 && downloadingAll) {
       const audioId = newDownloadingIds[0]
-      const element = document.querySelector(`[data-item-id="${audioId}"]`)
-
-      if (element) {
-        // Scroll into view with smooth behavior
-        element.scrollIntoView({
-          behavior: "smooth",
-          block: "center",
-          inline: "nearest",
-        })
-      }
+      setScrollToId(audioId)
     }
   }, [downloadingIds, downloadingAll])
+
+  // Auto-scroll to default selection when playlist changes
+  useEffect(() => {
+    if (playlist?.audios?.length) {
+      const currentSelectedIds = useAppStore.getState().searchSelectedIds
+      const target = playlist.audios.find((a) => currentSelectedIds.has(a.id))
+      if (target) {
+        setScrollToId(target.id)
+      } else {
+        setScrollToId(playlist.audios[0].id)
+      }
+    }
+  }, [playlist])
 
   // Get existing audios from config
   const configAudios = useMemo(() => {
@@ -611,6 +618,7 @@ export const SearchPage: FC = () => {
               items={playlist.audios}
               getItemId={getAudioId}
               renderItem={renderSearchItem}
+              highlightId={scrollToId}
             />
           </Box>
 

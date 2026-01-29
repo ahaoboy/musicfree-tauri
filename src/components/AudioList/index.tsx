@@ -1,5 +1,5 @@
 import { FC, ReactElement, useRef, CSSProperties, useEffect, memo } from "react"
-import { List } from "react-window"
+import { List, ListImperativeAPI } from "react-window"
 
 interface AudioListProps<T = any> {
   /**
@@ -78,7 +78,7 @@ export const AudioList: FC<AudioListProps> = ({
   className = "audio-list",
   style,
 }) => {
-  const listRef = useRef<any>(null)
+  const listRef = useRef<ListImperativeAPI>(null)
 
   // Scroll to highlighted item when highlight changes
   useEffect(() => {
@@ -98,7 +98,8 @@ export const AudioList: FC<AudioListProps> = ({
               // scrollToRow(config: { index: number; align?: string; behavior?: string })
               listRef.current.scrollToRow({
                 index,
-                align: "center",
+                align: "start",
+                behavior: "instant",
               })
             } catch (err) {
               console.warn(`AudioList: Failed to scroll to row ${index}.`, err)
