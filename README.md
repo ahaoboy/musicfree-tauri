@@ -6,6 +6,12 @@ A modern music player application built with Rust, Tauri, and React.
   <img src="https://github.com/ahaoboy/musicfree-tauri/blob/main/public/icon.png?raw=true" alt="MusicFree Icon" width="256" height="256">
 </div>
 
+
+
+https://github.com/user-attachments/assets/990ff7c7-c1e6-4446-91a8-21c112a0e3f3
+
+
+
 ## About
 
 This is a desktop music player application that provides a seamless music listening experience.
