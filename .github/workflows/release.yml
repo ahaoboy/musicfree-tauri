@@ -35,7 +35,7 @@ jobs:
           - platform: "ubuntu-latest"
             # args: "-- --runner cross"
             # args: "--features boa"
-            args: "--features qjs"
+            args: "--features qjs --target aarch64-linux-android"
             mobile: android
             java: "21"
             ndk: "29.0.14206865"
