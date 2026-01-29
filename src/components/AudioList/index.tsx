@@ -1,7 +1,7 @@
-import { FC, ReactElement, useRef, CSSProperties, useEffect, memo } from "react"
+import { ReactElement, useRef, CSSProperties, useEffect, memo } from "react"
 import { List, ListImperativeAPI } from "react-window"
 
-interface AudioListProps<T = any> {
+interface AudioListProps<T = unknown> {
   /**
    * Data items to render
    */
@@ -38,9 +38,26 @@ interface AudioListProps<T = any> {
   style?: CSSProperties
 }
 
+interface RowProps<T> {
+  index: number
+  style: CSSProperties
+  rowProps: {
+    items: T[]
+    renderItem: (item: T, index: number) => ReactElement
+    getItemId: (item: T) => string
+    highlightId?: string | null
+  }
+  ariaAttributes?: {
+    "aria-posinset": number
+    "aria-setsize": number
+    role: "listitem"
+  }
+}
+
 // Row component for react-window, moved outside to prevent re-creation on every render
 const RowComponent = memo(
-  ({ index, style, items, renderItem, getItemId, highlightId }: any) => {
+  <T,>({ index, style, rowProps, ariaAttributes }: RowProps<T>) => {
+    const { items, renderItem, getItemId, highlightId } = rowProps
     const item = items?.[index]
     if (!item) return null
 
@@ -56,6 +73,7 @@ const RowComponent = memo(
         }}
         data-item-id={itemId}
         className={isHighlighted ? "highlighted-item" : ""}
+        {...ariaAttributes}
       >
         {renderItem(item, index)}
       </div>
@@ -69,7 +87,7 @@ RowComponent.displayName = "RowComponent"
  * Virtual audio list component with highlight and auto-scroll functionality
  * Optimized for performance: uses react-window and stable row components.
  */
-export const AudioList: FC<AudioListProps> = ({
+export function AudioList<T>({
   items,
   renderItem,
   getItemId,
@@ -77,7 +95,7 @@ export const AudioList: FC<AudioListProps> = ({
   itemHeight = 80,
   className = "audio-list",
   style,
-}) => {
+}: AudioListProps<T>) {
   const listRef = useRef<ListImperativeAPI>(null)
 
   // Scroll to highlighted item when highlight changes

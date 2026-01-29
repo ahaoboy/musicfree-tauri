@@ -56,7 +56,7 @@ export const FavoriteButton: FC<FavoriteButtonProps> = ({
       }
       if (audio) {
         toggleFavorite(audio)
-        onClick?.(e as any, !isFavorited)
+        onClick?.(e, !isFavorited)
       }
     },
     [audio, toggleFavorite, isFavorited, onClick, stopPropagation],

@@ -50,8 +50,9 @@ export const MoreActionsDropdown: FC<MoreActionsDropdownProps> = ({
     _reason?: "backdropClick" | "escapeKeyDown",
   ) => {
     if (event && "stopPropagation" in event) {
-      ;(event as any).stopPropagation()
+      ;(event as React.BaseSyntheticEvent).stopPropagation()
     }
+
     setAnchorEl(null)
   }
 

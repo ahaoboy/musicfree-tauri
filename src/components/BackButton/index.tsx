@@ -55,7 +55,7 @@ export const BackButton: FC<BackButtonProps> = ({
       if (typeof to === "string") {
         navigate(to)
       } else {
-        navigate(to as any)
+        navigate(to as number)
       }
     },
     [onClick, to, navigate],

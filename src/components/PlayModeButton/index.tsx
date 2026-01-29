@@ -63,7 +63,7 @@ export const PlayModeButton: FC<PlayModeButtonProps> = ({
       const currentMode = currentPlayMode || "sequence"
       const currentIndex = modes.indexOf(currentMode)
       const newMode = modes[(currentIndex + 1) % modes.length]
-      onClick?.(e as any, newMode)
+      onClick?.(e, newMode)
     },
     [togglePlayMode, currentPlayMode, onClick, stopPropagation],
   )

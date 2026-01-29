@@ -2,13 +2,13 @@ import { FC, ReactNode } from "react"
 import { Checkbox, Typography, Stack, Box, Button } from "@mui/material"
 import Clear from "@mui/icons-material/Clear"
 import { AudioCard } from "../../components"
-import { Platform } from "../../api"
+import { Platform, Audio } from "../../api"
 
 interface SearchBottomBarProps {
   playlist: {
     title?: string
     platform: Platform
-    audios: any[]
+    audios: Audio[]
   }
   playlistCoverUrl?: string | null
   isAllSelected: boolean

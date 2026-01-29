@@ -24,7 +24,10 @@ import {
   AUDIO_PLAYLIST_ID,
   download_cover,
   LocalAudio,
+  Audio,
+  Playlist,
 } from "../../api"
+
 import { useAppStore } from "../../store"
 import { AudioCard, AudioList } from "../../components"
 import { isLongDuration } from "../../utils/audio"
@@ -146,7 +149,7 @@ export const SearchPage: FC = () => {
     [navigate],
   )
 
-  const getAudioId = useCallback((audio: any) => audio.id, [])
+  const getAudioId = useCallback((audio: Audio) => audio.id, [])
 
   const handleDownloadSingle = useCallback(
     async (audioId: string) => {
@@ -275,7 +278,7 @@ export const SearchPage: FC = () => {
 
   const processDownloadResult = async (
     result: { downloadedAudios: LocalAudio[]; existingAudios: LocalAudio[] },
-    currentPlaylist: any,
+    currentPlaylist: Playlist,
     _isAddMode: boolean,
   ) => {
     const allAudios = [...result.downloadedAudios, ...result.existingAudios]
@@ -306,8 +309,8 @@ export const SearchPage: FC = () => {
 
       const audioMap = new Map(allAudios.map((a) => [a.audio.id, a]))
       const finalAudios = currentPlaylist.audios
-        .map((a: any) => audioMap.get(a.id))
-        .filter(Boolean)
+        .map((a: Audio) => audioMap.get(a.id))
+        .filter(Boolean) as LocalAudio[]
 
       const localPlaylist: LocalPlaylist = {
         id:

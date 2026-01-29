@@ -59,7 +59,7 @@ export const SkipButton: FC<SkipButtonProps> = ({
       } else {
         playNext()
       }
-      onClick?.(e as any, direction)
+      onClick?.(e, direction)
     },
     [direction, playPrev, playNext, canPlayPrevValue, onClick, stopPropagation],
   )

@@ -117,7 +117,7 @@ export const SettingsPage: FC = () => {
       const filename = await import_data()
       message.success(`Successfully imported data from ${filename}`)
       await loadConfig()
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error(e)
       if (typeof e === "string" && e.includes("No backup")) {
         message.warning("No backup file found in Downloads")

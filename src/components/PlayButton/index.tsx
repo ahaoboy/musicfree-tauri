@@ -52,7 +52,7 @@ export const PlayButton: FC<PlayButtonProps> = ({
         e.stopPropagation()
       }
       togglePlay()
-      onClick?.(e as any, !isPlaying)
+      onClick?.(e, !isPlaying)
     },
     [togglePlay, isPlaying, onClick, stopPropagation],
   )
