@@ -2,6 +2,15 @@ import { StateCreator } from "zustand"
 import type { AppState } from "./index"
 import { LocalAudio, PlayMode, get_web_url, storage } from "../api"
 
+// Helper to create and configure Audio element
+const getAudio = (): HTMLAudioElement => {
+  const audio = new Audio()
+  audio.preload = "auto"
+  // Allow cross-origin playback if needed for some resources
+  // audio.crossOrigin = "anonymous"
+  return audio
+}
+
 const MAX_HISTORY_SIZE = 64
 
 // ============================================
@@ -72,12 +81,23 @@ export const createPlaybackSlice: StateCreator<
   duration: 0,
   currentTime: 0,
   canSeek: false,
-  audioElement: new Audio(),
+  audioElement: getAudio(),
   listenersInitialized: false,
 
   // Setup audio event listeners
   setupAudioListeners: () => {
     const { audioElement } = get()
+
+    // Helper to check seekability
+    const checkSeekable = () => {
+      // HAVE_METADATA (1) or higher means we have duration and can seek
+      const isSeekable =
+        audioElement.readyState >= 1 &&
+        Number.isFinite(audioElement.duration) &&
+        audioElement.duration > 0
+      set({ canSeek: isSeekable })
+    }
+
     // Time update
     audioElement.addEventListener("timeupdate", () => {
       set({
@@ -86,16 +106,24 @@ export const createPlaybackSlice: StateCreator<
       })
     })
 
-    // Metadata loaded
+    // Load start - reset state
+    audioElement.addEventListener("loadstart", () => {
+      set({ canSeek: false, duration: 0 })
+    })
+
+    // Metadata loaded - ready to seek
     audioElement.addEventListener("loadedmetadata", () => {
       set({
         duration: audioElement.duration || 0,
       })
+      checkSeekable()
     })
 
-    audioElement.addEventListener("canplaythrough", () => {
-      set({ canSeek: true })
-    })
+    // Can play - definitely seekable
+    audioElement.addEventListener("canplay", checkSeekable)
+
+    // Can play through - optimal state
+    audioElement.addEventListener("canplaythrough", checkSeekable)
 
     // Audio ended - auto play next
     audioElement.addEventListener("ended", () => {
@@ -107,6 +135,9 @@ export const createPlaybackSlice: StateCreator<
       console.error("Audio playback error:", e)
       set({ isPlaying: false, canSeek: false })
     })
+
+    // Initial check in case listeners are attached after load
+    checkSeekable()
   },
 
   playAudio: async (

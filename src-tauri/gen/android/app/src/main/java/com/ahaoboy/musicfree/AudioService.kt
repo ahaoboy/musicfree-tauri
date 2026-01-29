@@ -41,7 +41,8 @@ class AudioService : Service() {
             PowerManager.PARTIAL_WAKE_LOCK,
             "MusicFree::AudioPlaybackWakeLock"
         )
-        wakeLock?.acquire(10*60*1000L /*10 minutes*/)
+        // Acquire lock without timeout, release in onDestroy
+        wakeLock?.acquire()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
