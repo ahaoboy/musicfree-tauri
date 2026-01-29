@@ -18,7 +18,8 @@ crate-type = ["staticlib", "cdylib", "rlib"]
 tauri-build = { version = "2", features = [] }
 
 [features]
-qjs = ["musicfree/qjs", "musicfree/bindgen"]
+# qjs = ["musicfree/qjs", "musicfree/bindgen"]
+qjs = ["musicfree/qjs"]
 boa = ["musicfree/boa", "dep:icu_normalizer"]
 
 [dependencies]
@@ -65,6 +66,10 @@ icu_normalizer = { version = "=2.0.1", optional = true }
 # FIXME: https://github.com/aws/aws-lc-rs/issues/1006
 # [patch.crates-io]
 # aws-lc-sys = { git = "https://github.com/zsdsys/aws-lc-rs", branch = "android-getentropy-fix" }
+
+# FIXME: https://github.com/tauri-apps/tauri/issues/14849
+[patch.crates-io]
+rquickjs = { version = "0.11", optional = true, git = "https://github.com/ahaoboy/rquickjs.git", branch = "android" }
 
 [profile.release]
 debug = false
