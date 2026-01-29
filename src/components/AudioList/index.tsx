@@ -38,27 +38,19 @@ interface AudioListProps<T = unknown> {
   style?: CSSProperties
 }
 
-interface RowProps<T> {
-  index: number
-  style: CSSProperties
-  rowProps: {
-    items: T[]
-    renderItem: (item: T, index: number) => ReactElement
-    getItemId: (item: T) => string
-    highlightId?: string | null
-  }
-  ariaAttributes?: {
-    "aria-posinset": number
-    "aria-setsize": number
-    role: "listitem"
-  }
-}
-
 // Row component for react-window, moved outside to prevent re-creation on every render
 const RowComponent = memo(
-  <T,>({ index, style, rowProps, ariaAttributes }: RowProps<T>) => {
-    const { items, renderItem, getItemId, highlightId } = rowProps
+  ({
+    index,
+    style,
+    items,
+    renderItem,
+    getItemId,
+    highlightId,
+    ariaAttributes,
+  }: any) => {
     const item = items?.[index]
+
     if (!item) return null
 
     const itemId = getItemId(item)
@@ -147,7 +139,7 @@ export function AudioList<T>({
         rowComponent={RowComponent as any}
         rowCount={items.length}
         rowHeight={itemHeight}
-        rowProps={rowProps} // Correct prop name for this library version
+        rowProps={rowProps as any}
         overscanCount={6}
         style={{
           height: "100%",
@@ -159,4 +151,4 @@ export function AudioList<T>({
   )
 }
 
-export default AudioList
+// export default AudioList (Removed for consistency with named export)

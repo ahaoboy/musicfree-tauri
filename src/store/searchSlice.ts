@@ -287,7 +287,9 @@ export const createSearchSlice: StateCreator<AppState, [], [], SearchSlice> = (
       })
 
       return result
-    } catch (error: any) {
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error)
       const {
         searchDownloadingIds: currDownloading,
         searchFailedIds: currFailed,
@@ -300,7 +302,7 @@ export const createSearchSlice: StateCreator<AppState, [], [], SearchSlice> = (
       const newFailed = new Set(currFailed)
       const newSkipped = new Set(currSkipped)
 
-      if (error.message === "ABORTED") {
+      if (errorMessage === "ABORTED") {
         newSkipped.add(audio.id)
       } else {
         newFailed.add(audio.id)

@@ -43,14 +43,18 @@ export interface PlaybackSliceActions {
     audio: LocalAudio,
     playlistId: string,
     addToHistory?: boolean,
+    autoPlay?: boolean,
   ) => Promise<void>
   loadAudioMetadata: (audio: LocalAudio) => Promise<void>
   pauseAudio: () => void
   resumeAudio: () => void
   togglePlay: () => void
-  playNext: () => Promise<void>
-  playPrev: () => Promise<void>
+  playNext: (force?: boolean) => Promise<void>
+  playPrev: (force?: boolean) => Promise<void>
+  switchToNextAudio: () => LocalAudio | null
+  switchToPrevAudio: () => LocalAudio | null
   canPlayPrev: () => boolean
+
   togglePlayMode: () => void
   setupAudioListeners: () => void
   seekTo: (time: number) => void
@@ -144,6 +148,7 @@ export const createPlaybackSlice: StateCreator<
     audio: LocalAudio,
     playlistId: string,
     addToHistory: boolean = true,
+    autoPlay: boolean = true,
   ) => {
     const { currentAudio, audioElement, playbackHistory } = get()
 
@@ -209,9 +214,13 @@ export const createPlaybackSlice: StateCreator<
             audioElement.addEventListener("error", onError, { once: true })
           })
 
-          // Now play
-          await audioElement.play()
-          set({ isPlaying: true })
+          // Now play if autoPlay is true
+          if (autoPlay) {
+            await audioElement.play()
+            set({ isPlaying: true })
+          } else {
+            set({ isPlaying: false })
+          }
         } catch (error) {
           // Ignore AbortError when switching tracks quickly
           if (error instanceof Error && error.name === "AbortError") {
@@ -315,24 +324,47 @@ export const createPlaybackSlice: StateCreator<
     return nextAudio
   },
 
-  playNext: async () => {
-    const { currentPlaylistId, getNextAudio } = get()
-    const nextAudio = getNextAudio()
-
-    if (nextAudio && currentPlaylistId) {
-      await get().playAudio(nextAudio, currentPlaylistId, true)
-    }
+  switchToNextAudio: () => {
+    return get().getNextAudio()
   },
 
-  playPrev: async () => {
-    const { playbackHistory, currentPlaylistId } = get()
-    if (playbackHistory.length === 0 || !currentPlaylistId) return
+  switchToPrevAudio: () => {
+    const { playbackHistory } = get()
+    if (playbackHistory.length === 0) return null
 
     const prevAudio = playbackHistory[playbackHistory.length - 1]
     const newHistory = playbackHistory.slice(0, -1)
 
     set({ playbackHistory: newHistory })
-    await get().playAudio(prevAudio, currentPlaylistId, false)
+    return prevAudio
+  },
+
+  playNext: async (force: boolean = false) => {
+    const { currentPlaylistId, switchToNextAudio, isPlaying } = get()
+    const nextAudio = switchToNextAudio()
+
+    if (nextAudio && currentPlaylistId) {
+      await get().playAudio(
+        nextAudio,
+        currentPlaylistId,
+        true,
+        force || isPlaying,
+      )
+    }
+  },
+
+  playPrev: async (force: boolean = false) => {
+    const { currentPlaylistId, switchToPrevAudio, isPlaying } = get()
+    const prevAudio = switchToPrevAudio()
+
+    if (prevAudio && currentPlaylistId) {
+      await get().playAudio(
+        prevAudio,
+        currentPlaylistId,
+        false,
+        force || isPlaying,
+      )
+    }
   },
 
   canPlayPrev: () => {
