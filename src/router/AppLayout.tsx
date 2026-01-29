@@ -223,7 +223,12 @@ export const AppLayout: FC = memo(() => {
               <Paper
                 elevation={0}
                 square
-                sx={{ borderBottom: 1, borderColor: "divider", zIndex: 1 }}
+                sx={{
+                  borderBottom: 1,
+                  borderColor: "divider",
+                  zIndex: 1,
+                  // paddingTop: "env(safe-area-inset-top)",
+                }}
               >
                 <Tabs
                   value={currentTab}
@@ -271,9 +276,8 @@ export const AppLayout: FC = memo(() => {
                 display: "flex",
                 flexDirection: "column",
                 position: "relative",
-                paddingTop: routeHandle.isSpecial
-                  ? "env(safe-area-inset-top)"
-                  : 0,
+                // PlayerPage handles its own safe area padding
+                // paddingTop: 0,
               }}
             >
               <Suspense fallback={<LoadingFallback />}>
