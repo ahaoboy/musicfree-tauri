@@ -71,6 +71,8 @@ icu_normalizer = { version = "=2.0.1", optional = true }
 [patch.crates-io]
 rquickjs = { version = "0.11", optional = true, git = "https://github.com/ahaoboy/rquickjs.git", branch = "android" }
 rquickjs-sys = { version = "0.11", optional = true, git = "https://github.com/ahaoboy/rquickjs.git", branch = "android" }
+rquickjs-core = { version = "0.11", optional = true, git = "https://github.com/ahaoboy/rquickjs.git", branch = "android" }
+rquickjs-macro = { version = "0.11", optional = true, git = "https://github.com/ahaoboy/rquickjs.git", branch = "android" }
 
 [profile.release]
 debug = false
