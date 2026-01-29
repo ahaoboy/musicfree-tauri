@@ -159,6 +159,7 @@ export const PlayerPage: FC = () => {
         bgcolor: "background.default",
         zIndex: 20,
         overflow: "hidden",
+        pb: "12px",
       }}
     >
       {/* Background Blur */}
@@ -251,7 +252,7 @@ export const PlayerPage: FC = () => {
             sx={{
               width: "100%",
               display: "-webkit-box",
-              WebkitLineClamp: 2,
+              WebkitLineClamp: 3,
               WebkitBoxOrient: "vertical",
               overflow: "hidden",
               textShadow: "0 2px 4px rgba(0,0,0,0.2)",
