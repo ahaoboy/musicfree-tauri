@@ -42,15 +42,15 @@ reqwest = { version = "0.12", features = [
 ], default-features = false }
 tokio = { version = "1", features = ["full"] }
 regex = "1"
-anyhow = "*"
-thiserror = "1"
+anyhow = "1"
+thiserror = "2"
 musicfree = { git = "https://github.com/ahaoboy/musicfree", version = "0.1", default-features = false, features = [
   "bilibili",
   "youtube",
   # "qjs",
   # "bindgen",
 ] }
-uuid = { version = "1.0", features = ["v4"] }
+uuid = { version = "1", features = ["v4"] }
 md5 = "0.8"
 tauri-plugin-fs = "2"
 tauri-plugin-clipboard-manager = "2"
