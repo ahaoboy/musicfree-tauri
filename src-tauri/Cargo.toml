@@ -69,10 +69,16 @@ icu_normalizer = { version = "=2.0.1", optional = true }
 
 # FIXME: https://github.com/tauri-apps/tauri/issues/14849
 [patch.crates-io]
-rquickjs = { version = "0.11", optional = true, git = "https://github.com/ahaoboy/rquickjs.git", branch = "android" }
-rquickjs-sys = { version = "0.11", optional = true, git = "https://github.com/ahaoboy/rquickjs.git", branch = "android" }
-rquickjs-core = { version = "0.11", optional = true, git = "https://github.com/ahaoboy/rquickjs.git", branch = "android" }
-rquickjs-macro = { version = "0.11", optional = true, git = "https://github.com/ahaoboy/rquickjs.git", branch = "android" }
+rquickjs = { version = "0.11", git = "https://github.com/ahaoboy/rquickjs.git", branch = "android" }
+rquickjs-sys = { version = "0.11", git = "https://github.com/ahaoboy/rquickjs.git", branch = "android" }
+rquickjs-core = { version = "0.11", git = "https://github.com/ahaoboy/rquickjs.git", branch = "android" }
+rquickjs-macro = { version = "0.11", git = "https://github.com/ahaoboy/rquickjs.git", branch = "android" }
+
+[patch."https://github.com/DelSkayn/rquickjs.git"]
+rquickjs = { version = "0.11", git = "https://github.com/ahaoboy/rquickjs.git", branch = "android" }
+rquickjs-sys = { version = "0.11", git = "https://github.com/ahaoboy/rquickjs.git", branch = "android" }
+rquickjs-core = { version = "0.11", git = "https://github.com/ahaoboy/rquickjs.git", branch = "android" }
+rquickjs-macro = { version = "0.11", git = "https://github.com/ahaoboy/rquickjs.git", branch = "android" }
 
 [profile.release]
 debug = false
