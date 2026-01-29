@@ -1,4 +1,4 @@
-name: "publish"
+name: "release"
 
 on:
   push:
@@ -17,7 +17,7 @@ env:
 
 jobs:
   # Desktop and Mobile builds
-  publish:
+  release:
     permissions:
       contents: write
     strategy:
