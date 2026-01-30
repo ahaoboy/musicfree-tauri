@@ -21,7 +21,6 @@ import { useAppStore } from "../../store"
 import {
   clear_all_data,
   get_storage_size,
-  ThemeMode,
   is_builtin,
   export_data,
   import_data,
@@ -31,13 +30,14 @@ import { useConfirm } from "../../hooks"
 import { useMessage } from "../../contexts/MessageContext"
 import { CopyButton } from "../../components"
 import prettyBytes from "pretty-bytes"
+import { useTheme } from "../../hooks/useTheme"
 
 const REPO_URL = "https://github.com/ahaoboy/musicfree-tauri"
 
 // Settings page - app configuration
 export const SettingsPage: FC = () => {
-  const theme = useAppStore((state) => state.theme)
-  const setThemeMode = useAppStore((state) => state.setThemeMode)
+  const { mode, setMode } = useTheme()
+  // const setThemeMode = useAppStore((state) => state.setThemeMode)
   const loadConfig = useAppStore((state) => state.loadConfig)
 
   // Calculate total audios across all playlists (excluding duplicates)
@@ -137,8 +137,8 @@ export const SettingsPage: FC = () => {
           THEME
         </Typography>
         <Select
-          value={theme}
-          onChange={(e) => setThemeMode(e.target.value as ThemeMode)}
+          value={mode}
+          onChange={(e) => setMode(e.target.value)}
           fullWidth
         >
           <MenuItem value="light">
@@ -153,7 +153,7 @@ export const SettingsPage: FC = () => {
               <Typography>Dark</Typography>
             </Stack>
           </MenuItem>
-          <MenuItem value="auto">
+          <MenuItem value="system">
             <Stack direction="row" spacing={1} alignItems="center">
               <SettingsSystemDaydream fontSize="small" />
               <Typography>System</Typography>

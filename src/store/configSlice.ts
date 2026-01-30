@@ -48,8 +48,8 @@ export interface ConfigSliceActions {
   // Config actions
   loadConfig: () => Promise<void>
   saveConfig: (config: Config) => Promise<void>
-  setThemeMode: (mode: ThemeMode) => void
-  isDark: () => boolean
+  // setThemeMode: (mode: ThemeMode) => void
+  // isDark: () => boolean
 
   // Playlist actions
   addPlaylistToConfig: (playlist: LocalPlaylist) => Promise<void>
@@ -202,23 +202,23 @@ export const createConfigSlice: StateCreator<AppState, [], [], ConfigSlice> = (
     }
   },
 
-  isDark() {
-    const { theme } = get()
-    return (
-      theme === "dark" || (theme === "auto" && get_system_theme() === "dark")
-    )
-  },
+  // isDark() {
+  //   const { theme } = get()
+  //   return (
+  //     theme === "dark" || (theme === "auto" && get_system_theme() === "dark")
+  //   )
+  // },
 
   getTotalAudios(): LocalAudio[] {
     const { config } = get()
     return config.playlists.flatMap((i) => i.audios)
   },
 
-  setThemeMode: (mode: ThemeMode) => {
-    set({ theme: mode })
-    storage.setTheme(mode)
-    applyTheme(mode)
-  },
+  // setThemeMode: (mode: ThemeMode) => {
+  //   set({ theme: mode })
+  //   storage.setTheme(mode)
+  //   applyTheme(mode)
+  // },
 
   // Playlist actions
   addPlaylistToConfig: async (playlist: LocalPlaylist) => {
