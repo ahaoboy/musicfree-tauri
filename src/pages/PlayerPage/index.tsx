@@ -1,4 +1,4 @@
-import { FC, useCallback, useState } from "react"
+import { FC, useCallback } from "react"
 import { useNavigate } from "react-router-dom"
 import { MusicNote } from "@mui/icons-material"
 import {
@@ -50,18 +50,18 @@ export const PlayerPage: FC = () => {
   const duration = useDuration()
 
   // Local state for smoother seeking feedback
-  const [isDragging, setIsDragging] = useState(false)
-  const [dragTime, setDragTime] = useState(0)
+  // const [_isDragging, setIsDragging] = useState(false)
+  // const [_dragTime, setDragTime] = useState(0)
 
   // Handle slider interaction (UI only)
-  const handleSliderChange = useCallback(
-    (_: Event, value: number | number[]) => {
-      if (!canSeek) return
-      setIsDragging(true)
-      setDragTime(value as number)
-    },
-    [canSeek],
-  )
+  // const handleSliderChange = useCallback(
+  //   (_: Event, value: number | number[]) => {
+  //     if (!canSeek) return
+  //     setIsDragging(true)
+  //     setDragTime(value as number)
+  //   },
+  //   [canSeek],
+  // )
 
   // Commit seek operation when user releases slider
   const handleAfterChange = useCallback(
@@ -73,7 +73,7 @@ export const PlayerPage: FC = () => {
       const seekTime = value as number
       if (audioElement && Number.isFinite(seekTime)) {
         audioElement.currentTime = seekTime
-        setIsDragging(false)
+        // setIsDragging(false)
 
         // If audio is not playing (e.g. paused/ended), try to resume after seeking
         if (!isPlaying && currentAudio) {
@@ -284,8 +284,8 @@ export const PlayerPage: FC = () => {
             size="small"
             min={0}
             max={duration || 100}
-            value={isDragging ? dragTime : currentTime}
-            onChange={handleSliderChange}
+            value={currentTime}
+            // onChange={handleSliderChange}
             onChangeCommitted={handleAfterChange}
             disabled={!duration || duration === 0 || !canSeek}
             valueLabelDisplay="off"
@@ -294,7 +294,7 @@ export const PlayerPage: FC = () => {
               "& .MuiSlider-thumb": {
                 width: 12,
                 height: 12,
-                transition: "0.3s cubic-bezier(.47,1.64,.41,.8)",
+                // transition: "0.3s cubic-bezier(.47,1.64,.41,.8)",
                 "&:before": {
                   boxShadow: "0 2px 12px 0 rgba(0,0,0,0.4)",
                 },

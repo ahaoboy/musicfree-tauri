@@ -84,6 +84,22 @@ export const useTheme = () => {
             },
           },
         },
+        MuiSlider: {
+          styleOverrides: {
+            thumb: {
+              transition: "none",
+            },
+            track: {
+              transition: "none",
+            },
+            rail: {
+              transition: "none",
+            },
+            valueLabel: {
+              transition: "none",
+            },
+          },
+        },
       },
     })
   }, [mode])
