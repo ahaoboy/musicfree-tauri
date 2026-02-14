@@ -11,7 +11,7 @@ import {
   SyntheticEvent,
 } from "react"
 import { useNavigate, useLocation, useMatches } from "react-router-dom"
-import { Box, Tabs, Tab as MuiTab, Paper } from "@mui/material"
+import { Box, Tabs, Tab as MuiTab, Paper, Fade } from "@mui/material"
 import { QueueMusic, LibraryMusic, Search, Settings } from "@mui/icons-material"
 
 import {
@@ -56,7 +56,7 @@ export const AppLayout: FC = memo(() => {
   const loadConfig = useAppStore((state) => state.loadConfig)
   // const isDark = useAppStore((state) => state.isDark()) // Theme is handled by MUI ThemeProvider in App.tsx
 
-  // Loading state with minimum display time
+  // Loading state with minimum display time and fade animation
   const [showLoading, setShowLoading] = useState(true)
   const loadingStartTime = useRef<number>(Date.now())
 
@@ -221,9 +221,20 @@ export const AppLayout: FC = memo(() => {
   return (
     <ErrorBoundary onReset={() => window.location.reload()}>
       <NavigationContext.Provider value={navigationContextValue}>
-        {showLoading ? (
-          <LoadingFallback fullscreen tip="Loading..." />
-        ) : (
+        <Fade in={showLoading} timeout={500} unmountOnExit>
+          <Box
+            sx={{
+              position: "fixed",
+              inset: 0,
+              zIndex: 9999,
+              bgcolor: "background.default",
+            }}
+          >
+            <LoadingFallback fullscreen tip="Loading..." />
+          </Box>
+        </Fade>
+
+        <Fade in={!showLoading} timeout={500}>
           <Box
             className="app"
             sx={{
@@ -343,7 +354,7 @@ export const AppLayout: FC = memo(() => {
               </Activity>
             )}
           </Box>
-        )}
+        </Fade>
       </NavigationContext.Provider>
     </ErrorBoundary>
   )
