@@ -56,6 +56,23 @@ export const AppLayout: FC = memo(() => {
   const loadConfig = useAppStore((state) => state.loadConfig)
   // const isDark = useAppStore((state) => state.isDark()) // Theme is handled by MUI ThemeProvider in App.tsx
 
+  // Loading state with minimum display time
+  const [showLoading, setShowLoading] = useState(true)
+  const loadingStartTime = useRef<number>(Date.now())
+
+  useEffect(() => {
+    if (!isConfigLoading) {
+      const elapsed = Date.now() - loadingStartTime.current
+      const remaining = Math.max(0, 1000 - elapsed)
+
+      const timer = setTimeout(() => {
+        setShowLoading(false)
+      }, remaining)
+
+      return () => clearTimeout(timer)
+    }
+  }, [isConfigLoading])
+
   // Get route metadata
   const routeHandle = useMemo(() => {
     const match = matches[matches.length - 1]
@@ -204,8 +221,8 @@ export const AppLayout: FC = memo(() => {
   return (
     <ErrorBoundary onReset={() => window.location.reload()}>
       <NavigationContext.Provider value={navigationContextValue}>
-        {isConfigLoading ? (
-          <LoadingFallback fullscreen tip="Loading configuration..." />
+        {showLoading ? (
+          <LoadingFallback fullscreen tip="Loading..." />
         ) : (
           <Box
             className="app"

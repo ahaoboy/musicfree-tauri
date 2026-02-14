@@ -132,7 +132,7 @@ export const createConfigSlice: StateCreator<AppState, [], [], ConfigSlice> = (
 ) => ({
   // Initial state
   config: get_default_config(),
-  isConfigLoading: false,
+  isConfigLoading: true,
   theme: storage.getTheme(),
   app_dir: null,
   app_version: null,
