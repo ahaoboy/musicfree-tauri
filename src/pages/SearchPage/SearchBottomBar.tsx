@@ -47,7 +47,7 @@ export const SearchBottomBar: FC<SearchBottomBarProps> = ({
         coverUrl={playlistCoverUrl || undefined}
         platform={playlist.platform}
         title={playlist.title || "Search Result"}
-        subtitle={`${audioCount} ♪`}
+        subtitle={audioCount.toString()}
         active={false}
         actions={
           <Stack direction="row" alignItems="center" spacing={1}>

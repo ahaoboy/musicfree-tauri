@@ -56,10 +56,6 @@ export const PlaylistsPage: FC = () => {
     [showConfirm, deletePlaylist],
   )
 
-  const formatAudioCount = useCallback((count: number): string => {
-    return `${count.toString().padStart(3, " ")}♪`
-  }, [])
-
   const renderPlaylistItem = useCallback(
     (playlist: LocalPlaylist) => {
       const audioCount = playlist.audios?.length || 0
@@ -77,7 +73,7 @@ export const PlaylistsPage: FC = () => {
           coverUrl={playlist.cover}
           platform={playlist.platform}
           title={displayName}
-          subtitle={formatAudioCount(audioCount)}
+          subtitle={audioCount.toString()}
           icon={<FolderOpen />}
           onClick={() => handlePlaylistClick(playlist)}
           active={isActive}
@@ -95,13 +91,7 @@ export const PlaylistsPage: FC = () => {
         />
       )
     },
-    [
-      highlightId,
-      currentPlaylistId,
-      formatAudioCount,
-      handlePlaylistClick,
-      handleDeletePlaylist,
-    ],
+    [highlightId, currentPlaylistId, handlePlaylistClick, handleDeletePlaylist],
   )
 
   if (playlists.length === 0) {
