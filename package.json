@@ -15,7 +15,8 @@
     "clippy": "cd src-tauri && cargo clippy --fix --allow-dirty --allow-staged --all-targets --all-features",
     "lint": "biome check --apply-unsafe",
     "format": "biome format --write",
-    "lint:fix": "biome lint --write --unsafe"
+    "lint:fix": "biome lint --write --unsafe",
+    "icon": "tauri icon ./public/icon-android.png && cp public/icon.ico src-tauri/icons/icon.ico"
   },
   "dependencies": {
     "@biomejs/biome": "2.3.15",

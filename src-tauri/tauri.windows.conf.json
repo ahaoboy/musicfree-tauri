@@ -5,5 +5,10 @@
         "windows"
       ]
     }
+  },
+  "bundle": {
+    "icon": [
+      "icons/icon.ico"
+    ]
   }
 }
