@@ -16,11 +16,14 @@ import DarkMode from "@mui/icons-material/DarkMode"
 import SettingsSystemDaydream from "@mui/icons-material/SettingsSystemDaydream"
 import GitHub from "@mui/icons-material/GitHub"
 import FolderOpen from "@mui/icons-material/FolderOpen"
+import DeleteIcon from "@mui/icons-material/Delete"
 import { openUrl, openPath } from "@tauri-apps/plugin-opener"
 import { useAppStore } from "../../store"
 import {
   clear_all_data,
   get_storage_size,
+  get_cache_size,
+  clear_cache,
   is_builtin,
   export_data,
   import_data,
@@ -59,17 +62,25 @@ export const SettingsPage: FC = () => {
   const [importing, setImporting] = useState(false)
   const [storageSize, setStorageSize] = useState<number>(0)
   const [loadingStorage, setLoadingStorage] = useState(false)
+  const [cacheSize, setCacheSize] = useState<number>(0)
+  const [loadingCache, setLoadingCache] = useState(false)
 
   // Load storage size
   const loadStorageSize = useCallback(async () => {
     setLoadingStorage(true)
+    setLoadingCache(true)
     try {
-      const size = await get_storage_size()
-      setStorageSize(size)
+      const [storage, cache] = await Promise.all([
+        get_storage_size(),
+        get_cache_size(),
+      ])
+      setStorageSize(storage)
+      setCacheSize(cache)
     } catch (error) {
       console.error("Failed to get storage size:", error)
     } finally {
       setLoadingStorage(false)
+      setLoadingCache(false)
     }
   }, [])
 
@@ -77,6 +88,26 @@ export const SettingsPage: FC = () => {
   useEffect(() => {
     loadStorageSize()
   }, [loadStorageSize])
+
+  const handleClearCache = useCallback(() => {
+    showConfirm({
+      title: "Clear Cache",
+      content:
+        "This will delete all files that are not used by your playlists or audios. This action cannot be undone.",
+      okText: "Clear",
+      okType: "danger",
+      onOk: async () => {
+        try {
+          await clear_cache()
+          await loadStorageSize()
+          message.success("Cache cleared successfully")
+        } catch (e) {
+          console.error(e)
+          message.error("Failed to clear cache")
+        }
+      },
+    })
+  }, [showConfirm, message, loadStorageSize])
 
   const handleClearData = useCallback(() => {
     showConfirm({
@@ -274,16 +305,52 @@ export const SettingsPage: FC = () => {
             alignItems="center"
           >
             <Box>
-              <Typography>Clear Storage</Typography>
+              <Stack direction="row" spacing={1} alignItems="center">
+                <Typography>Clear Cache</Typography>
+                <Typography color="text.secondary" variant="body2">
+                  (
+                  {loadingCache ? (
+                    <CircularProgress
+                      size={12}
+                      sx={{ color: "text.secondary" }}
+                    />
+                  ) : (
+                    prettyBytes(cacheSize)
+                  )}
+                  )
+                </Typography>
+              </Stack>
             </Box>
-            <Button variant="contained" color="error" onClick={handleClearData}>
-              Clear
-              {loadingStorage ? (
-                <CircularProgress size={16} sx={{ ml: 1, color: "inherit" }} />
-              ) : (
-                ` ${prettyBytes(storageSize)}`
-              )}
-            </Button>
+            <IconButton color="error" onClick={handleClearCache} size="small">
+              <DeleteIcon />
+            </IconButton>
+          </Stack>
+          <Divider sx={{ my: 2 }} />
+          <Stack
+            direction="row"
+            justifyContent="space-between"
+            alignItems="center"
+          >
+            <Box>
+              <Stack direction="row" spacing={1} alignItems="center">
+                <Typography>Clear Storage</Typography>
+                <Typography color="text.secondary" variant="body2">
+                  (
+                  {loadingStorage ? (
+                    <CircularProgress
+                      size={12}
+                      sx={{ color: "text.secondary" }}
+                    />
+                  ) : (
+                    prettyBytes(storageSize)
+                  )}
+                  )
+                </Typography>
+              </Stack>
+            </Box>
+            <IconButton color="error" onClick={handleClearData} size="small">
+              <DeleteIcon />
+            </IconButton>
           </Stack>
         </Paper>
       </Stack>

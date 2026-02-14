@@ -160,6 +160,35 @@ pub async fn get_storage_size(app_handle: tauri::AppHandle) -> AppResult<u64> {
 }
 
 #[tauri::command]
+pub async fn get_cache_size(app_handle: tauri::AppHandle) -> AppResult<u64> {
+    let config = get_config(app_handle.clone()).await?;
+    let cache_files = api::get_cache_files(&app_handle, &config).await?;
+    let mut total_size: u64 = 0;
+
+    for file in cache_files {
+        if let Ok(metadata) = tokio::fs::metadata(file).await {
+            total_size += metadata.len();
+        }
+    }
+
+    Ok(total_size)
+}
+
+#[tauri::command]
+pub async fn clear_cache(app_handle: tauri::AppHandle) -> AppResult<()> {
+    let config = get_config(app_handle.clone()).await?;
+    let cache_files = api::get_cache_files(&app_handle, &config).await?;
+
+    for file in cache_files {
+        if tokio::fs::try_exists(&file).await.unwrap_or(false) {
+            tokio::fs::remove_file(file).await.map_err(AppError::Io)?;
+        }
+    }
+
+    Ok(())
+}
+
+#[tauri::command]
 pub async fn export_data(app_handle: tauri::AppHandle) -> AppResult<String> {
     let app_dir = api::app_dir(&app_handle).await?;
     let download_dir = app_handle

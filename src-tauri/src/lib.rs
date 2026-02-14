@@ -60,6 +60,8 @@ pub fn run() {
             cmd::import_data,
             cmd::remove_file,
             cmd::get_storage_size,
+            cmd::get_cache_size,
+            cmd::clear_cache,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

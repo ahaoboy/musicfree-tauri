@@ -90,6 +90,14 @@ export function get_storage_size(): Promise<number> {
   return invoke("get_storage_size")
 }
 
+export function get_cache_size(): Promise<number> {
+  return invoke("get_cache_size")
+}
+
+export function clear_cache(): Promise<void> {
+  return invoke("clear_cache")
+}
+
 export function download_cover(
   url: string,
   platform: string,

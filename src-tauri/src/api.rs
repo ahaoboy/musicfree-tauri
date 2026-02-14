@@ -1,9 +1,13 @@
 use crate::{
-    core::{ASSETS_DIR, AUDIOS_DIR, COVERS_DIR, LocalAudio},
+    core::{ASSETS_DIR, AUDIOS_DIR, COVERS_DIR, Config, LocalAudio},
     error::{AppError, AppResult},
 };
 use musicfree::{Audio, Platform};
-use std::path::{Path, PathBuf};
+use std::{
+    collections::HashSet,
+    path::{Path, PathBuf},
+};
+use walkdir::WalkDir;
 use tauri::Manager;
 
 pub async fn app_dir(app_handle: &tauri::AppHandle) -> AppResult<PathBuf> {
@@ -129,4 +133,50 @@ pub async fn download_cover(
         return Some(cover_path);
     }
     None
+}
+
+pub fn get_used_paths(config: &Config) -> HashSet<String> {
+    let mut used_paths = HashSet::new();
+    for playlist in &config.playlists {
+        if let Some(ref cover_path) = playlist.cover_path {
+            used_paths.insert(cover_path.replace("\\", "/"));
+        }
+        for audio in &playlist.audios {
+            used_paths.insert(audio.path.replace("\\", "/"));
+            if let Some(ref cover_path) = audio.cover_path {
+                used_paths.insert(cover_path.replace("\\", "/"));
+            }
+        }
+    }
+    used_paths
+}
+
+pub async fn get_cache_files(app_handle: &tauri::AppHandle, config: &Config) -> AppResult<Vec<PathBuf>> {
+    let app_dir = app_dir(app_handle).await?;
+    let assets_dir = app_dir.join(ASSETS_DIR);
+
+    if !assets_dir.exists() {
+        return Ok(vec![]);
+    }
+
+    let used_paths = get_used_paths(config);
+    let mut cache_files = Vec::new();
+
+    // Use WalkDir to find all files in assets directory
+    for entry in WalkDir::new(&assets_dir) {
+        let entry = entry.map_err(|e| AppError::Io(e.into()))?;
+        let path = entry.path();
+
+        if path.is_file() {
+            // Get relative path from app_dir to match config paths
+            if let Ok(relative_path) = path.strip_prefix(&app_dir) {
+                let relative_path_str = relative_path.to_string_lossy().to_string().replace("\\", "/");
+                if !used_paths.contains(&relative_path_str) {
+                    cache_files.push(path.to_path_buf());
+                }
+            }
+        }
+    }
+
+    Ok(cache_files)
 }
