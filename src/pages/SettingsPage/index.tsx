@@ -133,9 +133,6 @@ export const SettingsPage: FC = () => {
     <Stack spacing={3} className="page settings-page" sx={{ p: 2 }}>
       {/* Theme Section */}
       <Stack spacing={2}>
-        <Typography variant="caption" sx={{ opacity: 0.6, fontWeight: "bold" }}>
-          THEME
-        </Typography>
         <Select
           value={mode}
           onChange={(e) => setMode(e.target.value)}
@@ -164,9 +161,6 @@ export const SettingsPage: FC = () => {
 
       {/* Library Section */}
       <Stack spacing={2}>
-        <Typography variant="caption" sx={{ opacity: 0.6, fontWeight: "bold" }}>
-          LIBRARY
-        </Typography>
         <Paper variant="outlined" sx={{ p: 2, borderRadius: 3 }}>
           <Stack
             direction="row"
@@ -183,9 +177,6 @@ export const SettingsPage: FC = () => {
 
       {/* About Section */}
       <Stack spacing={2}>
-        <Typography variant="caption" sx={{ opacity: 0.6, fontWeight: "bold" }}>
-          ABOUT
-        </Typography>
         <Paper variant="outlined" sx={{ p: 2, borderRadius: 3 }}>
           <Stack
             direction="row"
@@ -250,9 +241,6 @@ export const SettingsPage: FC = () => {
 
       {/* Data Management Section */}
       <Stack spacing={2}>
-        <Typography variant="caption" sx={{ opacity: 0.6, fontWeight: "bold" }}>
-          DATA MANAGEMENT
-        </Typography>
         <Paper variant="outlined" sx={{ p: 2, borderRadius: 3 }}>
           <Stack
             direction="row"
