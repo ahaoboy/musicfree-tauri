@@ -9,6 +9,7 @@ import {
   useRef,
   Suspense,
   SyntheticEvent,
+  useLayoutEffect,
 } from "react"
 import { useNavigate, useLocation, useMatches } from "react-router-dom"
 import { Box, Tabs, Tab as MuiTab, Paper, Fade } from "@mui/material"
@@ -136,7 +137,22 @@ export const AppLayout: FC = memo(() => {
     return () => clearTimeout(timer)
   }, [location.pathname])
 
-  // Update detail view state
+  useLayoutEffect(() => {
+    // Simulate a click/mousedown on any active MUI backdrops to trigger closure
+    // This handles the "ghost backdrop" issue by specifically targeting the backdrop element
+    const backdrops = document.querySelectorAll<HTMLElement>(
+      ".MuiPopover-root.MuiMenu-root .MuiBackdrop-invisible",
+    )
+    for (const backdrop of backdrops) {
+      backdrop.click()
+      backdrop.style.setProperty("display", "none", "important")
+      const p = backdrop.parentElement
+      if (p) {
+        p.style.setProperty("display", "none", "important")
+      }
+    }
+  }, [routeHandle.isDetail, location.pathname])
+
   useEffect(() => {
     if (!routeHandle.isDetail && location.pathname !== "/player") {
       setIsInDetailView(false)
