@@ -9,6 +9,8 @@
     "preview": "vite preview",
     "tauri": "tauri",
     "android": "tauri android",
+    "android:dev": "tauri android dev",
+    "android:build": "tauri android build --target aarch64",
     "pre-check": "npm run format && npm run lint:fix",
     "clippy": "cd src-tauri && cargo clippy --fix --allow-dirty --allow-staged --all-targets --all-features",
     "lint": "biome check --apply-unsafe",

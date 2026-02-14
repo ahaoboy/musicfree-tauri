@@ -1,6 +1,7 @@
 import { invoke, convertFileSrc } from "@tauri-apps/api/core"
 import { join } from "@tauri-apps/api/path"
 import { platform } from "@tauri-apps/plugin-os"
+import { getWavUrl, isAudio, isVideo } from "./audio"
 export const CurrentPlatform = platform()
 
 export type Platform = `Bilibili` | `Youtube` | `File` | (string & {})
@@ -159,8 +160,14 @@ export async function get_musicfree_url(path: string): Promise<string> {
   // Remove leading slash if present
   const cleanPath = path.startsWith("/") ? path.slice(1) : path
 
-  if (CurrentPlatform === "windows" || CurrentPlatform === "android") {
-    return `http://musicfree.localhost/${cleanPath}`
+  const winUrl = `http://musicfree.localhost/${cleanPath}`
+  if (CurrentPlatform === "windows") {
+    return winUrl
+  }
+
+  if (CurrentPlatform === "android") {
+    if (isAudio(path) || isVideo(path)) return getWavUrl(winUrl)
+    return winUrl
   }
 
   // macOS, iOS, Linux
