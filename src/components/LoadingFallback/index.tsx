@@ -35,8 +35,9 @@ export const LoadingFallback: FC<LoadingFallbackProps> = ({
           src="/icon.png"
           alt="App Icon"
           sx={{
-            width: 96,
-            height: 96,
+            width: "80vmin",
+            height: "80vmin",
+            objectFit: "contain",
             borderRadius: "20%",
             mb: 3,
           }}
