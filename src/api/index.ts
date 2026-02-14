@@ -165,9 +165,8 @@ export async function get_musicfree_url(path: string): Promise<string> {
     return cached
   }
 
-  let assetUrl = `http://musicfree.localhost/${cleanPath}`
+  let assetUrl: string = `http://musicfree.localhost/${cleanPath}`
   if (CurrentPlatform === "windows") {
-    return assetUrl
   } else if (CurrentPlatform === "android") {
     if (isAudio(path) || isVideo(path)) {
       assetUrl = await getWavUrl(assetUrl)
