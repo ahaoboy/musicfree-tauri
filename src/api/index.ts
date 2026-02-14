@@ -160,22 +160,28 @@ export async function get_musicfree_url(path: string): Promise<string> {
   // Remove leading slash if present
   const cleanPath = path.startsWith("/") ? path.slice(1) : path
 
-  const winUrl = `http://musicfree.localhost/${cleanPath}`
+  const cached = urlCache.get(cleanPath)
+  if (cached) {
+    return cached
+  }
+
+  let assetUrl = `http://musicfree.localhost/${cleanPath}`
   if (CurrentPlatform === "windows") {
-    return winUrl
+    return assetUrl
+  } else if (CurrentPlatform === "android") {
+    if (isAudio(path) || isVideo(path)) {
+      assetUrl = await getWavUrl(assetUrl)
+    }
+  } else {
+    // macOS, iOS, Linux
+    assetUrl = `musicfree://localhost/${cleanPath}`
   }
-
-  if (CurrentPlatform === "android") {
-    if (isAudio(path) || isVideo(path)) return getWavUrl(winUrl)
-    return winUrl
-  }
-
-  // macOS, iOS, Linux
-  return `musicfree://localhost/${cleanPath}`
+  // Cache the result
+  urlCache.set(cleanPath, assetUrl)
+  return assetUrl
 }
 
 export function get_web_url(path: string): Promise<string> {
-  // return is_android() ? get_musicfree_url(path) : get_convert_url(path)
   return is_android() ? get_musicfree_url(path) : get_convert_url(path)
 }
 
