@@ -137,6 +137,21 @@ export const SearchPage: FC = () => {
     [configAudios],
   )
 
+  const handleSearchTextChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const value = e.target.value
+      // If it contains a URL but is not just the URL, extract it (handles sharing messages)
+      const urlRegex = /(https?:\/\/[^\s/$.?#].[^\s]*)/i
+      const match = value.match(urlRegex)
+      if (match && match[0] !== value.trim()) {
+        setSearchText(match[0])
+      } else {
+        setSearchText(value)
+      }
+    },
+    [setSearchText],
+  )
+
   const handleSearch = useCallback(() => {
     search(searchText)
   }, [search, searchText])
@@ -581,35 +596,41 @@ export const SearchPage: FC = () => {
           fullWidth
           placeholder="Input audio/playlist ID/URL"
           value={searchText}
-          onChange={(e) => setSearchText(e.target.value)}
+          onChange={handleSearchTextChange}
           disabled={searching || downloadingAll}
-          onKeyPress={(e) => {
+          onKeyDown={(e) => {
             if (e.key === "Enter") {
               handleSearch()
             }
           }}
-          InputProps={{
-            endAdornment: (
-              <InputAdornment position="end">
-                {searchText && !searching && (
+          slotProps={{
+            input: {
+              endAdornment: (
+                <InputAdornment position="end">
+                  {searchText && !searching && (
+                    <IconButton
+                      onClick={() => setSearchText("")}
+                      edge="end"
+                      sx={{ mr: 0.5 }}
+                    >
+                      <Clear />
+                    </IconButton>
+                  )}
                   <IconButton
-                    onClick={() => setSearchText("")}
+                    onClick={handleSearch}
                     edge="end"
-                    sx={{ mr: 0.5 }}
+                    disabled={searching || !searchText}
+                    color="primary"
                   >
-                    <Clear />
+                    {searching ? (
+                      <CircularProgress size={24} />
+                    ) : (
+                      <SearchIcon />
+                    )}
                   </IconButton>
-                )}
-                <IconButton
-                  onClick={handleSearch}
-                  edge="end"
-                  disabled={searching || !searchText}
-                  color="primary"
-                >
-                  {searching ? <CircularProgress size={24} /> : <SearchIcon />}
-                </IconButton>
-              </InputAdornment>
-            ),
+                </InputAdornment>
+              ),
+            },
           }}
         />
       </Box>
