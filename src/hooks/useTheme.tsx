@@ -136,7 +136,7 @@ const AVATAR_SIZE = {
   sm: 40,
   md: 48,
   lg: 80,
-  player: 52,
+  player: 48,
 }
 
 const Z_INDEX = {
@@ -262,7 +262,7 @@ export const useTheme = () => {
         borderRadius: 4,
       },
       custom: {
-        playerBarHeight: 68,
+        playerBarHeight: 64,
         safeAreaBottom: "env(safe-area-inset-bottom, 0px)",
         safeAreaTop: "env(safe-area-inset-top, 0px)",
         radius: RADIUS,
