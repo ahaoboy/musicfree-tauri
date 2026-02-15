@@ -1,8 +1,10 @@
 import { FC, ReactNode } from "react"
+import React from "react"
 import { Checkbox, Typography, Stack, Box, Button } from "@mui/material"
 import Clear from "@mui/icons-material/Clear"
 import { AudioCard } from "../../components"
 import { Platform, Audio } from "../../api"
+import { useAdaptiveSize } from "../../hooks"
 
 interface SearchBottomBarProps {
   playlist: {
@@ -40,6 +42,9 @@ export const SearchBottomBar: FC<SearchBottomBarProps> = ({
   onDownloadAll,
 }) => {
   const audioCount = playlist.audios?.length || 0
+  const { buttonSize, iconSize, muiSize } = useAdaptiveSize("medium")
+  const iconStyle = { fontSize: iconSize }
+
   return (
     <Box className="search-bottom-bar">
       <AudioCard
@@ -65,25 +70,26 @@ export const SearchBottomBar: FC<SearchBottomBarProps> = ({
                 onClick={onClear}
                 disabled={isDownloadingAll}
                 aria-label="Clear failed/long pending"
+                size={muiSize}
                 sx={{
                   minWidth: 0,
                   p: 0,
-                  width: 32,
-                  height: 32,
+                  width: buttonSize,
+                  height: buttonSize,
                   borderRadius: 1,
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
                 }}
               >
-                <Clear />
+                <Clear style={iconStyle} />
                 {longPendingCount > 0 && (
                   <Typography
                     component="span"
                     sx={{
                       color: "warning.main",
-                      ml: 0.5,
-                      fontSize: "inherit",
+                      ml: 0.2,
+                      fontSize: 12,
                     }}
                   >
                     {longPendingCount}
@@ -97,11 +103,15 @@ export const SearchBottomBar: FC<SearchBottomBarProps> = ({
               color="primary"
               onClick={onDownloadAll}
               disabled={isSelectedEmpty || isDownloadingAll}
+              size={muiSize}
               sx={{
                 borderRadius: 1.5,
               }}
             >
-              {downloadButtonIcon}
+              {React.cloneElement(downloadButtonIcon as React.ReactElement, {
+                // @ts-expect-error
+                style: { ...iconStyle, ...downloadButtonIcon.props.style },
+              })}
               <Typography component="span" sx={{ ml: 0.5 }}>
                 {downloadButtonText}
               </Typography>

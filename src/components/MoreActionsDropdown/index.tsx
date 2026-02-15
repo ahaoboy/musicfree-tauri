@@ -16,12 +16,14 @@ import {
 } from "@mui/icons-material"
 import { writeText } from "@tauri-apps/plugin-clipboard-manager"
 import { openUrl } from "@tauri-apps/plugin-opener"
+import { useAdaptiveSize, AdaptiveSize } from "../../hooks"
 
 export interface MoreActionsDropdownProps {
   url?: string
   onDelete?: () => void
   disabled?: boolean
   className?: string
+  size?: AdaptiveSize
 }
 
 export const MoreActionsDropdown: FC<MoreActionsDropdownProps> = ({
@@ -29,6 +31,7 @@ export const MoreActionsDropdown: FC<MoreActionsDropdownProps> = ({
   onDelete,
   disabled = false,
   className,
+  size = "medium",
 }) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
   const open = Boolean(anchorEl)
@@ -109,6 +112,9 @@ export const MoreActionsDropdown: FC<MoreActionsDropdownProps> = ({
     [onDelete],
   )
 
+  const { buttonSize, iconSize, muiSize } = useAdaptiveSize(size)
+  const iconStyle = { fontSize: iconSize }
+
   return (
     <>
       <Button
@@ -117,15 +123,16 @@ export const MoreActionsDropdown: FC<MoreActionsDropdownProps> = ({
         onClick={handleClick}
         className={className}
         disabled={disabled}
+        size={muiSize}
         sx={{
           minWidth: 0,
           p: 0,
-          width: 24,
-          height: 24,
+          width: buttonSize,
+          height: buttonSize,
           borderRadius: 1,
         }}
       >
-        <MoreVert sx={{ fontSize: 18 }} />
+        <MoreVert style={iconStyle} />
       </Button>
       <Menu
         anchorEl={anchorEl}

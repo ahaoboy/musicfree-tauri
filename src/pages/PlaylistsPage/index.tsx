@@ -81,6 +81,7 @@ export const PlaylistsPage: FC = () => {
           actions={
             canDelete ? (
               <MoreActionsDropdown
+                size="medium"
                 url={playlist.download_url}
                 onDelete={() =>
                   handleDeletePlaylist(playlist.id, playlist.title)

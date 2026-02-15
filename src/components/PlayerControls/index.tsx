@@ -5,6 +5,7 @@ import { PlayButton } from "../PlayButton"
 import { FavoriteButton } from "../FavoriteButton"
 import { SkipButton } from "../SkipButton"
 import { PlayModeButton } from "../PlayModeButton"
+import { AdaptiveSize } from "../../hooks"
 
 interface PlayerControlsProps {
   /** Current audio (required for favorite button) */
@@ -22,11 +23,11 @@ interface PlayerControlsProps {
   /** Button className */
   buttonClassName?: string
   /** Button size */
-  buttonSize?: "small" | "medium" | "large"
+  size?: AdaptiveSize
   /** Icon font size */
   iconSize?: number
   /** Emphasized play button size (only for full layout) */
-  playButtonSize?: "small" | "medium" | "large"
+  playButtonSize?: AdaptiveSize
   /** Emphasized play icon size (only for full layout) */
   playIconSize?: number
   /** Emphasized play button box size (px, only for play) */
@@ -54,7 +55,7 @@ export const PlayerControls: FC<PlayerControlsProps> = ({
   layout = "full",
   className,
   buttonClassName,
-  buttonSize,
+  size = "medium",
   iconSize,
   playButtonSize,
   playIconSize,
@@ -74,7 +75,7 @@ export const PlayerControls: FC<PlayerControlsProps> = ({
         <PlayButton
           stopPropagation
           className={`${buttonClassName} play`}
-          size={playButtonSize || buttonSize}
+          size={playButtonSize || size}
           iconSize={playIconSize || iconSize}
           boxSize={playBoxSize}
         />
@@ -83,7 +84,7 @@ export const PlayerControls: FC<PlayerControlsProps> = ({
             audio={audio}
             stopPropagation
             className={buttonClassName}
-            size={buttonSize}
+            size={size}
             iconSize={iconSize}
           />
         )}
@@ -104,7 +105,7 @@ export const PlayerControls: FC<PlayerControlsProps> = ({
         <PlayModeButton
           stopPropagation
           className={buttonClassName}
-          size={buttonSize}
+          size={size}
           iconSize={iconSize}
         />
       )}
@@ -114,7 +115,7 @@ export const PlayerControls: FC<PlayerControlsProps> = ({
           direction="prev"
           stopPropagation
           className={buttonClassName}
-          size={buttonSize}
+          size={size}
           iconSize={iconSize}
         />
       )}
@@ -122,7 +123,7 @@ export const PlayerControls: FC<PlayerControlsProps> = ({
       <PlayButton
         stopPropagation
         className={`${buttonClassName} play`}
-        size={playButtonSize || buttonSize}
+        size={playButtonSize || size}
         iconSize={playIconSize || iconSize}
         boxSize={playBoxSize}
       />
@@ -132,7 +133,7 @@ export const PlayerControls: FC<PlayerControlsProps> = ({
           direction="next"
           stopPropagation
           className={buttonClassName}
-          size={buttonSize}
+          size={size}
           iconSize={iconSize}
         />
       )}
@@ -142,7 +143,7 @@ export const PlayerControls: FC<PlayerControlsProps> = ({
           audio={audio}
           stopPropagation
           className={buttonClassName}
-          size={buttonSize}
+          size={size}
           iconSize={iconSize}
         />
       )}

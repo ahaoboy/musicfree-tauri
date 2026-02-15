@@ -3,6 +3,7 @@ import { Button } from "@mui/material"
 import { Repeat, RepeatOne, Shuffle, QueueMusic } from "@mui/icons-material"
 import { useAppStore } from "../../store"
 import type { PlayMode } from "../../api"
+import { useAdaptiveSize, AdaptiveSize } from "../../hooks"
 
 interface PlayModeButtonProps {
   /** Button variant */
@@ -19,7 +20,7 @@ interface PlayModeButtonProps {
   /** Additional className */
   className?: string
   /** Button size */
-  size?: "small" | "medium" | "large"
+  size?: AdaptiveSize
   /** Icon font size */
   iconSize?: number
   /** Stop event propagation */
@@ -68,7 +69,13 @@ export const PlayModeButton: FC<PlayModeButtonProps> = ({
     [togglePlayMode, currentPlayMode, onClick, stopPropagation],
   )
 
-  const iconStyle = iconSize ? { fontSize: iconSize } : undefined
+  const {
+    buttonSize,
+    iconSize: finalIconSize,
+    muiSize,
+  } = useAdaptiveSize(size, iconSize)
+
+  const iconStyle = { fontSize: finalIconSize }
 
   const modeIcon = useMemo(() => {
     switch (currentPlayMode) {
@@ -100,19 +107,13 @@ export const PlayModeButton: FC<PlayModeButtonProps> = ({
     }
   }, [currentPlayMode])
 
-  const buttonSize = useMemo(() => {
-    if (size === "small") return 28
-    if (size === "large") return 40
-    return 32
-  }, [size])
-
   return (
     <Button
       variant={variant}
       color={color}
       onClick={handleClick}
       className={className}
-      size={size}
+      size={muiSize}
       disabled={disabled}
       aria-label={ariaLabel}
       sx={{

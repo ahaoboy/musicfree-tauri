@@ -142,7 +142,7 @@ export const PlayerPage: FC = () => {
             pt: "max(env(safe-area-inset-top), 12px)",
           }}
         >
-          <BackButton />
+          <BackButton size="large" />
         </Stack>
       </Box>
     )
@@ -198,7 +198,7 @@ export const PlayerPage: FC = () => {
           pt: "max(env(safe-area-inset-top), 12px)",
         }}
       >
-        <BackButton />
+        <BackButton size="large" />
         <Box
           sx={{
             flex: 1,
@@ -218,6 +218,7 @@ export const PlayerPage: FC = () => {
           </Typography>
         </Box>
         <MoreActionsDropdown
+          size="large"
           url={currentAudio.audio.download_url}
           onDelete={handleDelete}
           disabled={!currentAudio.audio.download_url && !currentPlaylistId}
@@ -325,11 +326,8 @@ export const PlayerPage: FC = () => {
           audio={currentAudio}
           layout="full"
           align="space-between"
-          buttonSize="medium"
-          iconSize={32}
-          playButtonSize="large"
-          playIconSize={60}
-          playBoxSize={60}
+          size="large"
+          playButtonSize="xlarge"
         />
       </Stack>
     </Box>

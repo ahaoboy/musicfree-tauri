@@ -5,7 +5,6 @@ import {
   Box,
   TextField,
   InputAdornment,
-  IconButton,
   CircularProgress,
   Button,
 } from "@mui/material"
@@ -14,9 +13,9 @@ import Refresh from "@mui/icons-material/Refresh"
 import Add from "@mui/icons-material/Add"
 import Stop from "@mui/icons-material/Stop"
 import Check from "@mui/icons-material/Check"
-import LibraryMusic from "@mui/icons-material/LibraryMusic"
 import SearchIcon from "@mui/icons-material/Search"
 import Clear from "@mui/icons-material/Clear"
+import ArrowForwardIcon from "@mui/icons-material/ArrowForward"
 
 import { SearchBottomBar } from "./SearchBottomBar"
 import {
@@ -30,6 +29,7 @@ import {
 
 import { useAppStore } from "../../store"
 import { AudioCard, AudioList } from "../../components"
+import { useAdaptiveSize } from "../../hooks"
 import { isLongDuration } from "../../utils/audio"
 
 export const SearchPage: FC = () => {
@@ -40,6 +40,9 @@ export const SearchPage: FC = () => {
 
   // State for auto-scroll target
   const [scrollToId, setScrollToId] = useState<string | null>(null)
+
+  const { buttonSize, iconSize, muiSize } = useAdaptiveSize("medium")
+  const iconStyle = { fontSize: iconSize }
 
   // Store State
   const searchText = useAppStore((state) => state.searchText)
@@ -513,15 +516,16 @@ export const SearchPage: FC = () => {
                   abortDownload(audioId)
                 }}
                 aria-label="Stop download"
+                size={muiSize}
                 sx={{
                   minWidth: 0,
                   p: 0,
-                  width: 32,
-                  height: 32,
+                  width: buttonSize,
+                  height: buttonSize,
                   borderRadius: 1,
                 }}
               >
-                <Stop />
+                <Stop style={iconStyle} />
               </Button>
             ) : inLibrary ? (
               <Button
@@ -532,15 +536,16 @@ export const SearchPage: FC = () => {
                   handleNavigateToAudio(audioId)
                 }}
                 aria-label="Go to audio"
+                size={muiSize}
                 sx={{
                   minWidth: 0,
                   p: 0,
-                  width: 32,
-                  height: 32,
+                  width: buttonSize,
+                  height: buttonSize,
                   borderRadius: 1,
                 }}
               >
-                <LibraryMusic />
+                <ArrowForwardIcon style={iconStyle} />
               </Button>
             ) : (
               <Button
@@ -552,15 +557,16 @@ export const SearchPage: FC = () => {
                   handleDownloadSingle(audioId)
                 }}
                 aria-label="Download"
+                size={muiSize}
                 sx={{
                   minWidth: 0,
                   p: 0,
-                  width: 32,
-                  height: 32,
+                  width: buttonSize,
+                  height: buttonSize,
                   borderRadius: 1,
                 }}
               >
-                <Download />
+                <Download style={iconStyle} />
               </Button>
             )
           }
@@ -608,26 +614,41 @@ export const SearchPage: FC = () => {
               endAdornment: (
                 <InputAdornment position="end">
                   {searchText && !searching && (
-                    <IconButton
+                    <Button
                       onClick={() => setSearchText("")}
-                      edge="end"
-                      sx={{ mr: 0.5 }}
+                      size={muiSize}
+                      sx={{
+                        minWidth: 0,
+                        p: 0,
+                        width: buttonSize,
+                        height: buttonSize,
+                        borderRadius: "50%",
+                        color: "text.secondary",
+                        mr: 0.5,
+                      }}
                     >
-                      <Clear />
-                    </IconButton>
+                      <Clear style={iconStyle} />
+                    </Button>
                   )}
-                  <IconButton
+                  <Button
                     onClick={handleSearch}
-                    edge="end"
                     disabled={searching || !searchText}
                     color="primary"
+                    size={muiSize}
+                    sx={{
+                      minWidth: 0,
+                      p: 0,
+                      width: buttonSize,
+                      height: buttonSize,
+                      borderRadius: "50%",
+                    }}
                   >
                     {searching ? (
-                      <CircularProgress size={24} />
+                      <CircularProgress size={iconSize} />
                     ) : (
-                      <SearchIcon />
+                      <SearchIcon style={iconStyle} />
                     )}
-                  </IconButton>
+                  </Button>
                 </InputAdornment>
               ),
             },

@@ -1,7 +1,8 @@
-import { FC, useCallback, MouseEvent, useMemo } from "react"
+import { FC, useCallback, MouseEvent } from "react"
 import { Button } from "@mui/material"
 import { SkipPrevious, SkipNext } from "@mui/icons-material"
 import { useAppStore } from "../../store"
+import { useAdaptiveSize, AdaptiveSize } from "../../hooks"
 
 interface SkipButtonProps {
   /** Direction to skip */
@@ -9,7 +10,7 @@ interface SkipButtonProps {
   /** Additional className */
   className?: string
   /** Button size */
-  size?: "small" | "medium" | "large"
+  size?: AdaptiveSize
   /** Icon font size */
   iconSize?: number
   /** Stop event propagation */
@@ -64,13 +65,13 @@ export const SkipButton: FC<SkipButtonProps> = ({
     [direction, playPrev, playNext, canPlayPrevValue, onClick, stopPropagation],
   )
 
-  const iconStyle = iconSize ? { fontSize: iconSize } : undefined
+  const {
+    buttonSize,
+    iconSize: finalIconSize,
+    muiSize,
+  } = useAdaptiveSize(size, iconSize)
 
-  const buttonSize = useMemo(() => {
-    if (size === "small") return 28
-    if (size === "large") return 40
-    return 32
-  }, [size])
+  const iconStyle = { fontSize: finalIconSize }
 
   return (
     <Button
@@ -78,7 +79,7 @@ export const SkipButton: FC<SkipButtonProps> = ({
       color={color}
       onClick={handleClick}
       className={className}
-      size={size}
+      size={muiSize}
       disabled={disabled}
       aria-label={direction === "prev" ? "Previous track" : "Next track"}
       sx={{

@@ -1,8 +1,9 @@
-import { FC, useCallback, MouseEvent, useMemo } from "react"
+import { FC, useCallback, MouseEvent } from "react"
 import { Button } from "@mui/material"
 import { Favorite, FavoriteBorder } from "@mui/icons-material"
 import { LocalAudio } from "../../api"
 import { useAppStore } from "../../store"
+import { useAdaptiveSize, AdaptiveSize } from "../../hooks"
 
 interface FavoriteButtonProps {
   /** Audio to favorite/unfavorite */
@@ -19,7 +20,7 @@ interface FavoriteButtonProps {
   /** Additional className */
   className?: string
   /** Button size */
-  size?: "small" | "medium" | "large"
+  size?: AdaptiveSize
   /** Icon font size */
   iconSize?: number
   /** Stop event propagation */
@@ -62,13 +63,13 @@ export const FavoriteButton: FC<FavoriteButtonProps> = ({
     [audio, toggleFavorite, isFavorited, onClick, stopPropagation],
   )
 
-  const iconStyle = iconSize ? { fontSize: iconSize } : undefined
+  const {
+    buttonSize,
+    iconSize: finalIconSize,
+    muiSize,
+  } = useAdaptiveSize(size, iconSize)
 
-  const buttonSize = useMemo(() => {
-    if (size === "small") return 28
-    if (size === "large") return 40
-    return 32
-  }, [size])
+  const iconStyle = { fontSize: finalIconSize }
 
   if (!audio) {
     return null
@@ -80,7 +81,7 @@ export const FavoriteButton: FC<FavoriteButtonProps> = ({
       color={color}
       onClick={handleClick}
       className={className}
-      size={size}
+      size={muiSize}
       disabled={disabled}
       aria-label={isFavorited ? "Remove from favorites" : "Add to favorites"}
       sx={{

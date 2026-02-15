@@ -1,7 +1,8 @@
-import { FC, useCallback, MouseEvent, useMemo } from "react"
+import { FC, useCallback, MouseEvent } from "react"
 import { useNavigate } from "react-router-dom"
 import { Button } from "@mui/material"
 import { ChevronLeft } from "@mui/icons-material"
+import { useAdaptiveSize, AdaptiveSize } from "../../hooks"
 
 interface BackButtonProps {
   /** Custom navigation path (default: go back -1) */
@@ -18,9 +19,7 @@ interface BackButtonProps {
   /** Additional className */
   className?: string
   /** Button size */
-  size?: "small" | "medium" | "large"
-  /** Custom icon */
-  icon?: React.ReactNode
+  size?: AdaptiveSize
   /** Custom onClick handler */
   onClick?: (e: MouseEvent<HTMLElement>) => undefined | boolean
   /** Disabled state */
@@ -38,7 +37,6 @@ export const BackButton: FC<BackButtonProps> = ({
   color = "inherit",
   className,
   size,
-  icon = <ChevronLeft />,
   onClick,
   disabled,
   ariaLabel = "Go back",
@@ -61,11 +59,8 @@ export const BackButton: FC<BackButtonProps> = ({
     [onClick, to, navigate],
   )
 
-  const buttonSize = useMemo(() => {
-    if (size === "small") return 28
-    if (size === "large") return 40
-    return 32
-  }, [size])
+  const { buttonSize, iconSize, muiSize } = useAdaptiveSize(size)
+  const iconStyle = { fontSize: iconSize }
 
   return (
     <Button
@@ -73,7 +68,7 @@ export const BackButton: FC<BackButtonProps> = ({
       color={color}
       onClick={handleClick}
       className={className}
-      size={size}
+      size={muiSize}
       disabled={disabled}
       aria-label={ariaLabel}
       sx={{
@@ -84,7 +79,7 @@ export const BackButton: FC<BackButtonProps> = ({
         borderRadius: 1,
       }}
     >
-      {icon}
+      <ChevronLeft style={iconStyle} />
     </Button>
   )
 }
