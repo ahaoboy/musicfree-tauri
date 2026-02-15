@@ -1,5 +1,13 @@
 import { FC, memo, useCallback, ReactNode } from "react"
-import { Box, Typography, Avatar, Badge, Card } from "@mui/material"
+import {
+  Box,
+  Typography,
+  Avatar,
+  Badge,
+  Card,
+  SxProps,
+  Theme,
+} from "@mui/material"
 import { Audiotrack, Check, Favorite } from "@mui/icons-material"
 import { DEFAULT_COVER_URL } from "../../api"
 import { useCoverUrl } from "../../hooks"
@@ -63,7 +71,7 @@ interface AudioCardProps {
   actions?: ReactNode
 
   /** Additional sx */
-  sx?: any
+  sx?: SxProps<Theme>
 }
 
 /**
@@ -109,8 +117,8 @@ export const AudioCard: FC<AudioCardProps> = memo(
         src={finalCoverUrl}
         variant="rounded"
         sx={{
-          width: avatarSize ?? ((theme: any) => theme.custom.avatarSize.md),
-          height: avatarSize ?? ((theme: any) => theme.custom.avatarSize.md),
+          width: avatarSize ?? ((theme) => theme.custom.avatarSize.md),
+          height: avatarSize ?? ((theme) => theme.custom.avatarSize.md),
           flexShrink: 0,
           transition: (theme) => `transform ${theme.custom.transition.normal}`,
         }}
@@ -176,7 +184,15 @@ export const AudioCard: FC<AudioCardProps> = memo(
           ...extraSx,
         }}
       >
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, width: "100%", minWidth: 0 }}>
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            gap: 1.5,
+            width: "100%",
+            minWidth: 0,
+          }}
+        >
           {avatarWithBadge}
 
           <Box

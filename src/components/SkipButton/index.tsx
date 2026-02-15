@@ -17,13 +17,13 @@ interface SkipButtonProps {
   stopPropagation?: boolean
   variant?: "text" | "outlined" | "contained"
   color?:
-  | "inherit"
-  | "primary"
-  | "secondary"
-  | "success"
-  | "error"
-  | "info"
-  | "warning"
+    | "inherit"
+    | "primary"
+    | "secondary"
+    | "success"
+    | "error"
+    | "info"
+    | "warning"
   /** Custom onClick handler */
   onClick?: (e: MouseEvent, direction: "next" | "prev") => void
   /** Disabled state */

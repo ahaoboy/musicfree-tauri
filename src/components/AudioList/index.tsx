@@ -1,6 +1,6 @@
 import { ReactElement, useRef, CSSProperties, useEffect, memo } from "react"
 import { List, ListImperativeAPI } from "react-window"
-import { Box } from "@mui/material"
+import { Box, SxProps, Theme } from "@mui/material"
 import { useTheme } from "../../hooks/useTheme"
 
 interface AudioListProps<T = unknown> {
@@ -32,7 +32,7 @@ interface AudioListProps<T = unknown> {
   /**
    * Custom sx for the list container
    */
-  sx?: any
+  sx?: SxProps<Theme>
 
   /**
    * Custom style for the list container
@@ -42,14 +42,7 @@ interface AudioListProps<T = unknown> {
 
 // Row component for react-window, moved outside to prevent re-creation on every render
 const RowComponent = memo(
-  ({
-    index,
-    style,
-    items,
-    renderItem,
-    getItemId,
-    ariaAttributes,
-  }: any) => {
+  ({ index, style, items, renderItem, getItemId, ariaAttributes }: any) => {
     const item = items?.[index]
 
     if (!item) return null

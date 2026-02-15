@@ -26,11 +26,11 @@ export const PlayerCard: FC<PlayerCardProps> = memo(({ audio }) => {
     <AudioCard
       sx={{
         m: 1,
-        height: (theme: any) => theme.custom.playerBarHeight,
+        height: (theme) => theme.custom.playerBarHeight,
         display: "flex",
         alignItems: "center",
         flexShrink: 0,
-        zIndex: (theme: any) => theme.custom.zIndex.miniPlayer,
+        zIndex: (theme) => theme.custom.zIndex.miniPlayer,
         borderRadius: 2,
       }}
       coverPath={audio.cover_path}
@@ -43,12 +43,7 @@ export const PlayerCard: FC<PlayerCardProps> = memo(({ audio }) => {
       showBorder={false}
       onClick={handleCardClick}
       actions={
-        <PlayerControls
-          audio={audio}
-          layout="mini"
-          size="large"
-          gap={1}
-        />
+        <PlayerControls audio={audio} layout="mini" size="large" gap={1} />
       }
     />
   )

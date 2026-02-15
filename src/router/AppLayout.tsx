@@ -34,7 +34,6 @@ import SettingsPage from "../pages/SettingsPage"
 import PlayerPage from "../pages/PlayerPage"
 import { PlaylistDetail } from "../pages/PlaylistsPage/PlaylistDetail"
 
-
 export const AppLayout: FC = memo(() => {
   const navigate = useNavigate()
   const location = useLocation()
@@ -241,7 +240,7 @@ export const AppLayout: FC = memo(() => {
             sx={{
               position: "fixed",
               inset: 0,
-              zIndex: (theme: any) => theme.custom.zIndex.loading,
+              zIndex: (theme) => theme.custom.zIndex.loading,
               bgcolor: "background.default",
             }}
           >
@@ -259,7 +258,7 @@ export const AppLayout: FC = memo(() => {
               color: "text.primary",
               overflow: "hidden",
               position: "relative",
-              pt: (theme: any) => theme.custom.safeAreaTop,
+              pt: (theme) => theme.custom.safeAreaTop,
             }}
             {...swipeHandlers}
           >

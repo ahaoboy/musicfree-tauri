@@ -19,13 +19,13 @@ interface CopyButtonProps {
   copiedDuration?: number
   variant?: "text" | "outlined" | "contained"
   color?:
-  | "inherit"
-  | "primary"
-  | "secondary"
-  | "success"
-  | "error"
-  | "info"
-  | "warning"
+    | "inherit"
+    | "primary"
+    | "secondary"
+    | "success"
+    | "error"
+    | "info"
+    | "warning"
   /** Additional className */
   className?: string
   /** Button size */

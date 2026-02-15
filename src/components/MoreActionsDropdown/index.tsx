@@ -58,7 +58,7 @@ export const MoreActionsDropdown: FC<MoreActionsDropdownProps> = ({
     _reason?: "backdropClick" | "escapeKeyDown",
   ) => {
     if (event && "stopPropagation" in event) {
-      ; (event as React.BaseSyntheticEvent).stopPropagation()
+      ;(event as React.BaseSyntheticEvent).stopPropagation()
     }
 
     setAnchorEl(null)
@@ -176,26 +176,20 @@ export const MoreActionsDropdown: FC<MoreActionsDropdownProps> = ({
           <ListItemIcon>
             <ContentCopy />
           </ListItemIcon>
-          <ListItemText>
-            Copy
-          </ListItemText>
+          <ListItemText>Copy</ListItemText>
         </MenuItem>
         <MenuItem onClick={handleOpenInBrowser} disabled={!url}>
           <ListItemIcon>
             <OpenInNewIcon />
           </ListItemIcon>
-          <ListItemText>
-            Open
-          </ListItemText>
+          <ListItemText>Open</ListItemText>
         </MenuItem>
         {showFileOption && (
           <MenuItem onClick={handleShowInFolder}>
             <ListItemIcon>
               <Source />
             </ListItemIcon>
-            <ListItemText>
-              File
-            </ListItemText>
+            <ListItemText>File</ListItemText>
           </MenuItem>
         )}
         {onDelete && (
@@ -203,9 +197,7 @@ export const MoreActionsDropdown: FC<MoreActionsDropdownProps> = ({
             <ListItemIcon>
               <Delete color="error" />
             </ListItemIcon>
-            <ListItemText>
-              Delete
-            </ListItemText>
+            <ListItemText>Delete</ListItemText>
           </MenuItem>
         )}
       </Menu>

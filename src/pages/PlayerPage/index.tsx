@@ -115,7 +115,7 @@ export const PlayerPage: FC = () => {
           display: "flex",
           flexDirection: "column",
           bgcolor: "background.default",
-          zIndex: (theme: any) => theme.custom.zIndex.playerPage,
+          zIndex: (theme) => theme.custom.zIndex.playerPage,
         }}
       >
         <Stack
@@ -141,9 +141,9 @@ export const PlayerPage: FC = () => {
         display: "flex",
         flexDirection: "column",
         bgcolor: "background.default",
-        zIndex: (theme: any) => theme.custom.zIndex.playerPage,
+        zIndex: (theme) => theme.custom.zIndex.playerPage,
         overflow: "hidden",
-        pb: (theme: any) => theme.custom.safeAreaBottom,
+        pb: (theme) => theme.custom.safeAreaBottom,
       }}
     >
       {/* Background Blur */}

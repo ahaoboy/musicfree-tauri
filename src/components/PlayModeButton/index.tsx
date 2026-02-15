@@ -10,13 +10,13 @@ interface PlayModeButtonProps {
   variant?: "text" | "outlined" | "contained"
   /** Button color */
   color?:
-  | "inherit"
-  | "primary"
-  | "secondary"
-  | "success"
-  | "error"
-  | "info"
-  | "warning"
+    | "inherit"
+    | "primary"
+    | "secondary"
+    | "success"
+    | "error"
+    | "info"
+    | "warning"
   /** Additional className */
   className?: string
   /** Button size */

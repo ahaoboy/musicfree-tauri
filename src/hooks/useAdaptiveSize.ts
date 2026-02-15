@@ -25,7 +25,12 @@ export const useAdaptiveSize = (
       iconSize: iconOverride ?? iconSize,
       muiSize,
     }
-  }, [size, iconOverride, theme.custom.actionButtonSize, theme.custom.actionIconSize])
+  }, [
+    size,
+    iconOverride,
+    theme.custom.actionButtonSize,
+    theme.custom.actionIconSize,
+  ])
 }
 
 export default useAdaptiveSize

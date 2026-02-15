@@ -226,7 +226,7 @@ export const SettingsPage: FC = () => {
               {version || "Loading..."}
             </Typography>
           </Stack>
-          <Divider sx={{ my: 2 }} />
+          <Divider sx={{ my: 1 }} />
           <Stack
             direction="row"
             justifyContent="space-between"
@@ -248,7 +248,7 @@ export const SettingsPage: FC = () => {
               />
             </Stack>
           </Stack>
-          <Divider sx={{ my: 2 }} />
+          <Divider sx={{ my: 1 }} />
           <Stack
             direction="row"
             justifyContent="space-between"
@@ -305,7 +305,7 @@ export const SettingsPage: FC = () => {
               </Button>
             </Stack>
           </Stack>
-          <Divider sx={{ my: 2 }} />
+          <Divider sx={{ my: 1 }} />
           <Stack
             direction="row"
             justifyContent="space-between"
@@ -332,7 +332,7 @@ export const SettingsPage: FC = () => {
               <DeleteIcon />
             </IconButton>
           </Stack>
-          <Divider sx={{ my: 2 }} />
+          <Divider sx={{ my: 1 }} />
           <Stack
             direction="row"
             justifyContent="space-between"
