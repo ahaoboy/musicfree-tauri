@@ -68,9 +68,21 @@ export const usePlaylistsPageData = (): LocalPlaylist[] => {
   const playlists = useAppStore((state) => state.config.playlists)
   const filtered = playlists.filter((p) => p.id !== AUDIO_PLAYLIST_ID)
   // Filter out empty FAVORITE playlist
-  return filtered.filter(
+  const withFavorites = filtered.filter(
     (p) => p.id !== FAVORITE_PLAYLIST_ID || p.audios.length > 0,
   )
+
+  // Always place FAVORITE_PLAYLIST_ID first
+  const favoriteIndex = withFavorites.findIndex(
+    (p) => p.id === FAVORITE_PLAYLIST_ID,
+  )
+  if (favoriteIndex > 0) {
+    const favorite = withFavorites[favoriteIndex]
+    withFavorites.splice(favoriteIndex, 1)
+    withFavorites.unshift(favorite)
+  }
+
+  return withFavorites
 }
 
 export const useCurrentAudio = () => useAppStore((state) => state.currentAudio)
