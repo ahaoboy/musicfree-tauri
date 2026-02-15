@@ -144,7 +144,8 @@ export function AudioList<T>({
         style={{
           height: "100%",
           width: "100%",
-          overflowX: "hidden", // Prevent horizontal scroll
+          overflowX: "hidden",
+          overflowY: "overlay", // WebKit: scrollbar overlays content, doesn't consume width
         }}
       />
     </Box>

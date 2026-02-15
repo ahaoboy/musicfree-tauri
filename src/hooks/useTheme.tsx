@@ -249,7 +249,7 @@ export const emptyStateSx: SxProps<Theme> = {
 /** Standard page container */
 export const pageContainerSx: SxProps<Theme> = {
   flex: 1,
-  p: SPACING.pagePadding,
+  pt: 0.5,
   overflow: "hidden",
 }
 
@@ -383,6 +383,7 @@ export const useTheme = () => {
               background-color: ${theme.palette.background.default};
               color: ${theme.palette.text.primary};
               font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', Roboto, sans-serif;
+              scrollbar-width: thin;
             }
             ::-webkit-scrollbar {
               width: 4px;
@@ -479,6 +480,35 @@ export const useTheme = () => {
               "& .MuiSvgIcon-root": {
                 fontSize: "1.125rem", // 18px
               },
+            },
+          },
+        },
+        MuiPopover: {
+          styleOverrides: {
+            paper: {
+              overflowY: "overlay",
+            },
+          },
+        },
+        MuiMenu: {
+          styleOverrides: {
+            paper: {
+              overflowY: "overlay", // WebKit overlay scrollbar
+            },
+          },
+        },
+        MuiDialogContent: {
+          styleOverrides: {
+            root: {
+              overflowY: "overlay",
+            },
+          },
+        },
+        MuiList: {
+          styleOverrides: {
+            root: {
+              // Ensure lists inside menus/dialogs handle overlay properly if they scroll
+              // overflowY: "overlay" ,
             },
           },
         },

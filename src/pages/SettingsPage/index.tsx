@@ -166,7 +166,7 @@ export const SettingsPage: FC = () => {
       sx={{
         p: 1,
         height: "100%",
-        overflowY: "auto",
+        overflowY: "overlay",
       }}
     >
       {/* Theme Section */}
