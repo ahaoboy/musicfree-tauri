@@ -166,24 +166,14 @@ export const PlayerPage: FC = () => {
       <Box
         sx={{
           position: "absolute",
-          inset: -20,
+          inset: -32,
           backgroundSize: "cover",
           backgroundPosition: "center",
           zIndex: -1,
           opacity: theme.palette.mode === "light" ? 0.2 : 0.3,
           backgroundImage: coverUrl ? `url(${coverUrl})` : "none",
-          filter:
-            theme.palette.mode === "light"
-              ? "blur(40px) brightness(0.8)"
-              : "blur(40px) brightness(0.7)",
-          "@media (hover: none)": {
-            filter:
-              theme.palette.mode === "light"
-                ? "brightness(0.8)"
-                : "brightness(0.4)",
-            backgroundColor:
-              theme.palette.mode === "light" ? "#f5f5f5" : "#000",
-          },
+          filter: "blur(32px) brightness(0.6)",
+          transform: "translateZ(0)",
         }}
       />
 
