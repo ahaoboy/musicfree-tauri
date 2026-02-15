@@ -10,13 +10,13 @@ interface FavoriteButtonProps {
   audio: LocalAudio | null | undefined
   variant?: "text" | "outlined" | "contained"
   color?:
-    | "inherit"
-    | "primary"
-    | "secondary"
-    | "success"
-    | "error"
-    | "info"
-    | "warning"
+  | "inherit"
+  | "primary"
+  | "secondary"
+  | "success"
+  | "error"
+  | "info"
+  | "warning"
   /** Additional className */
   className?: string
   /** Button size */
@@ -89,13 +89,13 @@ export const FavoriteButton: FC<FavoriteButtonProps> = ({
         p: 0,
         width: buttonSize,
         height: buttonSize,
-        borderRadius: 1,
+        borderRadius: 2,
       }}
     >
       {isFavorited ? (
-        <Favorite style={{ ...iconStyle, color: "#ff4d4f" }} />
+        <Favorite sx={{ ...iconStyle, color: "error.main" }} />
       ) : (
-        <FavoriteBorder style={iconStyle} />
+        <FavoriteBorder sx={iconStyle} />
       )}
     </Button>
   )

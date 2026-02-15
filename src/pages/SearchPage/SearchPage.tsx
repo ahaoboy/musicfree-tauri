@@ -321,7 +321,7 @@ export const SearchPage: FC = () => {
               first.audio.cover,
               first.audio.platform,
             )
-          } catch (_e) {}
+          } catch (_e) { }
         }
       }
 
@@ -591,7 +591,6 @@ export const SearchPage: FC = () => {
   return (
     <Stack
       spacing={1}
-      className="page search-page"
       sx={{
         height: "100%",
         overflow: "hidden",
@@ -658,7 +657,7 @@ export const SearchPage: FC = () => {
 
       {playlist && !searching && (
         <>
-          <Box className="audio-list" sx={{ flex: 1, overflow: "hidden" }}>
+          <Box sx={{ flex: 1, overflow: "hidden" }}>
             <AudioList
               items={playlist.audios}
               getItemId={getAudioId}

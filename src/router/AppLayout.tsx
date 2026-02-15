@@ -34,7 +34,6 @@ import SettingsPage from "../pages/SettingsPage"
 import PlayerPage from "../pages/PlayerPage"
 import { PlaylistDetail } from "../pages/PlaylistsPage/PlaylistDetail"
 
-import "../styles/index.less"
 
 export const AppLayout: FC = memo(() => {
   const navigate = useNavigate()
@@ -242,7 +241,7 @@ export const AppLayout: FC = memo(() => {
             sx={{
               position: "fixed",
               inset: 0,
-              zIndex: 9999,
+              zIndex: (theme: any) => theme.custom.zIndex.loading,
               bgcolor: "background.default",
             }}
           >
@@ -252,13 +251,15 @@ export const AppLayout: FC = memo(() => {
 
         <Fade in={!showLoading} timeout={500}>
           <Box
-            className="app"
             sx={{
               height: "100vh",
               display: "flex",
               flexDirection: "column",
               bgcolor: "background.default",
               color: "text.primary",
+              overflow: "hidden",
+              position: "relative",
+              pt: (theme: any) => theme.custom.safeAreaTop,
             }}
             {...swipeHandlers}
           >
@@ -271,7 +272,6 @@ export const AppLayout: FC = memo(() => {
                   borderBottom: 1,
                   borderColor: "divider",
                   zIndex: 1,
-                  // paddingTop: "env(safe-area-inset-top)",
                 }}
               >
                 <Tabs
@@ -313,15 +313,12 @@ export const AppLayout: FC = memo(() => {
 
             <Box
               component="main"
-              className={`main-content ${showPlayerCard ? "has-player-card" : ""}`}
               sx={{
                 flex: 1,
                 overflow: "hidden",
                 display: "flex",
                 flexDirection: "column",
                 position: "relative",
-                // PlayerPage handles its own safe area padding
-                // paddingTop: 0,
               }}
             >
               <Suspense fallback={<LoadingFallback />}>

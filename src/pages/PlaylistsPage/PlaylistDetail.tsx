@@ -114,7 +114,7 @@ export const PlaylistDetail: FC = () => {
   // Playlist not found
   if (!playlist) {
     return (
-      <Stack className="page" flex={1}>
+      <Stack sx={{ flex: 1, p: 0.5 }}>
         <Stack flex={1} alignItems="center" justifyContent="center">
           <Avatar
             src={DEFAULT_COVER_URL}
@@ -130,7 +130,7 @@ export const PlaylistDetail: FC = () => {
   // Empty playlist
   if (playlist.audios.length === 0) {
     return (
-      <Stack className="page" flex={1}>
+      <Stack sx={{ flex: 1, p: 0.5 }}>
         <Stack flex={1} alignItems="center" justifyContent="center">
           <Avatar
             src={DEFAULT_COVER_URL}
@@ -144,7 +144,7 @@ export const PlaylistDetail: FC = () => {
   }
 
   return (
-    <Stack className="page" sx={{ flex: 1, overflow: "hidden" }}>
+    <Stack sx={{ flex: 1, p: 0.5, overflow: "hidden" }}>
       <AudioList
         items={playlist.audios}
         getItemId={getAudioId}

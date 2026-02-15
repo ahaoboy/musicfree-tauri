@@ -7,13 +7,13 @@ import { useAdaptiveSize, AdaptiveSize } from "../../hooks"
 interface PlayButtonProps {
   variant?: "text" | "outlined" | "contained"
   color?:
-    | "inherit"
-    | "primary"
-    | "secondary"
-    | "success"
-    | "error"
-    | "info"
-    | "warning"
+  | "inherit"
+  | "primary"
+  | "secondary"
+  | "success"
+  | "error"
+  | "info"
+  | "warning"
   /** Additional className */
   className?: string
   /** Button size */
@@ -80,7 +80,7 @@ export const PlayButton: FC<PlayButtonProps> = ({
         p: 0,
         width: boxSize ?? buttonSize,
         height: boxSize ?? buttonSize,
-        borderRadius: 1,
+        borderRadius: 2,
       }}
     >
       {isPlaying ? (

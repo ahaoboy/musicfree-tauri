@@ -161,7 +161,14 @@ export const SettingsPage: FC = () => {
   }, [message, loadConfig])
 
   return (
-    <Stack spacing={3} className="page settings-page" sx={{ p: 2 }}>
+    <Stack
+      spacing={3}
+      sx={{
+        p: 2,
+        height: "100%",
+        overflowY: "auto",
+      }}
+    >
       {/* Theme Section */}
       <Stack spacing={2}>
         <Select

@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom"
 import { LocalAudio } from "../../api"
 import { PlayerControls } from "../PlayerControls"
 import { AudioCard } from "../AudioCard"
+import { useTheme } from "../../hooks/useTheme"
 
 interface PlayerCardProps {
   audio: LocalAudio | null
@@ -11,6 +12,7 @@ interface PlayerCardProps {
 // Mini player card - Optimized to reuse AudioCard logic
 export const PlayerCard: FC<PlayerCardProps> = memo(({ audio }) => {
   const navigate = useNavigate()
+  const { theme } = useTheme()
 
   const handleCardClick = useCallback(() => {
     navigate("/player")
@@ -22,23 +24,28 @@ export const PlayerCard: FC<PlayerCardProps> = memo(({ audio }) => {
 
   return (
     <AudioCard
-      className="player-card"
+      sx={{
+        m: 1,
+        height: (theme: any) => theme.custom.playerBarHeight,
+        display: "flex",
+        alignItems: "center",
+        flexShrink: 0,
+        zIndex: (theme: any) => theme.custom.zIndex.miniPlayer,
+        borderRadius: 2,
+      }}
       coverPath={audio.cover_path}
       coverUrl={audio.audio.cover}
       platform={audio.audio.platform}
       title={audio.audio.title}
-      // Mini player specific: show platform text as subtitle
-      // subtitle={audio.audio.platform}
       duration={audio.audio.duration}
       showPlatformIcon={true}
-      avatarSize={60}
+      avatarSize={theme.custom.avatarSize.player}
       showBorder={false}
       onClick={handleCardClick}
       actions={
         <PlayerControls
           audio={audio}
           layout="mini"
-          buttonClassName="mini-player-btn"
           size="large"
           gap={1}
         />

@@ -5,6 +5,7 @@ import { DEFAULT_COVER_URL } from "../../api"
 import { useCoverUrl } from "../../hooks"
 import { PlatformIcon } from "../PlatformIcon"
 import { isLongDuration } from "../../utils/audio"
+import { cardHoverEffect } from "../../hooks/useTheme"
 
 /**
  * Format duration in seconds to MM:SS or HH:MM:SS
@@ -61,8 +62,8 @@ interface AudioCardProps {
   // Actions section
   actions?: ReactNode
 
-  /** Additional className */
-  className?: string
+  /** Additional sx */
+  sx?: any
 }
 
 /**
@@ -79,7 +80,7 @@ export const AudioCard: FC<AudioCardProps> = memo(
     duration,
     warnLongDuration = false,
     showPlatformIcon = true,
-    avatarSize = 60,
+    avatarSize,
     showBorder = true,
     onClick,
     active = false,
@@ -87,7 +88,7 @@ export const AudioCard: FC<AudioCardProps> = memo(
     badge,
     extraInfo,
     actions,
-    className,
+    sx: extraSx,
   }) => {
     const autoCoverUrl = useCoverUrl(coverPath, coverUrl, platform)
     const finalCoverUrl = autoCoverUrl || DEFAULT_COVER_URL
@@ -107,9 +108,13 @@ export const AudioCard: FC<AudioCardProps> = memo(
       <Avatar
         src={finalCoverUrl}
         variant="rounded"
-        sx={{ width: avatarSize, height: avatarSize }}
+        sx={{
+          width: avatarSize ?? ((theme: any) => theme.custom.avatarSize.md),
+          height: avatarSize ?? ((theme: any) => theme.custom.avatarSize.md),
+          flexShrink: 0,
+          transition: (theme) => `transform ${theme.custom.transition.normal}`,
+        }}
         alt={title}
-        className="card-avatar"
       >
         {icon}
       </Avatar>
@@ -121,7 +126,7 @@ export const AudioCard: FC<AudioCardProps> = memo(
           badge.icon ?? (
             <Box
               sx={{
-                bgcolor: "#52c41a",
+                bgcolor: "success.main",
                 borderRadius: "50%",
                 p: 0.5,
                 display: "flex",
@@ -131,7 +136,7 @@ export const AudioCard: FC<AudioCardProps> = memo(
                 height: 20,
               }}
             >
-              <Check sx={{ fontSize: 12, color: "#fff" }} />
+              <Check sx={{ fontSize: 12, color: "success.contrastText" }} />
             </Box>
           )
         }
@@ -152,14 +157,7 @@ export const AudioCard: FC<AudioCardProps> = memo(
 
     return (
       <Card
-        className={[
-          badge?.show ? "audio-card-selectable" : "audio-card",
-          className,
-        ]
-          .filter(Boolean)
-          .join(" ")}
         onClick={onClick ? handleCardClick : undefined}
-        // role={onClick ? "button" : undefined}
         tabIndex={onClick ? 0 : undefined}
         onKeyDown={onClick ? handleCardClick : undefined}
         elevation={0}
@@ -169,17 +167,16 @@ export const AudioCard: FC<AudioCardProps> = memo(
             showBorder
               ? active
                 ? `2px solid ${theme.palette.primary.main}`
-                : theme.palette.mode === "light"
-                  ? "2px solid rgba(0, 0, 0, 0.04)"
-                  : "2px solid transparent"
+                : `1px solid ${theme.palette.divider}`
               : "none",
-          borderRadius: 2,
-          p: 0.5,
+          borderRadius: 3,
+          p: 0.8,
           boxSizing: "border-box",
-          transition: "all 0.3s ease",
+          ...cardHoverEffect(),
+          ...extraSx,
         }}
       >
-        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, width: "100%", minWidth: 0 }}>
           {avatarWithBadge}
 
           <Box
@@ -188,14 +185,10 @@ export const AudioCard: FC<AudioCardProps> = memo(
               minWidth: 0,
               display: "flex",
               flexDirection: "column",
+              overflow: "hidden",
             }}
           >
-            <Typography
-              padding={"4px"}
-              variant="body1"
-              fontWeight="bold"
-              noWrap
-            >
+            <Typography variant="body1" fontWeight="bold" noWrap>
               {title}
             </Typography>
 
@@ -204,13 +197,18 @@ export const AudioCard: FC<AudioCardProps> = memo(
                 display: "flex",
                 alignItems: "center",
                 gap: 1,
-                fontSize: (theme) => theme.typography.caption.fontSize,
-                lineHeight: 1,
-                padding: "4px",
+                mt: 0.5,
+                minWidth: 0,
+                overflow: "hidden",
               }}
             >
               {isFavorite ? (
-                <Favorite sx={{ fontSize: "inherit", color: "#ff4d4f" }} />
+                <Favorite
+                  sx={{
+                    fontSize: 14,
+                    color: "error.main",
+                  }}
+                />
               ) : (
                 showPlatformIcon && <PlatformIcon platform={platform} />
               )}
@@ -222,7 +220,6 @@ export const AudioCard: FC<AudioCardProps> = memo(
                     fontFamily: "monospace",
                     whiteSpace: "pre",
                     color: "text.secondary",
-                    lineHeight: 1,
                   }}
                 >
                   {subtitle}
@@ -237,7 +234,6 @@ export const AudioCard: FC<AudioCardProps> = memo(
                     color: isLongDurationValue
                       ? "warning.main"
                       : "text.secondary",
-                    lineHeight: 1,
                   }}
                 >
                   {formattedDuration}
@@ -247,7 +243,15 @@ export const AudioCard: FC<AudioCardProps> = memo(
             </Box>
           </Box>
 
-          {actions}
+          {actions && (
+            <Box
+              onClick={(e) => e.stopPropagation()}
+              onKeyDown={(e) => e.stopPropagation()}
+              sx={{ flexShrink: 0, display: "flex", alignItems: "center" }}
+            >
+              {actions}
+            </Box>
+          )}
         </Box>
       </Card>
     )

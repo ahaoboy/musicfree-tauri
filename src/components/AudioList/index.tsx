@@ -1,5 +1,7 @@
 import { ReactElement, useRef, CSSProperties, useEffect, memo } from "react"
 import { List, ListImperativeAPI } from "react-window"
+import { Box } from "@mui/material"
+import { useTheme } from "../../hooks/useTheme"
 
 interface AudioListProps<T = unknown> {
   /**
@@ -28,9 +30,9 @@ interface AudioListProps<T = unknown> {
   itemHeight?: number
 
   /**
-   * Additional class name
+   * Custom sx for the list container
    */
-  className?: string
+  sx?: any
 
   /**
    * Custom style for the list container
@@ -46,7 +48,6 @@ const RowComponent = memo(
     items,
     renderItem,
     getItemId,
-    highlightId,
     ariaAttributes,
   }: any) => {
     const item = items?.[index]
@@ -54,21 +55,19 @@ const RowComponent = memo(
     if (!item) return null
 
     const itemId = getItemId(item)
-    const isHighlighted = highlightId === itemId
 
     return (
-      <div
+      <Box
         style={{
           ...style,
           padding: "4px 8px",
           boxSizing: "border-box",
         }}
         data-item-id={itemId}
-        className={isHighlighted ? "highlighted-item" : ""}
         {...ariaAttributes}
       >
         {renderItem(item, index)}
-      </div>
+      </Box>
     )
   },
 )
@@ -84,11 +83,13 @@ export function AudioList<T>({
   renderItem,
   getItemId,
   highlightId,
-  itemHeight = 80,
-  className = "audio-list",
+  itemHeight,
+  sx,
   style,
 }: AudioListProps<T>) {
+  const { theme } = useTheme()
   const listRef = useRef<ListImperativeAPI>(null)
+  const finalItemHeight = itemHeight ?? theme.custom.audioItemHeight
 
   // Scroll to highlighted item when highlight changes
   useEffect(() => {
@@ -108,7 +109,7 @@ export function AudioList<T>({
               // scrollToRow(config: { index: number; align?: string; behavior?: string })
               listRef.current.scrollToRow({
                 index,
-                align: "start",
+                align: "center", // Center the highlighted item
                 behavior: "instant",
               })
             } catch (err) {
@@ -130,15 +131,21 @@ export function AudioList<T>({
   }
 
   return (
-    <div
-      className={className}
-      style={{ height: "100%", width: "100%", ...style }}
+    <Box
+      sx={{
+        height: "100%",
+        width: "100%",
+        flex: 1,
+        minHeight: 0,
+        ...sx,
+      }}
+      style={style}
     >
       <List
         listRef={listRef}
         rowComponent={RowComponent as any}
         rowCount={items.length}
-        rowHeight={itemHeight}
+        rowHeight={finalItemHeight as any}
         rowProps={rowProps as any}
         overscanCount={6}
         style={{
@@ -147,7 +154,7 @@ export function AudioList<T>({
           overflowX: "hidden", // Prevent horizontal scroll
         }}
       />
-    </div>
+    </Box>
   )
 }
 

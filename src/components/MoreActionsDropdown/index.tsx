@@ -58,7 +58,7 @@ export const MoreActionsDropdown: FC<MoreActionsDropdownProps> = ({
     _reason?: "backdropClick" | "escapeKeyDown",
   ) => {
     if (event && "stopPropagation" in event) {
-      ;(event as React.BaseSyntheticEvent).stopPropagation()
+      ; (event as React.BaseSyntheticEvent).stopPropagation()
     }
 
     setAnchorEl(null)
@@ -155,7 +155,7 @@ export const MoreActionsDropdown: FC<MoreActionsDropdownProps> = ({
           p: 0,
           width: buttonSize,
           height: buttonSize,
-          borderRadius: 1,
+          borderRadius: 2,
         }}
       >
         <MoreVert style={iconStyle} />
@@ -173,37 +173,37 @@ export const MoreActionsDropdown: FC<MoreActionsDropdownProps> = ({
         }}
       >
         <MenuItem onClick={handleCopyUrl} disabled={!url}>
-          <ListItemIcon sx={{ minWidth: "24px !important" }}>
-            <ContentCopy sx={{ fontSize: 18 }} />
+          <ListItemIcon>
+            <ContentCopy />
           </ListItemIcon>
-          <ListItemText slotProps={{ primary: { fontSize: 13 } }}>
+          <ListItemText>
             Copy
           </ListItemText>
         </MenuItem>
         <MenuItem onClick={handleOpenInBrowser} disabled={!url}>
-          <ListItemIcon sx={{ minWidth: "24px !important" }}>
-            <OpenInNewIcon sx={{ fontSize: 18 }} />
+          <ListItemIcon>
+            <OpenInNewIcon />
           </ListItemIcon>
-          <ListItemText slotProps={{ primary: { fontSize: 13 } }}>
+          <ListItemText>
             Open
           </ListItemText>
         </MenuItem>
         {showFileOption && (
           <MenuItem onClick={handleShowInFolder}>
-            <ListItemIcon sx={{ minWidth: "24px !important" }}>
-              <Source sx={{ fontSize: 18 }} />
+            <ListItemIcon>
+              <Source />
             </ListItemIcon>
-            <ListItemText slotProps={{ primary: { fontSize: 13 } }}>
+            <ListItemText>
               File
             </ListItemText>
           </MenuItem>
         )}
         {onDelete && (
           <MenuItem onClick={handleDelete} sx={{ color: "error.main" }}>
-            <ListItemIcon sx={{ minWidth: "24px !important" }}>
-              <Delete sx={{ fontSize: 18 }} color="error" />
+            <ListItemIcon>
+              <Delete color="error" />
             </ListItemIcon>
-            <ListItemText slotProps={{ primary: { fontSize: 13 } }}>
+            <ListItemText>
               Delete
             </ListItemText>
           </MenuItem>

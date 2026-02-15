@@ -46,7 +46,7 @@ export const SearchBottomBar: FC<SearchBottomBarProps> = ({
   const iconStyle = { fontSize: iconSize }
 
   return (
-    <Box className="search-bottom-bar">
+    <Box>
       <AudioCard
         coverPath={null}
         coverUrl={playlistCoverUrl || undefined}

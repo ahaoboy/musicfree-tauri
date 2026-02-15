@@ -1,7 +1,8 @@
-import { FC, useState, useCallback, ReactNode, useMemo } from "react"
+import { FC, useState, useCallback, ReactNode } from "react"
 import { Snackbar, Alert, Button } from "@mui/material"
 import { ContentCopy, Check } from "@mui/icons-material"
 import { writeText } from "@tauri-apps/plugin-clipboard-manager"
+import { useAdaptiveSize, AdaptiveSize } from "../../hooks"
 
 interface CopyButtonProps {
   /** Text to copy to clipboard */
@@ -18,17 +19,17 @@ interface CopyButtonProps {
   copiedDuration?: number
   variant?: "text" | "outlined" | "contained"
   color?:
-    | "inherit"
-    | "primary"
-    | "secondary"
-    | "success"
-    | "error"
-    | "info"
-    | "warning"
+  | "inherit"
+  | "primary"
+  | "secondary"
+  | "success"
+  | "error"
+  | "info"
+  | "warning"
   /** Additional className */
   className?: string
   /** Button size */
-  size?: "small" | "medium" | "large"
+  size?: AdaptiveSize
   /** Disabled state */
   disabled?: boolean
 }
@@ -78,11 +79,7 @@ export const CopyButton: FC<CopyButtonProps> = ({
     }
   }, [text, disabled, successMessage, errorMessage, copiedDuration])
 
-  const buttonSize = useMemo(() => {
-    if (size === "small") return 28
-    if (size === "large") return 40
-    return 32
-  }, [size])
+  const { buttonSize, muiSize } = useAdaptiveSize(size)
 
   return (
     <>
@@ -91,14 +88,14 @@ export const CopyButton: FC<CopyButtonProps> = ({
         color={color}
         onClick={handleCopy}
         className={className}
-        size={size}
+        size={muiSize}
         disabled={disabled}
         sx={{
           minWidth: 0,
           p: 0,
           width: buttonSize,
           height: buttonSize,
-          borderRadius: 1,
+          borderRadius: 2,
         }}
       >
         {copied ? copiedIcon : icon}

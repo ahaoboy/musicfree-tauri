@@ -70,7 +70,7 @@ export const MusicPage: FC = () => {
       const isActive = highlightId
         ? highlightId === audio.audio.id
         : currentPlaylistId === AUDIO_PLAYLIST_ID &&
-          currentAudio?.audio.id === audio.audio.id
+        currentAudio?.audio.id === audio.audio.id
 
       return (
         <AudioCard
@@ -104,10 +104,12 @@ export const MusicPage: FC = () => {
   if (isConfigLoading) {
     return (
       <Stack
-        flex={1}
-        alignItems="center"
-        justifyContent="center"
-        className="page"
+        sx={{
+          flex: 1,
+          p: 0.5,
+          alignItems: "center",
+          justifyContent: "center",
+        }}
       >
         <CircularProgress size={40} />
       </Stack>
@@ -116,7 +118,7 @@ export const MusicPage: FC = () => {
 
   if (audios.length === 0) {
     return (
-      <Stack className="page" flex={1}>
+      <Stack sx={{ flex: 1, p: 0.5 }}>
         <Stack flex={1} alignItems="center" justifyContent="center">
           <Avatar
             src={DEFAULT_COVER_URL}
@@ -130,7 +132,7 @@ export const MusicPage: FC = () => {
   }
 
   return (
-    <Stack className="page" sx={{ flex: 1, overflow: "hidden" }}>
+    <Stack sx={{ flex: 1, p: 0.5, overflow: "hidden" }}>
       <AudioList
         items={audios}
         getItemId={getAudioId}

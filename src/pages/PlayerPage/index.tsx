@@ -109,14 +109,13 @@ export const PlayerPage: FC = () => {
   if (!currentAudio) {
     return (
       <Box
-        className="player-page empty"
         sx={{
           position: "fixed",
           inset: 0,
           display: "flex",
           flexDirection: "column",
           bgcolor: "background.default",
-          zIndex: 20,
+          zIndex: (theme: any) => theme.custom.zIndex.playerPage,
         }}
       >
         <Stack
@@ -136,16 +135,15 @@ export const PlayerPage: FC = () => {
 
   return (
     <Box
-      className={`player-page ${isPlaying ? "playing" : ""}`}
       sx={{
         position: "fixed",
         inset: 0,
         display: "flex",
         flexDirection: "column",
         bgcolor: "background.default",
-        zIndex: 20,
+        zIndex: (theme: any) => theme.custom.zIndex.playerPage,
         overflow: "hidden",
-        pb: "12px",
+        pb: (theme: any) => theme.custom.safeAreaBottom,
       }}
     >
       {/* Background Blur */}

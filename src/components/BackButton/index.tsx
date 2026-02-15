@@ -9,13 +9,13 @@ interface BackButtonProps {
   to?: string | number
   variant?: "text" | "outlined" | "contained"
   color?:
-    | "inherit"
-    | "primary"
-    | "secondary"
-    | "success"
-    | "error"
-    | "info"
-    | "warning"
+  | "inherit"
+  | "primary"
+  | "secondary"
+  | "success"
+  | "error"
+  | "info"
+  | "warning"
   /** Additional className */
   className?: string
   /** Button size */
@@ -76,7 +76,7 @@ export const BackButton: FC<BackButtonProps> = ({
         p: 0,
         width: buttonSize,
         height: buttonSize,
-        borderRadius: 1,
+        borderRadius: 2,
       }}
     >
       <ArrowBackIosIcon style={iconStyle} />
