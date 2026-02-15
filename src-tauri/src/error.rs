@@ -12,6 +12,12 @@ pub enum AppError {
     #[error("MusicFree error: {0}")]
     MusicFree(String),
 
+    #[error("Path error: {0}")]
+    PathError(String),
+
+    #[error("Invalid UTF-8 in path")]
+    InvalidUtf8,
+
     #[error("Unknown error: {0}")]
     Unknown(String),
 }

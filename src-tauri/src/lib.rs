@@ -79,11 +79,17 @@ async fn musicfree_protocol_handler_async(
         Ok(dir) => dir,
         Err(e) => {
             eprintln!("Failed to get app data directory: {}", e);
-            return Response::builder()
+            return match Response::builder()
                 .status(StatusCode::INTERNAL_SERVER_ERROR)
                 .header("Content-Type", "text/plain")
                 .body(b"Failed to get app data directory".to_vec())
-                .unwrap();
+            {
+                Ok(response) => response,
+                Err(e) => {
+                    eprintln!("Failed to build error response: {}", e);
+                    Response::new(vec![])
+                }
+            };
         }
     };
 
@@ -99,32 +105,57 @@ async fn musicfree_protocol_handler_async(
             Ok(response) => response,
             Err(e) => {
                 eprintln!("Failed to handle range request: {}", e);
-                Response::builder()
+                match Response::builder()
                     .status(StatusCode::INTERNAL_SERVER_ERROR)
                     .header("Content-Type", "text/plain")
                     .body(format!("Range request failed: {}", e).into_bytes())
-                    .unwrap()
+                {
+                    Ok(response) => response,
+                    Err(e) => {
+                        eprintln!("Failed to build error response: {}", e);
+                        Response::new(vec![])
+                    }
+                }
             }
         }
     } else {
         // Read entire file for non-range requests
         match tokio::fs::read(&file_path).await {
             Ok(data) => {
-                Response::builder()
+                match Response::builder()
                     .status(StatusCode::OK)
                     .header("Content-Type", mime_type)
                     .header("Accept-Ranges", "bytes")
                     .header("Access-Control-Allow-Origin", "*")
                     .body(data)
-                    .unwrap()
+                {
+                    Ok(response) => response,
+                    Err(e) => {
+                        eprintln!("Failed to build response: {}", e);
+                        Response::builder()
+                            .status(StatusCode::INTERNAL_SERVER_ERROR)
+                            .header("Content-Type", "text/plain")
+                            .body(b"Failed to build response".to_vec())
+                            .unwrap_or_else(|_| Response::new(vec![]))
+                    }
+                }
             }
             Err(e) => {
                 eprintln!("Failed to read file {:?}: {}", file_path, e);
-                Response::builder()
+                match Response::builder()
                     .status(StatusCode::NOT_FOUND)
                     .header("Content-Type", "text/plain")
                     .body(format!("File not found: {:?}", file_path).into_bytes())
-                    .unwrap()
+                {
+                    Ok(response) => response,
+                    Err(e) => {
+                        eprintln!("Failed to build error response: {}", e);
+                        Response::builder()
+                            .status(StatusCode::INTERNAL_SERVER_ERROR)
+                            .body(vec![])
+                            .unwrap_or_else(|_| Response::new(vec![]))
+                    }
+                }
             }
         }
     }

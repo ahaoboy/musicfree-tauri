@@ -191,6 +191,7 @@ pub async fn clear_cache(app_handle: tauri::AppHandle) -> AppResult<()> {
 #[tauri::command]
 pub async fn export_data(app_handle: tauri::AppHandle) -> AppResult<String> {
     let app_dir = api::app_dir(&app_handle).await?;
+    let config = get_config(app_handle.clone()).await?;
     let download_dir = app_handle
         .path()
         .download_dir()
@@ -206,6 +207,9 @@ pub async fn export_data(app_handle: tauri::AppHandle) -> AppResult<String> {
     let date_str = Local::now().format("%Y-%m-%d").to_string();
     let zip_filename = format!("musicfree-{}.zip", date_str);
     let zip_path = download_dir.join(&zip_filename);
+
+    // Get used paths from config to exclude unused cache files
+    let used_paths = api::get_used_paths(&config);
 
     let app_dir_clone = app_dir.clone();
     let zip_path_clone = zip_path.clone();
@@ -227,17 +231,27 @@ pub async fn export_data(app_handle: tauri::AppHandle) -> AppResult<String> {
             zip.write_all(&content).map_err(AppError::Io)?;
         }
 
-        // Add assets directory
+        // Add assets directory (only used files)
         let assets_path = app_dir_clone.join(ASSETS_DIR);
         if assets_path.exists() {
             for entry in WalkDir::new(&assets_path) {
                 let entry = entry.map_err(|e| AppError::Io(e.into()))?;
                 let path = entry.path();
                 if path.is_file() {
-                    let name = path.strip_prefix(&app_dir_clone).unwrap();
-                    let name_str = name.to_str().unwrap().replace("\\", "/");
+                    let name = path
+                        .strip_prefix(&app_dir_clone)
+                        .map_err(|e| AppError::PathError(e.to_string()))?;
+                    let name_str = name
+                        .to_str()
+                        .ok_or(AppError::InvalidUtf8)?
+                        .replace("\\", "/");
 
-                    zip.start_file(name_str, options)
+                    // Skip unused cache files
+                    if !used_paths.contains(&name_str) {
+                        continue;
+                    }
+
+                    zip.start_file(&name_str, options)
                         .map_err(|e| AppError::Unknown(e.to_string()))?;
                     let mut f = File::open(path).map_err(AppError::Io)?;
                     let mut buffer = Vec::new();
@@ -290,7 +304,11 @@ pub async fn import_data(app_handle: tauri::AppHandle) -> AppResult<String> {
     }
 
     let (zip_path, _) = latest_zip.ok_or(AppError::Unknown("No backup file found".to_string()))?;
-    let zip_filename = zip_path.file_name().unwrap().to_string_lossy().to_string();
+    let zip_filename = zip_path
+        .file_name()
+        .ok_or(AppError::PathError("Invalid zip file path".to_string()))?
+        .to_string_lossy()
+        .to_string();
 
     // 2. Unzip to temp
     let temp_dir = std::env::temp_dir().join("musicfree_import_temp");
