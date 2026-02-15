@@ -1,4 +1,4 @@
-import { createTheme, useColorScheme, Theme } from "@mui/material"
+import { createTheme, useColorScheme, Theme, SxProps } from "@mui/material"
 import { useMemo } from "react"
 
 // Types for theme customization
@@ -50,6 +50,27 @@ declare module "@mui/material/styles" {
         slow: string
       }
       audioItemHeight: number
+      /** Shared spacing tokens to avoid magic numbers */
+      spacing: {
+        /** Standard page padding (0.5 = 4px) */
+        pagePadding: number
+        /** Standard section padding (2 = 16px) */
+        sectionPadding: number
+        /** Tab bar height */
+        tabHeight: number
+        /** Tab icon size */
+        tabIconSize: number
+        /** Empty state placeholder size */
+        emptyPlaceholderSize: number
+        /** Status dot size */
+        statusDotSize: number
+        /** Small circular indicator size */
+        smallIndicatorSize: number
+        /** Slider thumb size */
+        sliderThumbSize: number
+        /** Slider thumb active size */
+        sliderThumbActiveSize: number
+      }
     }
   }
   interface ThemeOptions {
@@ -99,11 +120,23 @@ declare module "@mui/material/styles" {
         slow?: string
       }
       audioItemHeight?: number
+      spacing?: {
+        pagePadding?: number
+        sectionPadding?: number
+        tabHeight?: number
+        tabIconSize?: number
+        emptyPlaceholderSize?: number
+        statusDotSize?: number
+        smallIndicatorSize?: number
+        sliderThumbSize?: number
+        sliderThumbActiveSize?: number
+      }
     }
   }
 }
 
-// Design tokens from variables.less
+// ─── Design Tokens ───────────────────────────────────────────────────────────
+
 const RADIUS = {
   sm: 8,
   md: 12,
@@ -152,7 +185,22 @@ const TRANSITION = {
   slow: "300ms cubic-bezier(0.25, 0.46, 0.45, 0.94)",
 }
 
-// Mixins
+/** Spacing tokens to replace magic numbers */
+const SPACING = {
+  pagePadding: 0.5, // 4px – standard page content padding
+  sectionPadding: 2, // 16px – Paper/section inner padding
+  tabHeight: 48, // Tab bar minimum height
+  tabIconSize: 24, // Tab icon font size
+  emptyPlaceholderSize: 256, // Empty-state avatar placeholder
+  statusDotSize: 8, // Status indicator dot
+  smallIndicatorSize: 12, // Small CircularProgress / badge
+  sliderThumbSize: 12, // Slider thumb default
+  sliderThumbActiveSize: 20, // Slider thumb on active
+}
+
+// ─── Shared Style Mixins ─────────────────────────────────────────────────────
+
+/** Glass/frosted effect for elevated surfaces */
 export const glassEffect = (theme: Theme, blur = 16) => ({
   background:
     theme.palette.mode === "light"
@@ -168,6 +216,7 @@ export const glassEffect = (theme: Theme, blur = 16) => ({
   },
 })
 
+/** Hover/press effect for interactive card surfaces */
 export const cardHoverEffect = () => ({
   transition: `all ${TRANSITION.normal}`,
   "@media (hover: hover)": {
@@ -183,6 +232,42 @@ export const cardHoverEffect = () => ({
     transform: "scale(0.98)",
   },
 })
+
+/** Status indicator dot (used in SearchPage for download states) */
+export const statusDotSx: SxProps<Theme> = {
+  width: SPACING.statusDotSize,
+  height: SPACING.statusDotSize,
+  borderRadius: "50%",
+}
+
+/** Centered empty-state container (reused in MusicPage, PlaylistsPage, etc.) */
+export const emptyStateSx: SxProps<Theme> = {
+  flex: 1,
+  p: SPACING.pagePadding,
+}
+
+/** Standard page container */
+export const pageContainerSx: SxProps<Theme> = {
+  flex: 1,
+  p: SPACING.pagePadding,
+  overflow: "hidden",
+}
+
+/** Centered flex container */
+export const centeredFlexSx: SxProps<Theme> = {
+  flex: 1,
+  alignItems: "center",
+  justifyContent: "center",
+}
+
+/** Empty-state placeholder avatar sx */
+export const emptyPlaceholderAvatarSx: SxProps<Theme> = {
+  width: SPACING.emptyPlaceholderSize,
+  height: SPACING.emptyPlaceholderSize,
+  opacity: 0.5,
+}
+
+// ─── Palette Definitions ─────────────────────────────────────────────────────
 
 const lightPalette = {
   primary: {
@@ -246,6 +331,8 @@ const darkPalette = {
   },
 }
 
+// ─── Theme Hook ──────────────────────────────────────────────────────────────
+
 export const useTheme = () => {
   const { mode = "system", setMode } = useColorScheme()
   const theme = useMemo(() => {
@@ -273,6 +360,7 @@ export const useTheme = () => {
         zIndex: Z_INDEX,
         transition: TRANSITION,
         audioItemHeight: 72,
+        spacing: SPACING,
       },
       components: {
         MuiCssBaseline: {
@@ -314,6 +402,7 @@ export const useTheme = () => {
             }
           `,
         },
+        // ── MuiButton: icon-button defaults so components don't repeat them ──
         MuiButton: {
           defaultProps: {
             disableRipple: true,
@@ -350,12 +439,29 @@ export const useTheme = () => {
             }),
           },
         },
+        // ── MuiPaper: consistent section border-radius ──
+        MuiPaper: {
+          styleOverrides: {
+            outlined: ({ theme }) => ({
+              borderRadius: theme.custom.radius.md / 4,
+            }),
+          },
+        },
         MuiTabs: {
           styleOverrides: {
             root: ({ theme }) => ({
-              minHeight: 48,
+              minHeight: theme.custom.spacing.tabHeight,
               backgroundColor: theme.palette.background.paper,
               borderBottom: `1px solid ${theme.palette.divider}`,
+            }),
+          },
+        },
+        // ── MuiTab: consistent sizing defaults ──
+        MuiTab: {
+          styleOverrides: {
+            root: ({ theme }) => ({
+              minHeight: theme.custom.spacing.tabHeight,
+              padding: theme.spacing(1),
             }),
           },
         },

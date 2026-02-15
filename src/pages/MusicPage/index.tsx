@@ -5,6 +5,12 @@ import { useAppStore, useAudios } from "../../store"
 import { AudioCard, AudioList, MoreActionsDropdown } from "../../components"
 import { useConfirm } from "../../hooks"
 import { DEFAULT_COVER_URL, LocalAudio, AUDIO_PLAYLIST_ID } from "../../api"
+import {
+  emptyStateSx,
+  centeredFlexSx,
+  emptyPlaceholderAvatarSx,
+  pageContainerSx,
+} from "../../hooks/useTheme"
 
 // Music page - displays all downloaded individual audio files
 // Wrapped with ErrorBoundary in App.tsx
@@ -118,12 +124,12 @@ export const MusicPage: FC = () => {
 
   if (audios.length === 0) {
     return (
-      <Stack sx={{ flex: 1, p: 0.5 }}>
-        <Stack flex={1} alignItems="center" justifyContent="center">
+      <Stack sx={emptyStateSx}>
+        <Stack sx={centeredFlexSx}>
           <Avatar
             src={DEFAULT_COVER_URL}
             variant="rounded"
-            sx={{ width: 256, height: 256, opacity: 0.5 }}
+            sx={emptyPlaceholderAvatarSx}
             alt="No Music"
           />
         </Stack>
@@ -132,7 +138,7 @@ export const MusicPage: FC = () => {
   }
 
   return (
-    <Stack sx={{ flex: 1, p: 0.5, overflow: "hidden" }}>
+    <Stack sx={pageContainerSx}>
       <AudioList
         items={audios}
         getItemId={getAudioId}

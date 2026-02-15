@@ -6,6 +6,12 @@ import { LocalAudio, DEFAULT_COVER_URL } from "../../api"
 import { AudioCard, AudioList, MoreActionsDropdown } from "../../components"
 import { useNavigation } from "../../contexts"
 import { useConfirm } from "../../hooks"
+import {
+  emptyStateSx,
+  centeredFlexSx,
+  emptyPlaceholderAvatarSx,
+  pageContainerSx,
+} from "../../hooks/useTheme"
 
 // Playlist detail view
 export const PlaylistDetail: FC = () => {
@@ -114,12 +120,12 @@ export const PlaylistDetail: FC = () => {
   // Playlist not found
   if (!playlist) {
     return (
-      <Stack sx={{ flex: 1, p: 0.5 }}>
-        <Stack flex={1} alignItems="center" justifyContent="center">
+      <Stack sx={emptyStateSx}>
+        <Stack sx={centeredFlexSx}>
           <Avatar
             src={DEFAULT_COVER_URL}
             variant="rounded"
-            sx={{ width: 256, height: 256, opacity: 0.5 }}
+            sx={emptyPlaceholderAvatarSx}
             alt="Playlist Not Found"
           />
         </Stack>
@@ -130,12 +136,12 @@ export const PlaylistDetail: FC = () => {
   // Empty playlist
   if (playlist.audios.length === 0) {
     return (
-      <Stack sx={{ flex: 1, p: 0.5 }}>
-        <Stack flex={1} alignItems="center" justifyContent="center">
+      <Stack sx={emptyStateSx}>
+        <Stack sx={centeredFlexSx}>
           <Avatar
             src={DEFAULT_COVER_URL}
             variant="rounded"
-            sx={{ width: 256, height: 256, opacity: 0.5 }}
+            sx={emptyPlaceholderAvatarSx}
             alt="No Audio"
           />
         </Stack>
@@ -144,7 +150,7 @@ export const PlaylistDetail: FC = () => {
   }
 
   return (
-    <Stack sx={{ flex: 1, p: 0.5, overflow: "hidden" }}>
+    <Stack sx={pageContainerSx}>
       <AudioList
         items={playlist.audios}
         getItemId={getAudioId}

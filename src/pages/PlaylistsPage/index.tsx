@@ -10,6 +10,12 @@ import {
 } from "../../api"
 import { AudioCard, AudioList, MoreActionsDropdown } from "../../components"
 import { useConfirm } from "../../hooks"
+import {
+  emptyStateSx,
+  centeredFlexSx,
+  emptyPlaceholderAvatarSx,
+  pageContainerSx,
+} from "../../hooks/useTheme"
 
 // Playlists list view
 export const PlaylistsPage: FC = () => {
@@ -97,12 +103,12 @@ export const PlaylistsPage: FC = () => {
 
   if (playlists.length === 0) {
     return (
-      <Stack sx={{ flex: 1, p: 0.5 }}>
-        <Stack flex={1} alignItems="center" justifyContent="center">
+      <Stack sx={emptyStateSx}>
+        <Stack sx={centeredFlexSx}>
           <Avatar
             src={DEFAULT_COVER_URL}
             variant="rounded"
-            sx={{ width: 256, height: 256, opacity: 0.5 }}
+            sx={emptyPlaceholderAvatarSx}
             alt="No Playlists"
           />
         </Stack>
@@ -111,7 +117,7 @@ export const PlaylistsPage: FC = () => {
   }
 
   return (
-    <Stack sx={{ flex: 1, p: 0.5, overflow: "hidden" }}>
+    <Stack sx={pageContainerSx}>
       <AudioList
         items={playlists}
         getItemId={getPlaylistId}

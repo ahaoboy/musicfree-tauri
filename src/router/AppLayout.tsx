@@ -280,31 +280,26 @@ export const AppLayout: FC = memo(() => {
                   variant="fullWidth"
                   indicatorColor="primary"
                   textColor="primary"
-                  sx={{ minHeight: 48 }}
                 >
                   <MuiTab
                     value="playlists"
                     icon={<QueueMusic sx={{ fontSize: 24 }} />}
                     aria-label="Playlists"
-                    sx={{ minHeight: 48, p: 1 }}
                   />
                   <MuiTab
                     value="music"
                     icon={<LibraryMusic sx={{ fontSize: 24 }} />}
                     aria-label="Music"
-                    sx={{ minHeight: 48, p: 1 }}
                   />
                   <MuiTab
                     value="search"
                     icon={<Search sx={{ fontSize: 24 }} />}
                     aria-label="Search"
-                    sx={{ minHeight: 48, p: 1 }}
                   />
                   <MuiTab
                     value="settings"
                     icon={<Settings sx={{ fontSize: 24 }} />}
                     aria-label="Settings"
-                    sx={{ minHeight: 48, p: 1 }}
                   />
                 </Tabs>
               </Paper>

@@ -31,6 +31,7 @@ import { useAppStore } from "../../store"
 import { AudioCard, AudioList } from "../../components"
 import { useAdaptiveSize } from "../../hooks"
 import { isLongDuration } from "../../utils/audio"
+import { statusDotSx } from "../../hooks/useTheme"
 
 export const SearchPage: FC = () => {
   const navigate = useNavigate()
@@ -441,34 +442,19 @@ export const SearchPage: FC = () => {
           )}
           {downloaded && (
             <Box
-              sx={{
-                width: 8,
-                height: 8,
-                borderRadius: "50%",
-                bgcolor: "success.main",
-              }}
+              sx={{ ...statusDotSx, bgcolor: "success.main" }}
               title="Downloaded"
             />
           )}
           {failed && (
             <Box
-              sx={{
-                width: 8,
-                height: 8,
-                borderRadius: "50%",
-                bgcolor: "error.main",
-              }}
+              sx={{ ...statusDotSx, bgcolor: "error.main" }}
               title="Failed"
             />
           )}
           {skipped && (
             <Box
-              sx={{
-                width: 8,
-                height: 8,
-                borderRadius: "50%",
-                bgcolor: "warning.main",
-              }}
+              sx={{ ...statusDotSx, bgcolor: "warning.main" }}
               title="Skipped"
             />
           )}
@@ -590,13 +576,13 @@ export const SearchPage: FC = () => {
 
   return (
     <Stack
-      spacing={1}
+      spacing={0.5}
       sx={{
         height: "100%",
         overflow: "hidden",
       }}
     >
-      <Box sx={{ p: 1 }}>
+      <Box sx={{ p: 1, pb: 0 }}>
         <TextField
           fullWidth
           placeholder="Input audio/playlist ID/URL"

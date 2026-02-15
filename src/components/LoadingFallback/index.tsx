@@ -27,7 +27,7 @@ export const LoadingFallback: FC<LoadingFallbackProps> = ({
           alignItems: "center",
           justifyContent: "center",
           bgcolor: "background.default",
-          zIndex: 9999,
+          zIndex: (theme) => theme.custom.zIndex.loading,
         }}
       >
         <Box

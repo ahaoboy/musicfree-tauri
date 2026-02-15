@@ -267,9 +267,8 @@ export const PlayerPage: FC = () => {
             sx={{
               flex: 1,
               "& .MuiSlider-thumb": {
-                width: 12,
-                height: 12,
-                // transition: "0.3s cubic-bezier(.47,1.64,.41,.8)",
+                width: (theme) => theme.custom.spacing.sliderThumbSize,
+                height: (theme) => theme.custom.spacing.sliderThumbSize,
                 "&:before": {
                   boxShadow: "0 2px 12px 0 rgba(0,0,0,0.4)",
                 },
@@ -277,8 +276,8 @@ export const PlayerPage: FC = () => {
                   boxShadow: `0px 0px 0px 8px ${alpha(theme.palette.primary.main, 0.16)}`,
                 },
                 "&.Mui-active": {
-                  width: 20,
-                  height: 20,
+                  width: (theme) => theme.custom.spacing.sliderThumbActiveSize,
+                  height: (theme) => theme.custom.spacing.sliderThumbActiveSize,
                 },
               },
               "& .MuiSlider-rail": {

@@ -199,7 +199,7 @@ export const SettingsPage: FC = () => {
 
       {/* Library Section */}
       <Stack spacing={2}>
-        <Paper variant="outlined" sx={{ p: 2, borderRadius: 3 }}>
+        <Paper variant="outlined" sx={{ p: 2 }}>
           <Stack
             direction="row"
             justifyContent="space-between"
@@ -215,7 +215,7 @@ export const SettingsPage: FC = () => {
 
       {/* About Section */}
       <Stack spacing={2}>
-        <Paper variant="outlined" sx={{ p: 2, borderRadius: 3 }}>
+        <Paper variant="outlined" sx={{ p: 2 }}>
           <Stack
             direction="row"
             justifyContent="space-between"
@@ -279,7 +279,7 @@ export const SettingsPage: FC = () => {
 
       {/* Data Management Section */}
       <Stack spacing={2}>
-        <Paper variant="outlined" sx={{ p: 2, borderRadius: 3 }}>
+        <Paper variant="outlined" sx={{ p: 2 }}>
           <Stack
             direction="row"
             justifyContent="space-between"
