@@ -49,20 +49,6 @@ export const PlayerPage: FC = () => {
   const currentTime = useCurrentTime()
   const duration = useDuration()
 
-  // Local state for smoother seeking feedback
-  // const [_isDragging, setIsDragging] = useState(false)
-  // const [_dragTime, setDragTime] = useState(0)
-
-  // Handle slider interaction (UI only)
-  // const handleSliderChange = useCallback(
-  //   (_: Event, value: number | number[]) => {
-  //     if (!canSeek) return
-  //     setIsDragging(true)
-  //     setDragTime(value as number)
-  //   },
-  //   [canSeek],
-  // )
-
   // Commit seek operation when user releases slider
   const handleAfterChange = useCallback(
     (

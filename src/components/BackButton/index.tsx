@@ -1,8 +1,8 @@
 import { FC, useCallback, MouseEvent } from "react"
 import { useNavigate } from "react-router-dom"
 import { Button } from "@mui/material"
-import { ChevronLeft } from "@mui/icons-material"
 import { useAdaptiveSize, AdaptiveSize } from "../../hooks"
+import ArrowBackIosIcon from "@mui/icons-material/ArrowBackIos"
 
 interface BackButtonProps {
   /** Custom navigation path (default: go back -1) */
@@ -79,7 +79,7 @@ export const BackButton: FC<BackButtonProps> = ({
         borderRadius: 1,
       }}
     >
-      <ChevronLeft style={iconStyle} />
+      <ArrowBackIosIcon style={iconStyle} />
     </Button>
   )
 }
