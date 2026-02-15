@@ -27,6 +27,39 @@ Download the installer for your platform from the [Releases](https://github.com/
 If you prefer a pure CLI without GUI, check out: [musicfree](https://github.com/ahaoboy/musicfree)
 
 
+## Usage Guide
+
+### Search Support
+The search bar is highly flexible and supports several input formats:
+- **Full URLs**: Paste direct links to single tracks or entire playlists.
+  ```text
+  https://www.youtube.com/watch?v=BnnbP7pCIvQ
+  https://www.bilibili.com/video/BV1aAV7zHEhJ
+  https://www.youtube.com/watch?v=F5tSoaJ93ac&list=PLJP5_qSxMbkLzsriTWWMMhWhG7C7ThQPz
+  ```
+- **Short IDs**: Paste a video or playlist ID. The app automatically identifies the platform.
+  ```text
+  BnnbP7pCIvQ
+  BV1aAV7zHEhJ
+  PLJP5_qSxMbkLzsriTWWMMhWhG7C7ThQPz
+  ```
+- **Sharing Messages**: Raw sharing text from mobile apps. The app extracts links and handles short links like `b23.tv`.
+  ```text
+  【Right Here Waiting - Richard Marx-哔哩哔哩】 https://b23.tv/fcic1pG
+  ```
+
+### Data Management
+In the Settings page, you will find two cleaning options:
+- **Clear Cache**: Removes internal temporary files (such as cached cover images) generated during searching and downloading. These files help speed up repeated searches but can be safely removed to save space without losing your downloaded music.
+- **Clear Storage**: **A complete reset.** This will delete all downloaded music, saved playlists, and configuration data, including the cache.
+
+## Troubleshooting
+
+### YouTube Download Failures
+Due to intensified restrictions by YouTube, some videos may be unavailable for download depending on your IP region.
+- **Currently, there is no universal workaround for these restrictions.**
+- **Recommendation**: If a YouTube download fails, try searching for the same video or a re-upload on **Bilibili**.
+
 ## Development Notice
 
 ⚠️ **This project is still in development. Breaking changes may occur at any time.**
