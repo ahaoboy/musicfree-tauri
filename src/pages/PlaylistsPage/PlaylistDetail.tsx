@@ -93,6 +93,7 @@ export const PlaylistDetail: FC = () => {
             <MoreActionsDropdown
               size="medium"
               url={audio.audio.download_url}
+              filePath={audio.path}
               onDelete={() =>
                 handleDeleteAudio(audio.audio.id, audio.audio.title)
               }

@@ -8,18 +8,18 @@ import {
   Alert,
   Button,
 } from "@mui/material"
-import {
-  MoreVert,
-  ContentCopy,
-  OpenInBrowser,
-  Delete,
-} from "@mui/icons-material"
+import { MoreVert, ContentCopy, Delete, Source } from "@mui/icons-material"
 import { writeText } from "@tauri-apps/plugin-clipboard-manager"
-import { openUrl } from "@tauri-apps/plugin-opener"
+import { openUrl, revealItemInDir } from "@tauri-apps/plugin-opener"
+import { join } from "@tauri-apps/api/path"
+import { CurrentPlatform } from "../../api"
 import { useAdaptiveSize, AdaptiveSize } from "../../hooks"
+import { useAppStore } from "../../store"
+import OpenInNewIcon from "@mui/icons-material/OpenInNew"
 
 export interface MoreActionsDropdownProps {
   url?: string
+  filePath?: string
   onDelete?: () => void
   disabled?: boolean
   className?: string
@@ -28,6 +28,7 @@ export interface MoreActionsDropdownProps {
 
 export const MoreActionsDropdown: FC<MoreActionsDropdownProps> = ({
   url,
+  filePath,
   onDelete,
   disabled = false,
   className,
@@ -41,6 +42,10 @@ export const MoreActionsDropdown: FC<MoreActionsDropdownProps> = ({
   const [snackbarSeverity, setSnackbarSeverity] = useState<"success" | "error">(
     "success",
   )
+
+  const appDir = useAppStore((state) => state.app_dir)
+  const isAndroid = CurrentPlatform === "android"
+  const showFileOption = !isAndroid && !!filePath && !!appDir
 
   const handleClick = (event: React.MouseEvent<HTMLElement>) => {
     event.stopPropagation()
@@ -103,6 +108,27 @@ export const MoreActionsDropdown: FC<MoreActionsDropdownProps> = ({
     [url],
   )
 
+  const handleShowInFolder = useCallback(
+    async (e: React.MouseEvent) => {
+      e.stopPropagation()
+
+      if (!appDir || !filePath) return
+
+      try {
+        // Convert relative path to absolute path
+        const fullPath = await join(appDir, filePath)
+
+        // Use revealItemInDir to open the file location
+        await revealItemInDir(fullPath)
+      } catch (error) {
+        console.error("Failed to open file location:", error)
+        showMessage("Failed to open file location", "error")
+      }
+      handleClose()
+    },
+    [filePath, appDir],
+  )
+
   const handleDelete = useCallback(
     (e: React.MouseEvent) => {
       e.stopPropagation()
@@ -156,12 +182,22 @@ export const MoreActionsDropdown: FC<MoreActionsDropdownProps> = ({
         </MenuItem>
         <MenuItem onClick={handleOpenInBrowser} disabled={!url}>
           <ListItemIcon sx={{ minWidth: "24px !important" }}>
-            <OpenInBrowser sx={{ fontSize: 18 }} />
+            <OpenInNewIcon sx={{ fontSize: 18 }} />
           </ListItemIcon>
           <ListItemText slotProps={{ primary: { fontSize: 13 } }}>
             Open
           </ListItemText>
         </MenuItem>
+        {showFileOption && (
+          <MenuItem onClick={handleShowInFolder}>
+            <ListItemIcon sx={{ minWidth: "24px !important" }}>
+              <Source sx={{ fontSize: 18 }} />
+            </ListItemIcon>
+            <ListItemText slotProps={{ primary: { fontSize: 13 } }}>
+              File
+            </ListItemText>
+          </MenuItem>
+        )}
         {onDelete && (
           <MenuItem onClick={handleDelete} sx={{ color: "error.main" }}>
             <ListItemIcon sx={{ minWidth: "24px !important" }}>
