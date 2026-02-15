@@ -164,7 +164,7 @@ export const SettingsPage: FC = () => {
     <Stack
       spacing={3}
       sx={{
-        p: 2,
+        p: 1,
         height: "100%",
         overflowY: "auto",
       }}

@@ -134,7 +134,7 @@ const ACTION_ICON_SIZE = {
 
 const AVATAR_SIZE = {
   sm: 40,
-  md: 60,
+  md: 48,
   lg: 80,
   player: 52,
 }
@@ -272,7 +272,7 @@ export const useTheme = () => {
         avatarSize: AVATAR_SIZE,
         zIndex: Z_INDEX,
         transition: TRANSITION,
-        audioItemHeight: 84,
+        audioItemHeight: 72,
       },
       components: {
         MuiCssBaseline: {

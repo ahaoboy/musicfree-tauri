@@ -178,7 +178,7 @@ export const AudioCard: FC<AudioCardProps> = memo(
                 : `1px solid ${theme.palette.divider}`
               : "none",
           borderRadius: 3,
-          p: 0.8,
+          p: 1,
           boxSizing: "border-box",
           ...cardHoverEffect(),
           ...extraSx,
