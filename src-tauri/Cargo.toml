@@ -21,7 +21,7 @@ tauri-build = { version = "2", features = [] }
 default = ["qjs"]
 # qjs = ["musicfree/qjs", "musicfree/bindgen"]
 qjs = ["musicfree/qjs"]
-boa = ["musicfree/boa", "dep:icu_normalizer"]
+# boa = ["musicfree/boa", "dep:icu_normalizer"]
 
 [dependencies]
 tauri = { version = "2", features = ["protocol-asset"] }
@@ -62,7 +62,7 @@ tauri-plugin-os = "2"
 zip = "7"
 walkdir = "2"
 chrono = "0.4"
-icu_normalizer = { version = "=2.0.1", optional = true }
+# icu_normalizer = { version = "=2.0.1", optional = true }
 
 # FIXME: https://github.com/aws/aws-lc-rs/issues/1006
 # [patch.crates-io]
