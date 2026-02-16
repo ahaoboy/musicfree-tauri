@@ -271,10 +271,10 @@ export const createPlaybackSlice: StateCreator<
 
       const { config } = get()
       const playlist = config.playlists.find((p) => p.id === playlistId)
-      const albumTitle = playlist?.title || "MusicFree"
+      const albumTitle = playlist?.title || "musicfree"
 
       // Update document title to help Windows identify the app in media controls
-      document.title = `${audio.audio.title} - MusicFree`
+      document.title = `${audio.audio.title} - musicfree`
 
       updateMediaSessionMetadata({
         title: audio.audio.title,

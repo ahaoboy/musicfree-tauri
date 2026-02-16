@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "MusicFree",
+  "productName": "musicfree",
   "version": "0.1.0",
   "identifier": "com.ahaoboy.musicfree",
   "build": {
@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "MusicFree",
+        "title": "musicfree",
         "width": 393,
         "height": 852,
         "decorations": true,
