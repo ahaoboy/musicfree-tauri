@@ -86,14 +86,25 @@ export const initBluetoothListener = async (
 
   try {
     // Request permission to get device labels.
-    await navigator.mediaDevices
-      .getUserMedia({ audio: true })
-      .then((stream) => {
-        stream.getTracks().forEach((track) => track.stop())
-      })
-      .catch((err) => {
-        console.warn("Media permission denied or failed:", err)
-      })
+    // We only call getUserMedia if there's at least one audio input device,
+    // otherwise it will throw NotFoundError.
+    const devices = await navigator.mediaDevices.enumerateDevices()
+    const hasMic = devices.some((d) => d.kind === "audioinput")
+
+    if (hasMic) {
+      await navigator.mediaDevices
+        .getUserMedia({ audio: true })
+        .then((stream) => {
+          stream.getTracks().forEach((track) => track.stop())
+        })
+        .catch((err) => {
+          console.warn("Media permission denied or failed:", err)
+        })
+    } else {
+      console.log(
+        "No audio input device found, skipping microphone permission request.",
+      )
+    }
 
     // Get initial device list and populate store
     const initialDevices = await navigator.mediaDevices.enumerateDevices()

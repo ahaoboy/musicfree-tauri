@@ -152,7 +152,7 @@ export const createPlaybackSlice: StateCreator<
 
     // Audio ended - auto play next
     audioElement.addEventListener("ended", () => {
-      get().playNext()
+      get().playNext(true)
     })
 
     // Error handling
@@ -202,18 +202,21 @@ export const createPlaybackSlice: StateCreator<
   },
 
   initDeviceListeners: async () => {
-    const { deviceListenersInitialized } = get()
-    if (deviceListenersInitialized) return
-
-    await initBluetoothListener({
-      onDevicesChange: (devices) =>
-        set({ connectedDevices: devices, deviceListenersInitialized: true }),
-      onBluetoothDisconnect: () => get().pauseAudio(),
-      getIsPlaying: () => get().isPlaying,
-      getConnectedDevices: () => get().connectedDevices,
-    })
-
+    if (get().deviceListenersInitialized) return
+    // Temporarily set to true to avoid concurrent calls
     set({ deviceListenersInitialized: true })
+
+    try {
+      await initBluetoothListener({
+        onDevicesChange: (devices) =>
+          set({ connectedDevices: devices, deviceListenersInitialized: true }),
+        onBluetoothDisconnect: () => get().pauseAudio(),
+        getIsPlaying: () => get().isPlaying,
+        getConnectedDevices: () => get().connectedDevices,
+      })
+    } catch (error) {
+      console.warn("Bluetooth listener initialization failed:", error)
+    }
   },
 
   playAudio: async (
@@ -271,10 +274,10 @@ export const createPlaybackSlice: StateCreator<
 
       const { config } = get()
       const playlist = config.playlists.find((p) => p.id === playlistId)
-      const albumTitle = playlist?.title || "musicfree"
+      const albumTitle = playlist?.title || "MusicFree"
 
       // Update document title to help Windows identify the app in media controls
-      document.title = `${audio.audio.title} - musicfree`
+      document.title = `${audio.audio.title} - MusicFree`
 
       updateMediaSessionMetadata({
         title: audio.audio.title,
