@@ -2,6 +2,12 @@ import { StateCreator } from "zustand"
 import type { AppState } from "./index"
 import { LocalAudio, PlayMode, get_web_url, storage } from "../api"
 import { initBluetoothListener } from "../utils/bluetooth"
+import {
+  initMediaSession,
+  updateMediaSessionMetadata,
+  updateMediaSessionPlaybackState,
+  updateMediaSessionPositionState,
+} from "../utils/mediaSession"
 
 // Helper to create and configure Audio element
 const getAudio = (): HTMLAudioElement => {
@@ -118,28 +124,11 @@ export const createPlaybackSlice: StateCreator<
         duration: duration || 0,
       })
 
-      if (
-        "mediaSession" in navigator &&
-        "setPositionState" in navigator.mediaSession
-      ) {
-        try {
-          // Check if values are within expected range
-          if (
-            Number.isFinite(duration) &&
-            duration > 0 &&
-            Number.isFinite(currentTime)
-          ) {
-            navigator.mediaSession.setPositionState({
-              duration: duration,
-              playbackRate: audioElement.playbackRate,
-              position: currentTime,
-            })
-          }
-        } catch (e) {
-          // Ignore state errors (e.g. if position > duration)
-          console.warn("Failed to set position state:", e)
-        }
-      }
+      updateMediaSessionPositionState({
+        duration: duration,
+        playbackRate: audioElement.playbackRate,
+        position: currentTime,
+      })
     })
 
     // Load start - reset state
@@ -176,49 +165,37 @@ export const createPlaybackSlice: StateCreator<
       if (get().isPlaying) {
         set({ isPlaying: false })
       }
-      if ("mediaSession" in navigator) {
-        navigator.mediaSession.playbackState = "paused"
-      }
+      updateMediaSessionPlaybackState("paused")
     })
 
     audioElement.addEventListener("play", () => {
       if (!get().isPlaying) {
         set({ isPlaying: true })
       }
-      if ("mediaSession" in navigator) {
-        navigator.mediaSession.playbackState = "playing"
-      }
+      updateMediaSessionPlaybackState("playing")
     })
 
     // Setup Media Session action handlers
-    if ("mediaSession" in navigator) {
-      navigator.mediaSession.setActionHandler("play", () => get().resumeAudio())
-      navigator.mediaSession.setActionHandler("pause", () => get().pauseAudio())
-      navigator.mediaSession.setActionHandler("previoustrack", () =>
-        get().playPrev(true),
-      )
-      navigator.mediaSession.setActionHandler("nexttrack", () =>
-        get().playNext(true),
-      )
-      navigator.mediaSession.setActionHandler("seekto", (details) => {
-        if (details.seekTime !== undefined) {
-          get().seekTo(details.seekTime)
-        }
-      })
-      navigator.mediaSession.setActionHandler("seekbackward", (details) => {
-        const skipTime = details.seekOffset || 10
+    initMediaSession({
+      onPlay: () => get().resumeAudio(),
+      onPause: () => get().pauseAudio(),
+      onPreviousTrack: () => get().playPrev(true),
+      onNextTrack: () => get().playNext(true),
+      onSeekTo: (time) => get().seekTo(time),
+      onSeekBackward: (offset) => {
+        const skipTime = offset || 10
         get().seekTo(Math.max(audioElement.currentTime - skipTime, 0))
-      })
-      navigator.mediaSession.setActionHandler("seekforward", (details) => {
-        const skipTime = details.seekOffset || 10
+      },
+      onSeekForward: (offset) => {
+        const skipTime = offset || 10
         get().seekTo(
           Math.min(
             audioElement.currentTime + skipTime,
             audioElement.duration || Infinity,
           ),
         )
-      })
-    }
+      },
+    })
 
     // Initial check in case listeners are attached after load
     checkSeekable()
@@ -283,38 +260,28 @@ export const createPlaybackSlice: StateCreator<
       })
 
       // Update Media Session Metadata
-      if ("mediaSession" in navigator) {
-        let artworkUrl = audio.audio.cover
-        if (audio.cover_path) {
-          try {
-            artworkUrl = await get_web_url(audio.cover_path)
-          } catch (e) {
-            console.error("Failed to get artwork URL:", e)
-          }
+      let artworkUrl = audio.audio.cover
+      if (audio.cover_path) {
+        try {
+          artworkUrl = await get_web_url(audio.cover_path)
+        } catch (e) {
+          console.error("Failed to get artwork URL:", e)
         }
-
-        const { config } = get()
-        const playlist = config.playlists.find((p) => p.id === playlistId)
-        const albumTitle = playlist?.title || "MusicFree"
-
-        // Update document title to help Windows identify the app in media controls
-        document.title = `${audio.audio.title} - MusicFree`
-
-        navigator.mediaSession.metadata = new MediaMetadata({
-          title: audio.audio.title,
-          artist: audio.audio.platform,
-          album: albumTitle,
-          artwork: artworkUrl
-            ? [
-                {
-                  src: artworkUrl,
-                  sizes: "512x512",
-                  type: "image/png",
-                },
-              ]
-            : [],
-        })
       }
+
+      const { config } = get()
+      const playlist = config.playlists.find((p) => p.id === playlistId)
+      const albumTitle = playlist?.title || "MusicFree"
+
+      // Update document title to help Windows identify the app in media controls
+      document.title = `${audio.audio.title} - MusicFree`
+
+      updateMediaSessionMetadata({
+        title: audio.audio.title,
+        artist: audio.audio.platform,
+        album: albumTitle,
+        artworkUrl: artworkUrl,
+      })
 
       // Save to localStorage
       storage.setCurrentAudio(audio)

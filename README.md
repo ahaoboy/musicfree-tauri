@@ -41,13 +41,13 @@ The search bar is highly flexible and supports several input formats:
 - **Full URLs**: Paste direct links to single tracks or entire playlists.
   ```text
   https://www.youtube.com/watch?v=BnnbP7pCIvQ
-  https://www.bilibili.com/video/BV1aAV7zHEhJ
+  https://www.bilibili.com/video/BV1soUtYEEJ7
   https://www.youtube.com/watch?v=F5tSoaJ93ac&list=PLJP5_qSxMbkLzsriTWWMMhWhG7C7ThQPz
   ```
 - **Short IDs**: Paste a video or playlist ID. The app automatically identifies the platform.
   ```text
   BnnbP7pCIvQ
-  BV1aAV7zHEhJ
+  BV1soUtYEEJ7
   PLJP5_qSxMbkLzsriTWWMMhWhG7C7ThQPz
   ```
 - **Sharing Messages**: Raw sharing text from mobile apps. The app extracts links and handles short links like `b23.tv`.
