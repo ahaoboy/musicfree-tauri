@@ -6,11 +6,22 @@ A modern music player application built with Rust, Tauri, and React.
   <img src="https://github.com/ahaoboy/musicfree-tauri/blob/main/public/icon.png?raw=true" alt="MusicFree Icon" width="256" height="256">
 </div>
 
-
-
-https://github.com/user-attachments/assets/990ff7c7-c1e6-4446-91a8-21c112a0e3f3
-
-
+<div align="center">
+  <table>
+    <tr>
+      <th align="center">Youtube</th>
+      <th align="center">Bilibili</th>
+    </tr>
+    <tr>
+      <td align="center">
+        <video src="https://github.com/user-attachments/assets/0211df67-ca00-4bde-9d53-25fe15886074"></video>
+      </td>
+      <td align="center">
+        <video src="https://github.com/user-attachments/assets/4fe1da37-6a9d-41d2-a7a2-7fbc1bf5cb54"></video>
+      </td>
+    </tr>
+  </table>
+</div>
 
 ## About
 
