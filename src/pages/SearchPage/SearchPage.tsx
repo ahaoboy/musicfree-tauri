@@ -31,7 +31,7 @@ import { useAppStore } from "../../store"
 import { AudioCard, AudioList } from "../../components"
 import { useAdaptiveSize } from "../../hooks"
 import { isLongDuration } from "../../utils/audio"
-import { statusDotSx } from "../../hooks/useTheme"
+import { statusDotSx, splashIconSx } from "../../hooks/useTheme"
 
 export const SearchPage: FC = () => {
   const navigate = useNavigate()
@@ -641,7 +641,21 @@ export const SearchPage: FC = () => {
         />
       </Box>
 
-      {playlist && !searching && (
+      {(!playlist || playlist.audios.length === 0) && !searching && (
+        <Box
+          sx={{
+            flex: 1,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            pb: "10%",
+          }}
+        >
+          <Box component="img" src="/icon.png" alt="icon" sx={splashIconSx} />
+        </Box>
+      )}
+
+      {playlist && playlist.audios.length > 0 && !searching && (
         <>
           <Box sx={{ flex: 1, overflow: "hidden" }}>
             <AudioList

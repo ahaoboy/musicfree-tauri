@@ -1,7 +1,7 @@
 import { invoke, convertFileSrc } from "@tauri-apps/api/core"
 import { join } from "@tauri-apps/api/path"
 import { platform } from "@tauri-apps/plugin-os"
-// import { getWavUrl, isVideo } from "./audio"
+import { getWavUrl, isVideo } from "./audio"
 
 export const CurrentPlatform = platform()
 
@@ -178,12 +178,12 @@ export async function get_musicfree_url(path: string): Promise<string> {
   if (CurrentPlatform === "windows") {
   } else if (CurrentPlatform === "android") {
     // FIXME: Converting video to audio takes a long time.
-    // if (isVideo(path)) {
-    //   assetUrl = await getWavUrl(assetUrl)
-    // } else {
-    //   assetUrl = await get_web_blob(cleanPath)
-    // }
-    assetUrl = await get_web_blob(cleanPath)
+    if (isVideo(path)) {
+      assetUrl = await getWavUrl(assetUrl)
+    } else {
+      assetUrl = await get_web_blob(cleanPath)
+    }
+    // assetUrl = await get_web_blob(cleanPath)
   } else {
     // macOS, iOS, Linux
     assetUrl = `musicfree://localhost/${cleanPath}`

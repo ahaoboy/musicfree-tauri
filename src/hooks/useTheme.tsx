@@ -267,6 +267,16 @@ export const emptyPlaceholderAvatarSx: SxProps<Theme> = {
   opacity: 0.5,
 }
 
+/** Splash/App Icon style (used in SearchPage empty state and LoadingFallback) */
+export const splashIconSx: SxProps<Theme> = {
+  width: "80vmin",
+  height: "80vmin",
+  objectFit: "contain",
+  borderRadius: "20%",
+  mb: 3,
+  opacity: 0.2, // Default opacity for background usage
+}
+
 // ─── Palette Definitions ─────────────────────────────────────────────────────
 
 const lightPalette = {

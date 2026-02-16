@@ -1,5 +1,6 @@
 import { FC } from "react"
-import { Box, Typography, CircularProgress } from "@mui/material"
+import { Box, CircularProgress } from "@mui/material"
+import { splashIconSx } from "../../hooks/useTheme"
 
 interface LoadingFallbackProps {
   tip?: string
@@ -10,7 +11,6 @@ interface LoadingFallbackProps {
  * Loading fallback component for Suspense boundaries
  */
 export const LoadingFallback: FC<LoadingFallbackProps> = ({
-  tip = "Loading...",
   fullscreen = false,
 }) => {
   if (fullscreen) {
@@ -30,23 +30,7 @@ export const LoadingFallback: FC<LoadingFallbackProps> = ({
           zIndex: (theme) => theme.custom.zIndex.loading,
         }}
       >
-        <Box
-          component="img"
-          src="/icon.png"
-          alt="App Icon"
-          sx={{
-            width: "80vmin",
-            height: "80vmin",
-            objectFit: "contain",
-            borderRadius: "20%",
-            mb: 3,
-          }}
-        />
-        {tip && (
-          <Typography variant="body1" color="text.secondary">
-            {tip}
-          </Typography>
-        )}
+        <Box component="img" src="/icon.png" alt="App Icon" sx={splashIconSx} />
       </Box>
     )
   }
@@ -65,7 +49,6 @@ export const LoadingFallback: FC<LoadingFallbackProps> = ({
       className="page"
     >
       <CircularProgress />
-      {tip && <Typography color="text.secondary">{tip}</Typography>}
     </Box>
   )
 }

@@ -161,19 +161,6 @@ export const AppLayout: FC = memo(() => {
   // Load config on mount
   useEffect(() => {
     loadConfig()
-
-    const handleDeviceChange = () => {
-      const { isPlaying, pauseAudio } = useAppStore.getState()
-      if (isPlaying) pauseAudio()
-    }
-
-    navigator.mediaDevices.addEventListener("devicechange", handleDeviceChange)
-    return () => {
-      navigator.mediaDevices.removeEventListener(
-        "devicechange",
-        handleDeviceChange,
-      )
-    }
   }, [loadConfig])
 
   // Tab change handler
@@ -244,7 +231,7 @@ export const AppLayout: FC = memo(() => {
               bgcolor: "background.default",
             }}
           >
-            <LoadingFallback fullscreen tip="Loading..." />
+            <LoadingFallback fullscreen />
           </Box>
         </Fade>
 

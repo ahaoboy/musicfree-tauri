@@ -16,6 +16,13 @@ https://github.com/user-attachments/assets/990ff7c7-c1e6-4446-91a8-21c112a0e3f3
 
 This is a desktop music player application that provides a seamless music listening experience.
 
+## Features
+
+- **Gesture Support**: Supports natural gesture operations. Swiping left or right allows you to switch between pages or exit the current page smoothly.
+- **Media Session Integration**: Supports system-level media controls (lock screen, notification area, hardware keys) for play/pause, next/prev, and seeking on Windows. (Android support is currently not available, contributions are welcome via PR!)
+- **Auto-Pause on Disconnect**: Automatically pauses playback when a Bluetooth device or headset is disconnected.
+  > **Technical Note**: To detect device changes and identifying Bluetooth hardware, this feature utilizes the [MediaDevices API](https://developer.mozilla.org/en-US/docs/Web/API/Navigator/mediaDevices). As a result, the application requires **Bluetooth** and **Microphone** permissions. **MusicFree does not collect or upload any personal information.** If you have a more privacy-preserving or robust technical solution, contributions are welcome via Pull Requests!
+
 ## Installation
 
 ### Download Pre-built Binaries
