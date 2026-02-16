@@ -17,7 +17,7 @@ import SettingsSystemDaydream from "@mui/icons-material/SettingsSystemDaydream"
 import GitHub from "@mui/icons-material/GitHub"
 import FolderOpen from "@mui/icons-material/FolderOpen"
 import DeleteIcon from "@mui/icons-material/Delete"
-import { openUrl, openPath } from "@tauri-apps/plugin-opener"
+import { openUrl, openPath, revealItemInDir } from "@tauri-apps/plugin-opener"
 import { useAppStore } from "../../store"
 import {
   clear_all_data,
@@ -132,8 +132,10 @@ export const SettingsPage: FC = () => {
   const handleExport = useCallback(async () => {
     setExporting(true)
     try {
-      const filename = await export_data()
+      const path = await export_data()
+      const filename = path.replaceAll("\\", "/").split("/").at(-1)
       message.success(`Data exported to Downloads/${filename}`)
+      revealItemInDir(path)
     } catch (e) {
       console.error(e)
       message.error(`Failed to export data ${e}`)

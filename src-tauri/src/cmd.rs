@@ -267,7 +267,7 @@ pub async fn export_data(app_handle: tauri::AppHandle) -> AppResult<String> {
     .await
     .map_err(|e| AppError::Unknown(e.to_string()))??;
 
-    Ok(zip_filename)
+    Ok(zip_path.to_string_lossy().to_string())
 }
 
 #[tauri::command]
