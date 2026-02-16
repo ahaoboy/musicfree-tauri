@@ -33,6 +33,23 @@ import { useAdaptiveSize } from "../../hooks"
 import { isLongDuration } from "../../utils/audio"
 import { statusDotSx, splashIconSx } from "../../hooks/useTheme"
 
+/**
+ * Processes search input to extract URLs from sharing messages
+ * and trims the final result.
+ */
+const processSearchInput = (value: string): string => {
+  const urlRegex = /(https?:\/\/[^\s/$.?#].[^\s]*)/i
+  const match = value.match(urlRegex)
+
+  // If it's a sharing message (contains URL + extra text), extract URL
+  if (match && match[0] !== value.trim()) {
+    return match[0].trim()
+  }
+
+  // Otherwise return the whole trimmed input
+  return value.trim()
+}
+
 export const SearchPage: FC = () => {
   const navigate = useNavigate()
 
@@ -143,15 +160,7 @@ export const SearchPage: FC = () => {
 
   const handleSearchTextChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
-      const value = e.target.value
-      // If it contains a URL but is not just the URL, extract it (handles sharing messages)
-      const urlRegex = /(https?:\/\/[^\s/$.?#].[^\s]*)/i
-      const match = value.match(urlRegex)
-      if (match && match[0] !== value.trim()) {
-        setSearchText(match[0])
-      } else {
-        setSearchText(value)
-      }
+      setSearchText(processSearchInput(e.target.value))
     },
     [setSearchText],
   )
