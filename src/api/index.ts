@@ -118,18 +118,24 @@ export function clearBlobCache() {
 }
 
 export async function get_convert_url(path: string): Promise<string> {
-  // Check cache first
-  const cached = appCache.get(path)
-  if (cached) {
-    return cached
+  const isMedia = isAudio(path) || isVideo(path)
+
+  // Check cache first for media resources
+  if (isMedia) {
+    const cached = appCache.get(path)
+    if (cached) {
+      return cached
+    }
   }
 
   const appDataDirPath: string = await invoke("app_dir")
   const localPath = await join(appDataDirPath, path)
   const assetUrl = convertFileSrc(localPath)
 
-  // Cache the result
-  appCache.set(path, assetUrl)
+  // Cache the result only for media resources
+  if (isMedia) {
+    appCache.set(path, assetUrl)
+  }
 
   return assetUrl
 }
@@ -157,10 +163,14 @@ async function get_web_blob(path: string): Promise<string> {
 
 async function get_musicfree_url(path: string): Promise<string> {
   const cleanPath = path.startsWith("/") ? path.slice(1) : path
+  const isMedia = isAudio(path) || isVideo(path)
 
-  const cached = appCache.get(cleanPath)
-  if (cached) {
-    return cached
+  // Check cache first for media resources
+  if (isMedia) {
+    const cached = appCache.get(cleanPath)
+    if (cached) {
+      return cached
+    }
   }
 
   let assetUrl: string = `http://musicfree.localhost/${cleanPath}`
@@ -178,8 +188,11 @@ async function get_musicfree_url(path: string): Promise<string> {
     // macOS, iOS, Linux
     assetUrl = `musicfree://localhost/${cleanPath}`
   }
-  // Cache the result
-  appCache.set(cleanPath, assetUrl)
+
+  // Cache the result only for media resources
+  if (isMedia) {
+    appCache.set(cleanPath, assetUrl)
+  }
   return assetUrl
 }
 
