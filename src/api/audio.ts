@@ -6,7 +6,10 @@ const AudioTypes =
   "aac,ac3,aiff,ape,au,cue,dsf,dts,flac,m4a,mid,midi,mka,mp3,mp4a,oga,ogg,opus,spx,tak,tta,wav,weba,wma,wv".split(
     ",",
   )
-
+export const ImageTypes =
+  "apng,avif,bmp,gif,j2k,jp2,jfif,jpeg,jpg,jxl,mj2,png,svg,tga,tif,tiff,webp".split(
+    ",",
+  )
 function endsWith(s: string | undefined, exts: string[]) {
   if (!s?.length) {
     return false
@@ -28,7 +31,9 @@ export function isVideo(s: string, types = VideoTypes) {
 export function isAudio(s: string, types = AudioTypes) {
   return endsWith(s.toLocaleLowerCase(), types)
 }
-
+export function isImage(s: string, types = ImageTypes) {
+  return endsWith(s.toLocaleLowerCase(), types)
+}
 function writeWavHeader(
   view: DataView,
   numFrames: number,

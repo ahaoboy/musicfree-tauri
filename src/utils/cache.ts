@@ -1,8 +1,7 @@
 import { LRUCache } from "lru-cache"
 
 const options = {
-  max: 32,
-  ttl: 1000 * 60 * 60,
+  max: 64,
   dispose: (value: string) => {
     if (typeof value === "string" && value.startsWith("blob:")) {
       try {

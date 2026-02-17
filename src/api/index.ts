@@ -1,7 +1,7 @@
 import { invoke, convertFileSrc } from "@tauri-apps/api/core"
 import { join } from "@tauri-apps/api/path"
 import { platform } from "@tauri-apps/plugin-os"
-import { getWavUrl, isVideo } from "./audio"
+import { getWavUrl, isAudio, isVideo } from "./audio"
 import { appCache } from "../utils/cache"
 
 export const CurrentPlatform = platform()
@@ -138,7 +138,7 @@ export function is_android() {
   return CurrentPlatform === "android"
 }
 
-export async function get_web_blob(path: string): Promise<string> {
+async function get_web_blob(path: string): Promise<string> {
   // Check cache first
   const cached = appCache.get(path)
   if (cached) {
@@ -155,7 +155,7 @@ export async function get_web_blob(path: string): Promise<string> {
   return assetUrl
 }
 
-export async function get_musicfree_url(path: string): Promise<string> {
+async function get_musicfree_url(path: string): Promise<string> {
   const cleanPath = path.startsWith("/") ? path.slice(1) : path
 
   const cached = appCache.get(cleanPath)
@@ -169,9 +169,10 @@ export async function get_musicfree_url(path: string): Promise<string> {
     // FIXME: Converting video to audio takes a long time.
     if (isVideo(path)) {
       assetUrl = await getWavUrl(assetUrl)
-    } else {
+    } else if (isAudio(path)) {
       assetUrl = await get_web_blob(cleanPath)
     }
+    // Image
     // assetUrl = await get_web_blob(cleanPath)
   } else {
     // macOS, iOS, Linux
