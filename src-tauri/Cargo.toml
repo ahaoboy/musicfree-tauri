@@ -95,6 +95,6 @@ strip = false
 inherits = 'release'
 
 [target.'cfg(target_os = "windows")'.dependencies]
-tauri-plugin-media = { version = "0.1" }
+# tauri-plugin-media = { version = "0.1" }
 tauri-plugin-updater = { version = "2" }
 tauri-plugin-single-instance = { version = "2" }
