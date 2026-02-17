@@ -12,7 +12,7 @@
     ],
     "windows": {
       "nsis": {
-        "installerIcon": "../public/icons/icon.ico"
+        "installerIcon": "../public/icon.ico"
       }
     }
   }

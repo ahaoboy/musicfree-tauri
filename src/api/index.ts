@@ -2,6 +2,7 @@ import { invoke, convertFileSrc } from "@tauri-apps/api/core"
 import { join } from "@tauri-apps/api/path"
 import { platform } from "@tauri-apps/plugin-os"
 import { getWavUrl, isVideo } from "./audio"
+import { appCache } from "../utils/cache"
 
 export const CurrentPlatform = platform()
 
@@ -106,30 +107,19 @@ export function download_cover(
   return invoke("download_cover", { url, platform })
 }
 
-// Cache for converted URLs to avoid repeated conversions
-const urlCache = new Map<string, string>()
-
-// Cache for blob URLs to manage memory
-const blobUrlCache = new Map<string, string>()
-
 // Clean up blob URLs when they're no longer needed
 export function revokeBlobUrl(path: string) {
-  const blobUrl = blobUrlCache.get(path)
-  if (blobUrl) {
-    URL.revokeObjectURL(blobUrl)
-    blobUrlCache.delete(path)
-  }
+  appCache.delete(path)
 }
 
 // Clear all cached blob URLs (useful for memory management)
 export function clearBlobCache() {
-  blobUrlCache.forEach((url) => URL.revokeObjectURL(url))
-  blobUrlCache.clear()
+  appCache.clear()
 }
 
 export async function get_convert_url(path: string): Promise<string> {
   // Check cache first
-  const cached = urlCache.get(path)
+  const cached = appCache.get(path)
   if (cached) {
     return cached
   }
@@ -139,7 +129,7 @@ export async function get_convert_url(path: string): Promise<string> {
   const assetUrl = convertFileSrc(localPath)
 
   // Cache the result
-  urlCache.set(path, assetUrl)
+  appCache.set(path, assetUrl)
 
   return assetUrl
 }
@@ -150,7 +140,7 @@ export function is_android() {
 
 export async function get_web_blob(path: string): Promise<string> {
   // Check cache first
-  const cached = blobUrlCache.get(path)
+  const cached = appCache.get(path)
   if (cached) {
     return cached
   }
@@ -160,16 +150,15 @@ export async function get_web_blob(path: string): Promise<string> {
   const assetUrl = URL.createObjectURL(blob)
 
   // Cache the blob URL
-  blobUrlCache.set(path, assetUrl)
+  appCache.set(path, assetUrl)
 
   return assetUrl
 }
 
 export async function get_musicfree_url(path: string): Promise<string> {
-  // Remove leading slash if present
   const cleanPath = path.startsWith("/") ? path.slice(1) : path
 
-  const cached = urlCache.get(cleanPath)
+  const cached = appCache.get(cleanPath)
   if (cached) {
     return cached
   }
@@ -189,7 +178,7 @@ export async function get_musicfree_url(path: string): Promise<string> {
     assetUrl = `musicfree://localhost/${cleanPath}`
   }
   // Cache the result
-  urlCache.set(cleanPath, assetUrl)
+  appCache.set(cleanPath, assetUrl)
   return assetUrl
 }
 
