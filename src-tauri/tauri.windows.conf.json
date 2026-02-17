@@ -9,6 +9,11 @@
   "bundle": {
     "icon": [
       "icons/icon.ico"
-    ]
+    ],
+    "windows": {
+      "nsis": {
+        "installerIcon": "../public/icons/icon.ico"
+      }
+    }
   }
 }
