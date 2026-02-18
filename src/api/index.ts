@@ -62,7 +62,7 @@ export type Config = {
 }
 
 export type GistConfig = {
-  gistId: string
+  repoUrl: string // GitHub repository URL (e.g., "https://github.com/owner/repo" or "owner/repo")
   githubToken: string
   syncInterval: number // in minutes
   lastSyncTime?: number
@@ -250,16 +250,16 @@ export function remove_file(path: string): Promise<void> {
   return invoke("remove_file", { path })
 }
 
-export function gist_download(token: string, gistId: string): Promise<any> {
-  return invoke("gist_download", { token, gistId })
+export function sync_download(token: string, syncId: string): Promise<any> {
+  return invoke("sync_download", { token, syncId })
 }
 
-export function gist_update(
+export function sync_update(
   token: string,
-  gistId: string,
+  syncId: string,
   files: Record<string, string | null>,
 ): Promise<any> {
-  return invoke("gist_update", { token, gistId, files })
+  return invoke("sync_update", { token, syncId, files })
 }
 
 // ============================================
@@ -270,7 +270,7 @@ const STORAGE_KEYS = {
   CURRENT_PLAYLIST_ID: "musicfree_current_playlist_id",
   PLAY_MODE: "musicfree_play_mode",
   THEME: "musicfree_theme",
-  GIST_CONFIG: "musicfree_gist_config",
+  GIST_CONFIG: "musicfree_repo_sync_config",
 } as const
 
 // ============================================
@@ -331,4 +331,25 @@ export const storage = {
       return null
     }
   },
+}
+
+// Log API
+export function write_log(
+  level: string,
+  module: string,
+  message: string,
+): Promise<void> {
+  return invoke("write_log", { level, module, message })
+}
+
+export function get_log_path(): Promise<string> {
+  return invoke("get_log_path")
+}
+
+export function clear_log(): Promise<void> {
+  return invoke("clear_log")
+}
+
+export function get_log_size(): Promise<number> {
+  return invoke("get_log_size")
 }

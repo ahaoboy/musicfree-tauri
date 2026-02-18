@@ -18,8 +18,32 @@ pub enum AppError {
     #[error("Invalid UTF-8 in path")]
     InvalidUtf8,
 
+    #[error("Sync error: {0}")]
+    Sync(#[from] SyncError),
+
     #[error("Unknown error: {0}")]
     Unknown(String),
+}
+
+#[derive(Debug, Error)]
+pub enum SyncError {
+    #[error("Invalid repository URL: {0}")]
+    InvalidRepoUrl(String),
+
+    #[error("HTTP request failed: {0}")]
+    HttpRequest(#[from] reqwest::Error),
+
+    #[error("Base64 decode error: {0}")]
+    Base64Decode(#[from] base64::DecodeError),
+
+    #[error("UTF-8 decode error: {0}")]
+    Utf8Decode(#[from] std::string::FromUtf8Error),
+
+    #[error("File not found in repository: {0}")]
+    FileNotFound(String),
+
+    #[error("GitHub API error: {0}")]
+    GitHubApi(String),
 }
 
 // Implement Serialize so we can return it to Tauri frontend

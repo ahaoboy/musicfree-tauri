@@ -10,6 +10,7 @@ import {
   CircularProgress,
   Button,
   IconButton,
+  Switch,
 } from "@mui/material"
 import LightMode from "@mui/icons-material/LightMode"
 import DarkMode from "@mui/icons-material/DarkMode"
@@ -39,12 +40,16 @@ import {
   import_data,
   CurrentPlatform,
   GistConfig,
+  get_log_size,
+  clear_log,
+  get_log_path,
 } from "../../api"
 import { useConfirm } from "../../hooks"
 import { useMessage } from "../../contexts/MessageContext"
 import { CopyButton } from "../../components"
 import prettyBytes from "pretty-bytes"
 import { useTheme } from "../../hooks/useTheme"
+import { setSaveToFile, getSaveToFile } from "../../utils/logger"
 
 const REPO_URL = "https://github.com/ahaoboy/musicfree-tauri"
 
@@ -76,6 +81,8 @@ export const SettingsPage: FC = () => {
   const [cacheSize, setCacheSize] = useState<number>(0)
   const [loadingCache, setLoadingCache] = useState(false)
   const [openSyncDialog, setOpenSyncDialog] = useState(false)
+  const [saveLogsToFile, setSaveLogsToFile] = useState(getSaveToFile())
+  const [logSize, setLogSize] = useState<number>(0)
 
   const gistConfig = useAppStore((state) => state.gistConfig)
   const setGistConfig = useAppStore((state) => state.setGistConfig)
@@ -87,12 +94,14 @@ export const SettingsPage: FC = () => {
     setLoadingStorage(true)
     setLoadingCache(true)
     try {
-      const [storage, cache] = await Promise.all([
+      const [storage, cache, log] = await Promise.all([
         get_storage_size(),
         get_cache_size(),
+        get_log_size(),
       ])
       setStorageSize(storage)
       setCacheSize(cache)
+      setLogSize(log)
     } catch (error) {
       console.error("Failed to get storage size:", error)
     } finally {
@@ -178,6 +187,48 @@ export const SettingsPage: FC = () => {
       setImporting(false)
     }
   }, [message, loadConfig])
+
+  const handleToggleSaveLogs = useCallback(
+    (checked: boolean) => {
+      setSaveLogsToFile(checked)
+      setSaveToFile(checked)
+      if (checked) {
+        message.success("Logs will be saved to file")
+      } else {
+        message.info("Logs will not be saved to file")
+      }
+    },
+    [message],
+  )
+
+  const handleClearLog = useCallback(() => {
+    showConfirm({
+      title: "Clear Log",
+      content: "This will delete the log file. This action cannot be undone.",
+      okText: "Clear",
+      okType: "danger",
+      onOk: async () => {
+        try {
+          await clear_log()
+          await loadStorageSize()
+          message.success("Log cleared successfully")
+        } catch (e) {
+          console.error(e)
+          message.error("Failed to clear log")
+        }
+      },
+    })
+  }, [showConfirm, message, loadStorageSize])
+
+  const handleOpenLog = useCallback(async () => {
+    try {
+      const logPath = await get_log_path()
+      revealItemInDir(logPath)
+    } catch (e) {
+      console.error(e)
+      message.error("Failed to open log file")
+    }
+  }, [message])
 
   return (
     <Stack
@@ -381,6 +432,50 @@ export const SettingsPage: FC = () => {
         </Paper>
       </Stack>
 
+      {/* Log Section */}
+      <Stack spacing={2}>
+        <Paper variant="outlined" sx={{ p: 2 }}>
+          <Stack
+            direction="row"
+            justifyContent="space-between"
+            alignItems="center"
+          >
+            <Box>
+              <Stack direction="row" spacing={1} alignItems="center">
+                <Typography>Log</Typography>
+                <Typography color="text.secondary" variant="body2">
+                  ({prettyBytes(logSize)})
+                </Typography>
+              </Stack>
+            </Box>
+            <Stack direction="row" spacing={1} alignItems="center">
+              {CurrentPlatform !== "android" && (
+                <IconButton
+                  onClick={handleOpenLog}
+                  disabled={logSize === 0}
+                  aria-label="Open Log"
+                  size="small"
+                >
+                  <FolderOpen />
+                </IconButton>
+              )}
+              <Switch
+                checked={saveLogsToFile}
+                onChange={(e) => handleToggleSaveLogs(e.target.checked)}
+              />
+              <IconButton
+                color="error"
+                onClick={handleClearLog}
+                size="small"
+                disabled={logSize === 0}
+              >
+                <DeleteIcon />
+              </IconButton>
+            </Stack>
+          </Stack>
+        </Paper>
+      </Stack>
+
       {/* Sync Section */}
       <Stack spacing={2}>
         <Paper variant="outlined" sx={{ p: 2 }}>
@@ -390,7 +485,7 @@ export const SettingsPage: FC = () => {
             alignItems="center"
           >
             <Box>
-              <Typography>Gist Sync</Typography>
+              <Typography>GitHub Sync</Typography>
               {gistConfig?.lastSyncTime && (
                 <Typography variant="caption" color="text.secondary">
                   Last synced:{" "}
@@ -441,25 +536,25 @@ const SyncDialog: FC<SyncDialogProps> = ({
   isSyncing,
   syncGist,
 }) => {
-  const [gistId, setGistId] = useState(config?.gistId || "")
+  const [repoUrl, setRepoUrl] = useState(config?.repoUrl || "")
   const [token, setToken] = useState(config?.githubToken || "")
   const [interval, setIntervalValue] = useState(config?.syncInterval || 1)
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
     if (open && config) {
-      setGistId(config.gistId)
+      setRepoUrl(config.repoUrl)
       setToken(config.githubToken)
       setIntervalValue(config.syncInterval)
     }
   }, [open, config])
 
   const handleSave = async () => {
-    if (!gistId || !token) return
+    if (!repoUrl || !token) return
     setLoading(true)
     try {
       const newConfig = {
-        gistId,
+        repoUrl,
         githubToken: token,
         syncInterval: interval,
         lastSyncTime: config?.lastSyncTime,
@@ -472,16 +567,17 @@ const SyncDialog: FC<SyncDialogProps> = ({
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="xs">
-      <DialogTitle>Gist Sync Configuration</DialogTitle>
+      <DialogTitle>GitHub Repository Sync</DialogTitle>
       <DialogContent>
         <Stack spacing={3} sx={{ mt: 1 }}>
           <TextField
-            label="Gist ID"
-            value={gistId}
-            onChange={(e) => setGistId(e.target.value)}
+            label="Repository URL"
+            value={repoUrl}
+            onChange={(e) => setRepoUrl(e.target.value)}
             fullWidth
             size="small"
             autoFocus
+            placeholder="owner/repo or https://github.com/owner/repo"
           />
           <TextField
             label="GitHub Token"
@@ -520,7 +616,7 @@ const SyncDialog: FC<SyncDialogProps> = ({
               )
             }
             onClick={() => syncGist(true)}
-            disabled={isSyncing || !gistId || !token}
+            disabled={isSyncing || !repoUrl || !token}
             size="small"
           >
             Sync Now
@@ -532,7 +628,7 @@ const SyncDialog: FC<SyncDialogProps> = ({
         <Button
           onClick={handleSave}
           variant="contained"
-          disabled={!gistId || !token || loading}
+          disabled={!repoUrl || !token || loading}
         >
           {loading ? <CircularProgress size={24} /> : "Save"}
         </Button>

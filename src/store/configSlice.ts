@@ -21,6 +21,9 @@ import {
   GistConfig,
   syncWithGist,
 } from "../api"
+import logger from "../utils/logger"
+
+const log = logger.config
 
 // ============================================
 // Config Slice State Interface
@@ -174,20 +177,20 @@ export const createConfigSlice: StateCreator<AppState, [], [], ConfigSlice> = (
 
     // Skip if no changes
     if (JSON.stringify(oldConfig) === JSON.stringify(config)) {
-      console.log("[Config] No changes detected, skipping save")
+      log.info("No changes detected, skipping save")
       return
     }
 
-    console.log("[Config] Saving config...")
+    log.info("Saving config...")
     try {
       await save_config(config)
       set({ config })
-      console.log("[Config] Config saved successfully")
+      log.info("Config saved successfully")
 
       // Trigger background sync, passing old config to detect deletions
       get().syncGist(false, oldConfig)
     } catch (error) {
-      console.error("[Config] Failed to save config:", error)
+      log.error("Failed to save config:", error)
       throw error
     }
   },
@@ -292,7 +295,7 @@ export const createConfigSlice: StateCreator<AppState, [], [], ConfigSlice> = (
 
     // Don't allow deleting special playlists
     if (id === FAVORITE_PLAYLIST_ID || id === AUDIO_PLAYLIST_ID) {
-      console.warn("Cannot delete special playlist:", id)
+      log.warn("Cannot delete special playlist:", id)
       return
     }
 
@@ -369,7 +372,7 @@ export const createConfigSlice: StateCreator<AppState, [], [], ConfigSlice> = (
     const { config } = get()
     if (!config) return
 
-    console.log(`[Config] Adding ${audios.length} audios to config...`)
+    log.info(`Adding ${audios.length} audios to config...`)
 
     // Find or create AUDIO_PLAYLIST
     let audioPlaylist = config.playlists.find((p) => p.id === AUDIO_PLAYLIST_ID)
@@ -390,11 +393,11 @@ export const createConfigSlice: StateCreator<AppState, [], [], ConfigSlice> = (
     const newAudios = audios.filter((a) => !existingIds.has(a.audio.id))
 
     if (newAudios.length === 0) {
-      console.log("[Config] No new audios to add (all already exist)")
+      log.info("No new audios to add (all already exist)")
       return
     }
 
-    console.log(`[Config] Adding ${newAudios.length} new audios`)
+    log.info(`Adding ${newAudios.length} new audios`)
 
     // Create updated playlist with new audios at the front
     const updatedAudioPlaylist = {
@@ -404,7 +407,7 @@ export const createConfigSlice: StateCreator<AppState, [], [], ConfigSlice> = (
 
     // Create updated playlists array
     const updatedPlaylists = config.playlists.map((p) =>
-      p.id === AUDIO_PLAYLIST_ID ? updatedAudioPlaylist : p
+      p.id === AUDIO_PLAYLIST_ID ? updatedAudioPlaylist : p,
     )
 
     // If AUDIO_PLAYLIST didn't exist, add it
@@ -508,8 +511,8 @@ export const createConfigSlice: StateCreator<AppState, [], [], ConfigSlice> = (
 
     const deletedAudio = shouldCheckCleanup
       ? config.playlists
-        .find((p) => p.id === playlistId)
-        ?.audios.find((a) => a.audio.id === audioId)
+          .find((p) => p.id === playlistId)
+          ?.audios.find((a) => a.audio.id === audioId)
       : null
 
     if (deletedAudio) {
@@ -575,19 +578,20 @@ export const createConfigSlice: StateCreator<AppState, [], [], ConfigSlice> = (
     const { config } = get()
     if (!config) return
 
-    console.log(`[Config] Toggling favorite for: ${audio.audio.title}`)
+    log.info(`Toggling favorite for: ${audio.audio.title}`)
 
     // Find favorite playlist
-    let favPlaylist = config.playlists.find((p) => p.id === FAVORITE_PLAYLIST_ID)
-    const index = favPlaylist?.audios.findIndex(
-      (a) => a.audio.id === audio.audio.id,
-    ) ?? -1
+    const favPlaylist = config.playlists.find(
+      (p) => p.id === FAVORITE_PLAYLIST_ID,
+    )
+    const index =
+      favPlaylist?.audios.findIndex((a) => a.audio.id === audio.audio.id) ?? -1
 
     let updatedPlaylists: LocalPlaylist[]
 
     if (index >= 0 && favPlaylist) {
       // Remove from favorites
-      console.log("[Config] Removing from favorites")
+      log.info("Removing from favorites")
       const updatedAudios = favPlaylist.audios.filter(
         (a) => a.audio.id !== audio.audio.id,
       )
@@ -604,7 +608,7 @@ export const createConfigSlice: StateCreator<AppState, [], [], ConfigSlice> = (
       }
     } else {
       // Add to favorites
-      console.log("[Config] Adding to favorites")
+      log.info("Adding to favorites")
 
       if (favPlaylist) {
         // Update existing favorite playlist
@@ -656,16 +660,16 @@ export const createConfigSlice: StateCreator<AppState, [], [], ConfigSlice> = (
     const { config, gistConfig, isSyncing } = get()
 
     if (!gistConfig) {
-      console.log("[Config] No Gist config, skipping sync")
+      log.info("No repository sync config, skipping sync")
       return
     }
 
     if (!manual && isSyncing) {
-      console.log("[Config] Sync already in progress, skipping")
+      log.info("Sync already in progress, skipping")
       return
     }
 
-    console.log(`[Config] Starting ${manual ? 'manual' : 'background'} sync...`)
+    log.info(`Starting ${manual ? "manual" : "background"} sync...`)
     try {
       set({ isSyncing: true })
 
@@ -676,18 +680,18 @@ export const createConfigSlice: StateCreator<AppState, [], [], ConfigSlice> = (
       )
 
       if (changed) {
-        console.log("[Config] Applying synced config...")
+        log.info("Applying synced config...")
         await save_config(updatedConfig)
         set({ config: updatedConfig })
-        console.log("[Config] Synced config applied")
+        log.info("Synced config applied")
       } else {
-        console.log("[Config] No local changes from sync")
+        log.info("No local changes from sync")
       }
 
       get().setGistConfig(newGistConfig)
-      console.log("[Config] Sync completed successfully")
+      log.info("Sync completed successfully")
     } catch (error) {
-      console.error("[Config] Sync failed:", error)
+      log.error("Sync failed:", error)
       if (manual) throw error
     } finally {
       set({ isSyncing: false })

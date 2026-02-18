@@ -178,6 +178,10 @@ pub async fn get_cache_size(app_handle: tauri::AppHandle) -> AppResult<u64> {
         }
     }
 
+    // Include log file size in cache
+    let log_size = get_log_size(app_handle).await?;
+    total_size += log_size;
+
     Ok(total_size)
 }
 
@@ -191,6 +195,9 @@ pub async fn clear_cache(app_handle: tauri::AppHandle) -> AppResult<()> {
             tokio::fs::remove_file(file).await.map_err(AppError::Io)?;
         }
     }
+
+    // Also clear log file
+    clear_log(app_handle).await?;
 
     Ok(())
 }
@@ -463,21 +470,21 @@ async fn copy_asset_if_needed(src_root: &Path, dest_root: &Path, relative_path: 
 }
 
 #[tauri::command]
-pub async fn gist_download(token: &str, gist_id: &str) -> AppResult<crate::gist::Gist> {
-    crate::gist::download(token, gist_id)
+pub async fn sync_download(token: &str, sync_id: &str) -> AppResult<crate::sync::SyncResponse> {
+    crate::sync::download(token, sync_id)
         .await
-        .map_err(|e| AppError::Unknown(e.to_string()))
+        .map_err(AppError::from)
 }
 
 #[tauri::command]
-pub async fn gist_update(
+pub async fn sync_update(
     token: &str,
-    gist_id: &str,
+    sync_id: &str,
     files: std::collections::HashMap<String, Option<String>>,
-) -> AppResult<crate::gist::Gist> {
-    crate::gist::update(token, gist_id, files)
+) -> AppResult<crate::sync::SyncResponse> {
+    crate::sync::update(token, sync_id, files)
         .await
-        .map_err(|e| AppError::Unknown(e.to_string()))
+        .map_err(AppError::from)
 }
 
 async fn get_dir_size(path: PathBuf) -> AppResult<u64> {
@@ -495,4 +502,64 @@ async fn get_dir_size(path: PathBuf) -> AppResult<u64> {
         }
     }
     Ok(total_size)
+}
+
+#[tauri::command]
+pub async fn write_log(
+    level: &str,
+    module: &str,
+    message: &str,
+    app_handle: tauri::AppHandle,
+) -> AppResult<()> {
+    let dir = app_dir(app_handle).await?;
+    let log_path = crate::core::get_log_path(dir);
+
+    let timestamp = Local::now().format("%Y-%m-%d %H:%M:%S%.3f");
+    let log_line = format!("[{}] [{}] [{}] {}\n", timestamp, level, module, message);
+
+    // Append to log file
+    let mut file = tokio::fs::OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open(log_path)
+        .await
+        .map_err(AppError::Io)?;
+
+    use tokio::io::AsyncWriteExt;
+    file.write_all(log_line.as_bytes())
+        .await
+        .map_err(AppError::Io)?;
+
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn get_log_path(app_handle: tauri::AppHandle) -> AppResult<PathBuf> {
+    let dir = app_dir(app_handle).await?;
+    Ok(crate::core::get_log_path(dir))
+}
+
+#[tauri::command]
+pub async fn clear_log(app_handle: tauri::AppHandle) -> AppResult<()> {
+    let dir = app_dir(app_handle).await?;
+    let log_path = crate::core::get_log_path(dir);
+
+    if tokio::fs::try_exists(&log_path).await.unwrap_or(false) {
+        tokio::fs::remove_file(log_path).await.map_err(AppError::Io)?;
+    }
+
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn get_log_size(app_handle: tauri::AppHandle) -> AppResult<u64> {
+    let dir = app_dir(app_handle).await?;
+    let log_path = crate::core::get_log_path(dir);
+
+    if tokio::fs::try_exists(&log_path).await.unwrap_or(false)
+        && let Ok(metadata) = tokio::fs::metadata(&log_path).await {
+            return Ok(metadata.len());
+        }
+
+    Ok(0)
 }

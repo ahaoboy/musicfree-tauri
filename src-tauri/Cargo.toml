@@ -27,6 +27,7 @@ qjs = ["musicfree/qjs"]
 tauri = { version = "2", features = ["protocol-asset"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
+base64 = "0.22"
 
 # FIXME: ANDROID NOT WORKING WITH REQWEST 0.13
 # reqwest = { version = "0.13", features = [

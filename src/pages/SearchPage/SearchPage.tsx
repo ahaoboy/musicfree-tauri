@@ -28,6 +28,9 @@ import {
 } from "../../api"
 
 import { useAppStore } from "../../store"
+import logger from "../../utils/logger"
+
+const log = logger.search
 import { AudioCard, AudioList } from "../../components"
 import { useAdaptiveSize } from "../../hooks"
 import { isLongDuration } from "../../utils/audio"
@@ -237,6 +240,9 @@ export const SearchPage: FC = () => {
   const handleDownloadAll = useCallback(async () => {
     if (!playlist || selectedIds.size === 0) return
 
+    log.info("Starting download/add process...")
+    log.info(`Selected IDs: ${selectedIds.size}`)
+
     const selectedAudios = playlist.audios.filter((a) => selectedIds.has(a.id))
 
     // Determine mode
@@ -259,17 +265,29 @@ export const SearchPage: FC = () => {
       selectedFailedIds.length === 0 &&
       selectedSkippedIds.length === 0
 
+    log.info(`Mode: ${isRetryMode ? "Retry" : isAddMode ? "Add" : "Download"}`)
+    log.info(
+      `Pending: ${selectedPendingIds.length}, Failed: ${selectedFailedIds.length}, Skipped: ${selectedSkippedIds.length}`,
+    )
+
     // Collect existing audios for "Add" mode
     const existingAudios: LocalAudio[] = []
     if (isAddMode) {
+      log.info("Add mode: collecting existing audios...")
       for (const id of selectedIds) {
         if (downloadedAudios.has(id)) {
-          existingAudios.push(downloadedAudios.get(id)!)
+          const audio = downloadedAudios.get(id)!
+          existingAudios.push(audio)
+          log.info(`Found in downloadedAudios: ${audio.audio.title}`)
         } else {
           const cfg = configAudios.find((a) => a.audio.id === id)
-          if (cfg) existingAudios.push(cfg)
+          if (cfg) {
+            existingAudios.push(cfg)
+            log.info(`Found in config: ${cfg.audio.title}`)
+          }
         }
       }
+      log.info(`Total existing audios: ${existingAudios.length}`)
     }
 
     const knownExisting = configAudios.filter((a) =>
@@ -307,12 +325,20 @@ export const SearchPage: FC = () => {
   const processDownloadResult = async (
     result: { downloadedAudios: LocalAudio[]; existingAudios: LocalAudio[] },
     currentPlaylist: Playlist,
-    _isAddMode: boolean,
+    isAddMode: boolean,
   ) => {
+    log.info("Processing download result...")
+    log.info(
+      `Downloaded: ${result.downloadedAudios.length}, Existing: ${result.existingAudios.length}`,
+    )
+
     const allAudios = [...result.downloadedAudios, ...result.existingAudios]
     const isPlaylist = currentPlaylist.audios.length > 1
 
+    log.info(`Is playlist: ${isPlaylist}, Total audios: ${allAudios.length}`)
+
     if (isPlaylist && allAudios.length > 0) {
+      log.info("Processing as playlist...")
       let coverPath: string | null = null
       if (currentPlaylist.cover) {
         try {
@@ -321,7 +347,7 @@ export const SearchPage: FC = () => {
             currentPlaylist.platform,
           )
         } catch (e) {
-          console.error(e)
+          log.error("Failed to download playlist cover:", e)
         }
       } else {
         const first = result.downloadedAudios[0] || result.existingAudios[0]
@@ -353,16 +379,46 @@ export const SearchPage: FC = () => {
         download_url: currentPlaylist.download_url,
       }
 
+      log.info(`Adding playlist to config: ${localPlaylist.title}`)
       await addPlaylistToConfig(localPlaylist)
       clearSelection()
       navigate(`/playlists?highlight=${encodeURIComponent(localPlaylist.id!)}`)
     } else if (!isPlaylist && allAudios.length > 0) {
-      if (result.downloadedAudios.length > 0) {
+      log.info("Processing as single audio...")
+
+      // In Add mode, we need to add existing audios to config if they're not already there
+      if (isAddMode && result.existingAudios.length > 0) {
+        log.info("Add mode: checking if audios need to be added to config...")
+        const audiosToAdd: LocalAudio[] = []
+
+        for (const audio of result.existingAudios) {
+          const inConfig = configAudios.some(
+            (a) => a.audio.id === audio.audio.id,
+          )
+          if (!inConfig) {
+            log.info(`Audio not in config, will add: ${audio.audio.title}`)
+            audiosToAdd.push(audio)
+          } else {
+            log.info(`Audio already in config: ${audio.audio.title}`)
+          }
+        }
+
+        if (audiosToAdd.length > 0) {
+          log.info(`Adding ${audiosToAdd.length} audios to config`)
+          await addAudiosToConfig(audiosToAdd)
+        }
+      } else if (result.downloadedAudios.length > 0) {
+        log.info(
+          `Adding ${result.downloadedAudios.length} downloaded audios to config`,
+        )
         await addAudiosToConfig(result.downloadedAudios)
       }
+
       clearSelection()
       navigate(`/music?highlight=${encodeURIComponent(allAudios[0].audio.id)}`)
     }
+
+    log.info("Process complete")
   }
 
   // Selection helpers
