@@ -61,12 +61,13 @@ pub async fn download_audio(audio: &Audio, app_dir: PathBuf) -> anyhow::Result<L
 
     if !tokio::fs::try_exists(&file_path).await.unwrap_or(false) {
         println!("Downloading audio: {}", audio.title);
-        let bin = audio
-            .platform
-            .extractor()
-            .download(&audio.download_url)
-            .await?;
-        write(&file_path, bin).await?;
+        let download_future = audio.platform.extractor().download(&audio.download_url);
+        let bin = tokio::time::timeout(std::time::Duration::from_secs(60), download_future)
+            .await
+            .map_err(|_| AppError::Unknown("Download timed out".to_string()))?
+            .map_err(|e| AppError::Unknown(e.to_string()))?;
+
+        write(&file_path, bin).await.map_err(AppError::Io)?;
         println!("Successfully downloaded audio: {}", audio_path);
     } else {
         println!(
@@ -127,7 +128,8 @@ pub async fn download_cover(
     if tokio::fs::try_exists(&full_cover_path).await.unwrap_or(false) {
         return Some(cover_path);
     }
-    if let Ok(cover_data) = platform.extractor().download_cover(cover_url).await
+    let download_future = platform.extractor().download_cover(cover_url);
+    if let Ok(Ok(cover_data)) = tokio::time::timeout(std::time::Duration::from_secs(30), download_future).await
         && let Ok(_) = write(&full_cover_path, &cover_data).await
     {
         return Some(cover_path);

@@ -63,7 +63,12 @@ export const AppLayout: FC = memo(() => {
 
     const intervalMs = gistConfig.syncInterval * 60 * 1000
     const timer = setInterval(() => {
-      syncGist()
+      // Get the latest isSyncing state from the store by checking it inside the interval
+      // Or we can rely on syncGist action itself which already has this check.
+      // But adding it here makes it explicit and avoids unnecessary action dispatch.
+      if (!useAppStore.getState().isSyncing) {
+        syncGist()
+      }
     }, intervalMs)
 
     return () => clearInterval(timer)

@@ -92,6 +92,10 @@ export function read_file(path: string): Promise<Uint8Array> {
   return invoke("read_file", { path })
 }
 
+export function path_exists(path: string): Promise<boolean> {
+  return invoke("path_exists", { path })
+}
+
 export function clear_all_data(): Promise<void> {
   return invoke("clear_all_data")
 }

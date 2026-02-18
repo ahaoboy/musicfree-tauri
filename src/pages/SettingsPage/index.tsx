@@ -481,6 +481,7 @@ const SyncDialog: FC<SyncDialogProps> = ({
             onChange={(e) => setGistId(e.target.value)}
             fullWidth
             size="small"
+            autoFocus
           />
           <TextField
             label="GitHub Token"

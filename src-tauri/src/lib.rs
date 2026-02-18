@@ -49,6 +49,7 @@ pub fn run() {
             cmd::extract_audios,
             cmd::app_dir,
             cmd::read_file,
+            cmd::path_exists,
             cmd::download_audio,
             cmd::download_cover,
             cmd::get_config,

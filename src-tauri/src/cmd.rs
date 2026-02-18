@@ -101,6 +101,13 @@ pub async fn read_file(path: &str, app_handle: tauri::AppHandle) -> AppResult<Ve
 }
 
 #[tauri::command]
+pub async fn path_exists(path: &str, app_handle: tauri::AppHandle) -> AppResult<bool> {
+    let dir = app_dir(app_handle).await?;
+    let p = dir.join(path);
+    Ok(tokio::fs::try_exists(&p).await.unwrap_or(false))
+}
+
+#[tauri::command]
 pub async fn remove_file(path: &str, app_handle: tauri::AppHandle) -> AppResult<()> {
     let dir = app_dir(app_handle).await?;
     let p = dir.join(path);
