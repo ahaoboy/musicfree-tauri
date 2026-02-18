@@ -52,8 +52,22 @@ export const AppLayout: FC = memo(() => {
   // Store subscriptions
   const currentAudio = useAppStore((state) => state.currentAudio)
   const isConfigLoading = useAppStore((state) => state.isConfigLoading)
+  const isSyncing = useAppStore((state) => state.isSyncing)
+  const syncGist = useAppStore((state) => state.syncGist)
+  const gistConfig = useAppStore((state) => state.gistConfig)
   const loadConfig = useAppStore((state) => state.loadConfig)
-  // const isDark = useAppStore((state) => state.isDark()) // Theme is handled by MUI ThemeProvider in App.tsx
+
+  // Auto sync interval
+  useEffect(() => {
+    if (!gistConfig || !gistConfig.syncInterval) return
+
+    const intervalMs = gistConfig.syncInterval * 60 * 1000
+    const timer = setInterval(() => {
+      syncGist()
+    }, intervalMs)
+
+    return () => clearInterval(timer)
+  }, [gistConfig?.syncInterval, syncGist])
 
   // Loading state with minimum display time and fade animation
   const [showLoading, setShowLoading] = useState(true)
@@ -249,6 +263,22 @@ export const AppLayout: FC = memo(() => {
             }}
             {...swipeHandlers}
           >
+            {/* Sync Indicator */}
+            {isSyncing && (
+              <Box
+                sx={{
+                  position: "fixed",
+                  top: 12,
+                  left: 12,
+                  width: 8,
+                  height: 8,
+                  bgcolor: "success.main",
+                  borderRadius: "50%",
+                  zIndex: 10000,
+                  boxShadow: (theme) => `0 0 4px ${theme.palette.success.main}`,
+                }}
+              />
+            )}
             {/* Tab bar - hide on special pages */}
             {!routeHandle.isSpecial && (
               <Paper

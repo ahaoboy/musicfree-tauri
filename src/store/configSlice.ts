@@ -18,6 +18,8 @@ import {
   app_dir,
   get_web_url,
   remove_file,
+  GistConfig,
+  syncWithGist,
 } from "../api"
 
 // ============================================
@@ -29,6 +31,10 @@ export interface ConfigSliceState {
 
   // Loading states
   isConfigLoading: boolean
+
+  // Sync state
+  isSyncing: boolean
+  gistConfig: GistConfig | null
 
   // Theme
   theme: ThemeMode
@@ -66,6 +72,10 @@ export interface ConfigSliceActions {
 
   // UI Actions
   setViewingPlaylistId: (id: string | null) => void
+
+  // Gist actions
+  setGistConfig: (config: GistConfig | null) => void
+  syncGist: (manual?: boolean) => Promise<void>
 }
 
 export type ConfigSlice = ConfigSliceState & ConfigSliceActions
@@ -133,6 +143,8 @@ export const createConfigSlice: StateCreator<AppState, [], [], ConfigSlice> = (
   // Initial state
   config: get_default_config(),
   isConfigLoading: true,
+  isSyncing: false,
+  gistConfig: storage.getGistConfig(),
   theme: storage.getTheme(),
   app_dir: null,
   app_version: null,
@@ -193,9 +205,16 @@ export const createConfigSlice: StateCreator<AppState, [], [], ConfigSlice> = (
   },
 
   saveConfig: async (config: Config) => {
+    const { config: oldConfig } = get()
+    if (JSON.stringify(oldConfig) === JSON.stringify(config)) {
+      return
+    }
+
     try {
       await save_config(config)
       set({ config })
+      // Trigger background sync when config changes
+      get().syncGist()
     } catch (error) {
       console.error("Failed to save config:", error)
       throw error
@@ -584,5 +603,34 @@ export const createConfigSlice: StateCreator<AppState, [], [], ConfigSlice> = (
 
   setViewingPlaylistId: (id: string | null) => {
     set({ viewingPlaylistId: id })
+  },
+
+  setGistConfig: (config) => {
+    storage.setGistConfig(config)
+    set({ gistConfig: config })
+  },
+
+  syncGist: async (manual = false) => {
+    const { config, gistConfig, isSyncing } = get()
+    if (!gistConfig || (!manual && isSyncing)) return
+
+    try {
+      set({ isSyncing: true })
+      const { updatedConfig, newGistConfig, changed } = await syncWithGist(
+        config,
+        gistConfig,
+      )
+
+      if (changed) {
+        await save_config(updatedConfig)
+        set({ config: updatedConfig })
+      }
+      get().setGistConfig(newGistConfig)
+    } catch (error) {
+      console.error("Sync failed:", error)
+      if (manual) throw error
+    } finally {
+      set({ isSyncing: false })
+    }
   },
 })

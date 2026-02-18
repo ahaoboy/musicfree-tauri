@@ -3,6 +3,7 @@ import { join } from "@tauri-apps/api/path"
 import { platform } from "@tauri-apps/plugin-os"
 import { getWavUrl, isAudio, isVideo } from "./audio"
 import { appCache } from "../utils/cache"
+export * from "./sync"
 
 export const CurrentPlatform = platform()
 
@@ -58,6 +59,13 @@ export type ThemeMode = "light" | "dark" | "auto"
 
 export type Config = {
   playlists: LocalPlaylist[]
+}
+
+export type GistConfig = {
+  gistId: string
+  githubToken: string
+  syncInterval: number // in minutes
+  lastSyncTime?: number
 }
 
 export function get_default_config(): Config {
@@ -238,6 +246,18 @@ export function remove_file(path: string): Promise<void> {
   return invoke("remove_file", { path })
 }
 
+export function gist_download(token: string, gistId: string): Promise<any> {
+  return invoke("gist_download", { token, gistId })
+}
+
+export function gist_update(
+  token: string,
+  gistId: string,
+  files: Record<string, string | null>,
+): Promise<any> {
+  return invoke("gist_update", { token, gistId, files })
+}
+
 // ============================================
 // LocalStorage Keys
 // ============================================
@@ -246,6 +266,7 @@ const STORAGE_KEYS = {
   CURRENT_PLAYLIST_ID: "musicfree_current_playlist_id",
   PLAY_MODE: "musicfree_play_mode",
   THEME: "musicfree_theme",
+  GIST_CONFIG: "musicfree_gist_config",
 } as const
 
 // ============================================
@@ -290,5 +311,20 @@ export const storage = {
   },
   getTheme: (): ThemeMode => {
     return (localStorage.getItem(STORAGE_KEYS.THEME) as ThemeMode) || "auto"
+  },
+  setGistConfig: (config: GistConfig | null) => {
+    if (config) {
+      localStorage.setItem(STORAGE_KEYS.GIST_CONFIG, JSON.stringify(config))
+    } else {
+      localStorage.removeItem(STORAGE_KEYS.GIST_CONFIG)
+    }
+  },
+  getGistConfig: (): GistConfig | null => {
+    try {
+      const data = localStorage.getItem(STORAGE_KEYS.GIST_CONFIG)
+      return data ? JSON.parse(data) : null
+    } catch {
+      return null
+    }
   },
 }

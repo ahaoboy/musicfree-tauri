@@ -455,6 +455,24 @@ async fn copy_asset_if_needed(src_root: &Path, dest_root: &Path, relative_path: 
     }
 }
 
+#[tauri::command]
+pub async fn gist_download(token: &str, gist_id: &str) -> AppResult<crate::gist::Gist> {
+    crate::gist::download(token, gist_id)
+        .await
+        .map_err(|e| AppError::Unknown(e.to_string()))
+}
+
+#[tauri::command]
+pub async fn gist_update(
+    token: &str,
+    gist_id: &str,
+    files: std::collections::HashMap<String, Option<String>>,
+) -> AppResult<crate::gist::Gist> {
+    crate::gist::update(token, gist_id, files)
+        .await
+        .map_err(|e| AppError::Unknown(e.to_string()))
+}
+
 async fn get_dir_size(path: PathBuf) -> AppResult<u64> {
     let mut total_size: u64 = 0;
     let mut entries = tokio::fs::read_dir(path).await.map_err(AppError::Io)?;

@@ -2,6 +2,7 @@ pub mod api;
 pub mod cmd;
 pub mod core;
 pub mod error;
+pub mod gist;
 
 use std::path::Path;
 use std::io::SeekFrom;
@@ -62,6 +63,8 @@ pub fn run() {
             cmd::get_storage_size,
             cmd::get_cache_size,
             cmd::clear_cache,
+            cmd::gist_download,
+            cmd::gist_update,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

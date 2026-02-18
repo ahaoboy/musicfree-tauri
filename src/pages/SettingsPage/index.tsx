@@ -17,6 +17,16 @@ import SettingsSystemDaydream from "@mui/icons-material/SettingsSystemDaydream"
 import GitHub from "@mui/icons-material/GitHub"
 import FolderOpen from "@mui/icons-material/FolderOpen"
 import DeleteIcon from "@mui/icons-material/Delete"
+import SyncIcon from "@mui/icons-material/Sync"
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  FormControl,
+  InputLabel,
+} from "@mui/material"
 import { openUrl, openPath, revealItemInDir } from "@tauri-apps/plugin-opener"
 import { useAppStore } from "../../store"
 import {
@@ -28,6 +38,7 @@ import {
   export_data,
   import_data,
   CurrentPlatform,
+  GistConfig,
 } from "../../api"
 import { useConfirm } from "../../hooks"
 import { useMessage } from "../../contexts/MessageContext"
@@ -64,6 +75,12 @@ export const SettingsPage: FC = () => {
   const [loadingStorage, setLoadingStorage] = useState(false)
   const [cacheSize, setCacheSize] = useState<number>(0)
   const [loadingCache, setLoadingCache] = useState(false)
+  const [openSyncDialog, setOpenSyncDialog] = useState(false)
+
+  const gistConfig = useAppStore((state) => state.gistConfig)
+  const setGistConfig = useAppStore((state) => state.setGistConfig)
+  const syncGist = useAppStore((state) => state.syncGist)
+  const isSyncing = useAppStore((state) => state.isSyncing)
 
   // Load storage size
   const loadStorageSize = useCallback(async () => {
@@ -363,7 +380,163 @@ export const SettingsPage: FC = () => {
           </Stack>
         </Paper>
       </Stack>
+
+      {/* Sync Section */}
+      <Stack spacing={2}>
+        <Paper variant="outlined" sx={{ p: 2 }}>
+          <Stack
+            direction="row"
+            justifyContent="space-between"
+            alignItems="center"
+          >
+            <Box>
+              <Typography>Gist Sync</Typography>
+              {gistConfig?.lastSyncTime && (
+                <Typography variant="caption" color="text.secondary">
+                  Last synced:{" "}
+                  {new Date(gistConfig.lastSyncTime).toLocaleString()}
+                </Typography>
+              )}
+            </Box>
+            <Button
+              variant="outlined"
+              onClick={() => setOpenSyncDialog(true)}
+              disabled={isSyncing}
+            >
+              Configure
+            </Button>
+          </Stack>
+        </Paper>
+      </Stack>
+
+      <SyncDialog
+        open={openSyncDialog}
+        onClose={() => setOpenSyncDialog(false)}
+        config={gistConfig}
+        isSyncing={isSyncing}
+        syncGist={syncGist}
+        onSave={(config) => {
+          setGistConfig(config)
+          setOpenSyncDialog(false)
+        }}
+      />
     </Stack>
+  )
+}
+
+interface SyncDialogProps {
+  open: boolean
+  onClose: () => void
+  config: GistConfig | null
+  onSave: (config: GistConfig) => void
+  isSyncing: boolean
+  syncGist: (manual?: boolean) => Promise<void>
+}
+
+const SyncDialog: FC<SyncDialogProps> = ({
+  open,
+  onClose,
+  config,
+  onSave,
+  isSyncing,
+  syncGist,
+}) => {
+  const [gistId, setGistId] = useState(config?.gistId || "")
+  const [token, setToken] = useState(config?.githubToken || "")
+  const [interval, setIntervalValue] = useState(config?.syncInterval || 1)
+  const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    if (open && config) {
+      setGistId(config.gistId)
+      setToken(config.githubToken)
+      setIntervalValue(config.syncInterval)
+    }
+  }, [open, config])
+
+  const handleSave = async () => {
+    if (!gistId || !token) return
+    setLoading(true)
+    try {
+      const newConfig = {
+        gistId,
+        githubToken: token,
+        syncInterval: interval,
+        lastSyncTime: config?.lastSyncTime,
+      }
+      onSave(newConfig)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <Dialog open={open} onClose={onClose} fullWidth maxWidth="xs">
+      <DialogTitle>Gist Sync Configuration</DialogTitle>
+      <DialogContent>
+        <Stack spacing={3} sx={{ mt: 1 }}>
+          <TextField
+            label="Gist ID"
+            value={gistId}
+            onChange={(e) => setGistId(e.target.value)}
+            fullWidth
+            size="small"
+          />
+          <TextField
+            label="GitHub Token"
+            type="password"
+            value={token}
+            onChange={(e) => setToken(e.target.value)}
+            fullWidth
+            size="small"
+          />
+          <FormControl fullWidth size="small">
+            <InputLabel>Sync Interval</InputLabel>
+            <Select
+              value={interval}
+              label="Sync Interval"
+              onChange={(e) => setIntervalValue(Number(e.target.value))}
+            >
+              <MenuItem value={0}>Manual Only</MenuItem>
+              <MenuItem value={1}>1 Minute</MenuItem>
+              <MenuItem value={5}>5 Minutes</MenuItem>
+              <MenuItem value={10}>10 Minutes</MenuItem>
+              <MenuItem value={30}>30 Minutes</MenuItem>
+              <MenuItem value={60}>1 Hour</MenuItem>
+            </Select>
+          </FormControl>
+        </Stack>
+      </DialogContent>
+      <DialogActions>
+        <Box sx={{ flex: 1 }}>
+          <Button
+            color="success"
+            startIcon={
+              isSyncing ? (
+                <CircularProgress size={16} color="inherit" />
+              ) : (
+                <SyncIcon />
+              )
+            }
+            onClick={() => syncGist(true)}
+            disabled={isSyncing || !gistId || !token}
+            size="small"
+          >
+            Sync Now
+          </Button>
+        </Box>
+        <Button onClick={onClose} color="inherit">
+          Cancel
+        </Button>
+        <Button
+          onClick={handleSave}
+          variant="contained"
+          disabled={!gistId || !token || loading}
+        >
+          {loading ? <CircularProgress size={24} /> : "Save"}
+        </Button>
+      </DialogActions>
+    </Dialog>
   )
 }
 
