@@ -1,3 +1,4 @@
+import * as Y from "yjs"
 import {
   Config,
   GistConfig,
@@ -8,229 +9,147 @@ import {
   download_audio,
   download_cover,
   path_exists,
-  FAVORITE_PLAYLIST_ID,
-  AUDIO_PLAYLIST_ID,
+  get_local_yjs,
+  save_local_yjs,
 } from "./index"
 import logger from "../utils/logger"
+import { hostname, platform } from "@tauri-apps/plugin-os"
 
 const log = logger.sync
-const CONFIG_FILE_NAME = "musicfree.json"
 
 /**
- * Diff result between two configs
+ * Reconcile a Yjs document with a Config object.
+ * Strictly maintains order from config to Yjs while preserving object identity.
  */
-export interface ConfigDiff {
-  addedPlaylists: Set<string>
-  removedPlaylists: Set<string>
-  addedAudios: Set<string>
-  removedAudios: Set<string>
-  modifiedPlaylists: Set<string>
-}
+function reconcileYDocWithConfig(ydoc: Y.Doc, config: Config): void {
+  const yplaylists = ydoc.getArray<Y.Map<any>>("playlists")
+  const playlists = config.playlists
 
-/**
- * Compare two configs and return the differences
- * This is the core function for detecting changes
- */
-export function diffConfigs(oldConfig: Config, newConfig: Config): ConfigDiff {
-  log.info("[Sync] Diffing configs...")
+  // 1. Reconcile Playlists Order and Identity
+  for (let i = 0; i < playlists.length; i++) {
+    const playlist = playlists[i]
+    let yplaylist: Y.Map<any> | null = null
 
-  const oldPlaylists = new Map(oldConfig.playlists.map((p) => [p.id!, p]))
-  const newPlaylists = new Map(newConfig.playlists.map((p) => [p.id!, p]))
-
-  const addedPlaylists = new Set<string>()
-  const removedPlaylists = new Set<string>()
-  const modifiedPlaylists = new Set<string>()
-
-  // Detect added and modified playlists
-  for (const [id, newPlaylist] of newPlaylists) {
-    if (!oldPlaylists.has(id)) {
-      addedPlaylists.add(id)
-      log.info(`Added playlist: ${newPlaylist.title} (${id})`)
+    // Check if correct item is already at this index
+    const currentAtPos = i < yplaylists.length ? yplaylists.get(i) : null
+    if (currentAtPos && currentAtPos.get("id") === playlist.id) {
+      yplaylist = currentAtPos
     } else {
-      const oldPlaylist = oldPlaylists.get(id)!
-      if (JSON.stringify(oldPlaylist) !== JSON.stringify(newPlaylist)) {
-        modifiedPlaylists.add(id)
+      // Find and remove any existing instance of this playlist ID
+      for (let j = 0; j < yplaylists.length; j++) {
+        if (yplaylists.get(j).get("id") === playlist.id) {
+          yplaylists.delete(j, 1)
+          j--
+        }
       }
+      // Insert a NEW map at the correct position
+      yplaylist = new Y.Map()
+      yplaylist.set("id", playlist.id)
+      yplaylists.insert(i, [yplaylist])
+    }
+
+    // 2. Update Playlist Metadata
+    if (yplaylist.get("title") !== playlist.title)
+      yplaylist.set("title", playlist.title)
+    if (yplaylist.get("cover") !== playlist.cover)
+      yplaylist.set("cover", playlist.cover)
+    if (yplaylist.get("cover_path") !== playlist.cover_path)
+      yplaylist.set("cover_path", playlist.cover_path)
+    if (yplaylist.get("platform") !== playlist.platform)
+      yplaylist.set("platform", playlist.platform)
+    if (yplaylist.get("download_url") !== playlist.download_url)
+      yplaylist.set("download_url", playlist.download_url)
+
+    // 3. Reconcile Audios Order and Identity
+    let yaudios = yplaylist.get("audios") as Y.Array<Y.Map<any>>
+    if (!yaudios || !(yaudios instanceof Y.Array)) {
+      yaudios = new Y.Array<Y.Map<any>>()
+      yplaylist.set("audios", yaudios)
+    }
+
+    const audios = playlist.audios
+    for (let k = 0; k < audios.length; k++) {
+      const audio = audios[k]
+      let yaudio: Y.Map<any> | null = null
+
+      const curAudioAtPos = k < yaudios.length ? yaudios.get(k) : null
+      if (curAudioAtPos && curAudioAtPos.get("audio")?.id === audio.audio.id) {
+        yaudio = curAudioAtPos
+      } else {
+        // Find and remove any existing instance(s) of this audio ID
+        for (let m = 0; m < yaudios.length; m++) {
+          if (yaudios.get(m).get("audio")?.id === audio.audio.id) {
+            yaudios.delete(m, 1)
+            m--
+          }
+        }
+        // Insert a FRESH map at the correct position
+        yaudio = new Y.Map()
+        yaudios.insert(k, [yaudio])
+      }
+
+      // Update audio fields
+      yaudio.set("audio", audio.audio)
+      yaudio.set("path", audio.path)
+      yaudio.set("cover_path", audio.cover_path)
+    }
+
+    // Trim trailing audios
+    if (yaudios.length > audios.length) {
+      yaudios.delete(audios.length, yaudios.length - audios.length)
     }
   }
 
-  // Detect removed playlists
-  for (const [id, oldPlaylist] of oldPlaylists) {
-    if (!newPlaylists.has(id)) {
-      removedPlaylists.add(id)
-      log.info(`Removed playlist: ${oldPlaylist.title} (${id})`)
-    }
-  }
-
-  // Detect audio changes (global level - from AUDIO_PLAYLIST)
-  const oldAudioPlaylist = oldConfig.playlists.find(
-    (p) => p.id === AUDIO_PLAYLIST_ID,
-  )
-  const newAudioPlaylist = newConfig.playlists.find(
-    (p) => p.id === AUDIO_PLAYLIST_ID,
-  )
-
-  const oldAudioIds = new Set(
-    oldAudioPlaylist?.audios.map((a) => a.audio.id) || [],
-  )
-  const newAudioIds = new Set(
-    newAudioPlaylist?.audios.map((a) => a.audio.id) || [],
-  )
-
-  const addedAudios = new Set<string>()
-  const removedAudios = new Set<string>()
-
-  for (const id of newAudioIds) {
-    if (!oldAudioIds.has(id)) {
-      addedAudios.add(id)
-      const audio = newAudioPlaylist?.audios.find((a) => a.audio.id === id)
-      log.info(`Added audio: ${audio?.audio.title} (${id})`)
-    }
-  }
-
-  for (const id of oldAudioIds) {
-    if (!newAudioIds.has(id)) {
-      removedAudios.add(id)
-      const audio = oldAudioPlaylist?.audios.find((a) => a.audio.id === id)
-      log.info(`Removed audio: ${audio?.audio.title} (${id})`)
-    }
-  }
-
-  log.info(
-    `[Sync] Diff summary: +${addedPlaylists.size}/-${removedPlaylists.size} playlists, +${addedAudios.size}/-${removedAudios.size} audios`,
-  )
-
-  return {
-    addedPlaylists,
-    removedPlaylists,
-    addedAudios,
-    removedAudios,
-    modifiedPlaylists,
+  // 4. Trim trailing playlists
+  if (yplaylists.length > playlists.length) {
+    yplaylists.delete(playlists.length, yplaylists.length - playlists.length)
   }
 }
 
 /**
- * Merges local and remote configs with proper conflict resolution
- * Rules:
- * - Remote order is preserved for playlists and audios
- * - Local file paths are preserved (since files are stored locally)
- * - Deletions from local are applied to remote
+ * Convert Yjs document to Config
+ * Strictly follows Yjs structure without manual merging to ensure CRDT deletions are respected.
  */
-export function mergeConfigs(
-  local: Config,
-  remote: Config,
-  localDeletions: ConfigDiff,
-): Config {
-  log.info("[Sync] Merging configs...")
+function yDocToConfig(ydoc: Y.Doc): Config {
+  const yplaylists = ydoc.getArray<Y.Map<any>>("playlists")
+  const playlists: LocalPlaylist[] = []
 
-  const remotePlaylistMap = new Map(remote.playlists.map((p) => [p.id!, p]))
-  const mergedPlaylists: LocalPlaylist[] = []
-  const processedIds = new Set<string>()
+  yplaylists.forEach((yplaylist) => {
+    const playlistId = yplaylist.get("id")
+    if (!playlistId) return
 
-  // Process local playlists first (local order is preserved)
-  for (const localPlaylist of local.playlists) {
-    const id = localPlaylist.id!
+    const yaudios = yplaylist.get("audios") as Y.Array<Y.Map<any>>
+    const audios: LocalAudio[] = []
 
-    // Skip if deleted locally
-    if (localDeletions.removedPlaylists.has(id)) {
-      log.info(`Skipping deleted playlist: ${localPlaylist.title}`)
-      continue
-    }
+    if (yaudios && typeof yaudios.forEach === "function") {
+      yaudios.forEach((yaudio) => {
+        const audioData = yaudio.get("audio")
+        if (!audioData || !audioData.id) return
 
-    processedIds.add(id)
-    const remotePlaylist = remotePlaylistMap.get(id)
-
-    if (remotePlaylist) {
-      // Merge playlist: use local order, merge metadata
-      const remoteAudioMap = new Map(
-        remotePlaylist.audios.map((a) => [a.audio.id, a]),
-      )
-      const mergedAudios: LocalAudio[] = []
-
-      // Use local order
-      for (const localAudio of localPlaylist.audios) {
-        const audioId = localAudio.audio.id
-
-        // Skip if deleted locally
-        if (localDeletions.removedAudios.has(audioId)) {
-          log.info(`[Sync] Skipping deleted audio: ${localAudio.audio.title}`)
-          continue
-        }
-
-        const remoteAudio = remoteAudioMap.get(audioId)
-        if (remoteAudio) {
-          // Merge: use remote metadata, keep local paths
-          mergedAudios.push({
-            audio: remoteAudio.audio,
-            path: localAudio.path,
-            cover_path: localAudio.cover_path,
-          })
-        } else {
-          // Local-only audio (newly added)
-          log.info(`[Sync] Keeping local-only audio: ${localAudio.audio.title}`)
-          mergedAudios.push(localAudio)
-        }
-      }
-
-      // Add remote-only audios (newly added from remote) at the end
-      for (const remoteAudio of remotePlaylist.audios) {
-        const audioId = remoteAudio.audio.id
-        if (
-          !localPlaylist.audios.some((a) => a.audio.id === audioId) &&
-          !localDeletions.removedAudios.has(audioId)
-        ) {
-          log.info(
-            `[Sync] Adding remote-only audio: ${remoteAudio.audio.title}`,
-          )
-          mergedAudios.push(remoteAudio)
-        }
-      }
-
-      mergedPlaylists.push({
-        ...localPlaylist,
-        audios: mergedAudios,
-        cover_path: localPlaylist.cover_path || remotePlaylist.cover_path,
+        audios.push({
+          audio: audioData,
+          path: yaudio.get("path"),
+          cover_path: yaudio.get("cover_path"),
+        })
       })
-    } else {
-      // Local-only playlist (newly created)
-      const filteredAudios = localPlaylist.audios.filter(
-        (a) => !localDeletions.removedAudios.has(a.audio.id),
-      )
-      mergedPlaylists.push({ ...localPlaylist, audios: filteredAudios })
-      log.info(`Keeping local-only playlist: ${localPlaylist.title}`)
     }
-  }
 
-  // Add remote-only playlists (new playlists from remote)
-  for (const remotePlaylist of remote.playlists) {
-    const id = remotePlaylist.id!
-    if (!processedIds.has(id) && !localDeletions.removedPlaylists.has(id)) {
-      const filteredAudios = remotePlaylist.audios.filter(
-        (a) => !localDeletions.removedAudios.has(a.audio.id),
-      )
-      mergedPlaylists.push({ ...remotePlaylist, audios: filteredAudios })
-      log.info(`Adding remote-only playlist: ${remotePlaylist.title}`)
-    }
-  }
+    playlists.push({
+      id: playlistId,
+      title: yplaylist.get("title"),
+      cover: yplaylist.get("cover"),
+      cover_path: yplaylist.get("cover_path"),
+      platform: yplaylist.get("platform"),
+      download_url: yplaylist.get("download_url"),
+      audios,
+    })
+  })
 
-  // Ensure special playlists are first
-  const specialPlaylists = mergedPlaylists.filter(
-    (p) => p.id === FAVORITE_PLAYLIST_ID || p.id === AUDIO_PLAYLIST_ID,
-  )
-  const regularPlaylists = mergedPlaylists.filter(
-    (p) => p.id !== FAVORITE_PLAYLIST_ID && p.id !== AUDIO_PLAYLIST_ID,
-  )
-
-  specialPlaylists.sort((a, b) =>
-    a.id === FAVORITE_PLAYLIST_ID ? -1 : b.id === FAVORITE_PLAYLIST_ID ? 1 : 0,
-  )
-
-  log.info(`Merged ${mergedPlaylists.length} playlists`)
-  return { playlists: [...specialPlaylists, ...regularPlaylists] }
+  return { playlists }
 }
 
 /**
- * Downloads missing files for audios that need them
+ * Download missing files for audios that need them
  */
 async function downloadMissingFiles(
   config: Config,
@@ -283,45 +202,117 @@ async function downloadMissingFiles(
 }
 
 /**
- * Sync with GitHub Repository - simplified approach
+ * Detect new audio IDs from config comparison
  */
-export async function syncWithGist(
+function detectNewAudios(oldConfig: Config, newConfig: Config): Set<string> {
+  const oldAudioIds = new Set<string>()
+  for (const playlist of oldConfig.playlists) {
+    for (const audio of playlist.audios) {
+      oldAudioIds.add(audio.audio.id)
+    }
+  }
+
+  const newAudioIds = new Set<string>()
+  for (const playlist of newConfig.playlists) {
+    for (const audio of playlist.audios) {
+      if (!oldAudioIds.has(audio.audio.id)) {
+        newAudioIds.add(audio.audio.id)
+      }
+    }
+  }
+
+  return newAudioIds
+}
+
+/**
+ * Generate a commit message based on device name and timestamp
+ */
+async function getCommitMessage(): Promise<string> {
+  try {
+    const name = await hostname()
+    const p = platform()
+    const now = new Date().toLocaleString()
+    return `Update from ${name} (${p}) at ${now}`
+  } catch {
+    return `Update at ${new Date().toLocaleString()}`
+  }
+}
+
+/**
+ * Merge local sync file with current in-memory Yjs state to ensure no loss
+ */
+async function mergeWithLocalPersistence(yDoc: Y.Doc): Promise<void> {
+  try {
+    const localSaved = await get_local_yjs()
+    if (localSaved && localSaved.length > 0) {
+      Y.applyUpdate(yDoc, localSaved)
+    }
+  } catch (e) {
+    log.error("[Sync] Failed to load local Yjs persistence", e)
+  }
+}
+
+/**
+ * Sync with GitHub Repository using Yjs CRDT
+ */
+export async function syncWithYjs(
   localConfig: Config,
   gistConfig: GistConfig,
-  previousLocalConfig?: Config,
+  forcePush = false,
+  forcePull = false,
 ): Promise<{
   updatedConfig: Config
   newGistConfig: GistConfig
   changed: boolean
 }> {
-  log.info("[Sync] ========== Starting sync ==========")
+  log.info("[Sync] ========== Starting Yjs sync ==========")
   const { githubToken, repoUrl } = gistConfig
 
-  // Step 1: Download remote config
-  log.info("[Sync] Downloading remote config...")
-  const gist = await sync_download(githubToken, repoUrl)
-  const remoteContent = gist.files[CONFIG_FILE_NAME]?.content
+  // Step 1: Load or Init local Yjs document
+  const localYDoc = new Y.Doc()
 
-  let remoteConfig: Config | null = null
-  if (remoteContent) {
+  // Always load from local persistence first to maintain history (especially deletions)
+  await mergeWithLocalPersistence(localYDoc)
+
+  // Reconcile with the current config (JSON is the source of truth for the local user)
+  // This will record 'delete' operations if items were removed from config
+  reconcileYDocWithConfig(localYDoc, localConfig)
+
+  const localState = Y.encodeStateAsUpdate(localYDoc)
+  const commitMessage = await getCommitMessage()
+
+  // Always save the current state locally after merging with memory
+  await save_local_yjs(localState).catch((e) =>
+    log.error("[Sync] Failed to save local Yjs persistence", e),
+  )
+
+  // If force push, skip remote download and just upload local
+  if (forcePush) {
+    log.info("[Sync] Force push mode - uploading local state...")
+    await sync_update(
+      githubToken,
+      repoUrl,
+      localState,
+      undefined,
+      commitMessage,
+    )
     try {
-      remoteConfig = JSON.parse(remoteContent)
-      log.info(
-        `[Sync] Remote config loaded: ${remoteConfig?.playlists.length ?? 0} playlists`,
+      const jsonContent = JSON.stringify(localConfig, null, 2)
+      const encodedJson = new TextEncoder().encode(jsonContent)
+      await sync_update(
+        githubToken,
+        repoUrl,
+        encodedJson,
+        "musicfree.json",
+        commitMessage,
       )
     } catch (e) {
-      log.error("[Sync] Failed to parse remote config", e)
+      log.error("[Sync] Failed to upload JSON reference", e)
     }
-  }
-
-  // Step 2: Handle first-time sync (no valid remote)
-  if (!remoteConfig || !Array.isArray(remoteConfig.playlists)) {
-    log.info("[Sync] No valid remote config. Uploading local.")
-    await sync_update(githubToken, repoUrl, {
-      [CONFIG_FILE_NAME]: JSON.stringify(localConfig, null, 2),
-    })
-    log.info("[Sync] Upload completed")
+    log.info("[Sync] Force push completed")
     log.info("[Sync] ========== Sync finished ==========")
+
+    localYDoc.destroy()
     return {
       updatedConfig: localConfig,
       newGistConfig: { ...gistConfig, lastSyncTime: Date.now() },
@@ -329,78 +320,196 @@ export async function syncWithGist(
     }
   }
 
-  // Step 3: Detect local changes (if we have previous config)
-  let localDeletions: ConfigDiff = {
-    addedPlaylists: new Set(),
-    removedPlaylists: new Set(),
-    addedAudios: new Set(),
-    removedAudios: new Set(),
-    modifiedPlaylists: new Set(),
-  }
+  // Step 2: Download remote Yjs state (binary format)
+  log.info("[Sync] Downloading remote state...")
+  const remoteBytes = await sync_download(githubToken, repoUrl)
 
-  if (previousLocalConfig) {
-    log.info("[Sync] Detecting local changes...")
-    const localChanges = diffConfigs(previousLocalConfig, localConfig)
-    // We only care about deletions for conflict resolution
-    localDeletions = {
-      addedPlaylists: new Set(),
-      removedPlaylists: localChanges.removedPlaylists,
-      addedAudios: new Set(),
-      removedAudios: localChanges.removedAudios,
-      modifiedPlaylists: new Set(),
+  let remoteYDoc: Y.Doc | null = null
+  let remoteState: Uint8Array | null = null
+
+  if (remoteBytes && remoteBytes.length > 0) {
+    try {
+      remoteState = remoteBytes
+      remoteYDoc = new Y.Doc()
+      Y.applyUpdate(remoteYDoc, remoteState)
+      log.info(
+        `[Sync] Remote state loaded successfully (${remoteState.length} bytes)`,
+      )
+    } catch (e) {
+      log.error("[Sync] Failed to parse remote state", e)
+
+      // Throw a specific error for invalid remote data
+      throw new Error(
+        "Remote sync data is corrupted or in an incompatible format. " +
+          "This may happen if:\n" +
+          "1. The remote file was created with an older version\n" +
+          "2. The file was manually edited\n" +
+          "3. The file is corrupted\n\n" +
+          "Please choose one of the following options:\n" +
+          "- Delete the remote file and sync again to upload fresh data\n" +
+          "- Contact support if the problem persists",
+      )
     }
   }
 
-  // Step 4: Merge configs (remoteConfig is guaranteed non-null here)
-  const mergedConfig = mergeConfigs(localConfig, remoteConfig!, localDeletions)
+  // Step 3: Handle first-time sync (no valid remote)
+  if (!remoteYDoc || !remoteState) {
+    log.info("[Sync] No valid remote state. Uploading local.")
+
+    await sync_update(
+      githubToken,
+      repoUrl,
+      localState,
+      undefined,
+      commitMessage,
+    )
+    try {
+      const jsonContent = JSON.stringify(localConfig, null, 2)
+      const encodedJson = new TextEncoder().encode(jsonContent)
+      await sync_update(
+        githubToken,
+        repoUrl,
+        encodedJson,
+        "musicfree.json",
+        commitMessage,
+      )
+    } catch (e) {
+      log.error("[Sync] Failed to upload JSON reference", e)
+    }
+
+    log.info("[Sync] Upload completed")
+    log.info("[Sync] ========== Sync finished ==========")
+
+    localYDoc.destroy()
+    return {
+      updatedConfig: localConfig,
+      newGistConfig: { ...gistConfig, lastSyncTime: Date.now() },
+      changed: false,
+    }
+  }
+
+  // If force pull, use remote state directly
+  if (forcePull) {
+    log.info("[Sync] Force pull mode - using remote state...")
+    const remoteConfig = yDocToConfig(remoteYDoc)
+
+    // Download all files from remote
+    log.info("[Sync] Downloading all items from remote...")
+    await downloadMissingFiles(remoteConfig, new Set())
+
+    localYDoc.destroy()
+    remoteYDoc.destroy()
+
+    log.info("[Sync] Force pull completed")
+    log.info("[Sync] ========== Sync finished ==========")
+
+    return {
+      updatedConfig: remoteConfig,
+      newGistConfig: { ...gistConfig, lastSyncTime: Date.now() },
+      changed: true,
+    }
+  }
+
+  // Step 4: Merge using Yjs CRDT
+  log.info("[Sync] Merging states using Yjs CRDT...")
+
+  // Start with the remote document as the base
+  const mergedYDoc = new Y.Doc()
+  Y.applyUpdate(mergedYDoc, remoteState)
+
+  // Calculate the diff between local and remote
+  // We must use a State Vector (not the full update) to calculate the diff
+  const remoteStateVector = Y.encodeStateVector(remoteYDoc!)
+  const localDiff = Y.encodeStateAsUpdate(localYDoc, remoteStateVector)
+
+  // Apply only the local changes on top of remote
+  if (localDiff.length > 0) {
+    Y.applyUpdate(mergedYDoc, localDiff)
+  }
+
+  const mergedState = Y.encodeStateAsUpdate(mergedYDoc)
+  const mergedConfig = yDocToConfig(mergedYDoc)
+
+  // Save merged state to local persistence
+  await save_local_yjs(mergedState).catch((e) =>
+    log.error("[Sync] Failed to save merged local Yjs persistence", e),
+  )
 
   // Step 5: Detect what changed
-  const localChanged =
-    JSON.stringify(localConfig) !== JSON.stringify(mergedConfig)
-  const remoteChanged =
-    JSON.stringify(remoteConfig!) !== JSON.stringify(mergedConfig)
+  const localChanged = !areStatesEqual(localState, mergedState)
+  const remoteChanged = !areStatesEqual(remoteState, mergedState)
 
   log.info(
     `[Sync] Changes detected - Local: ${localChanged}, Remote: ${remoteChanged}`,
   )
 
   // Step 6: Update remote if needed
-  if (remoteChanged) {
-    log.info("[Sync] Uploading changes to repository...")
-    await sync_update(githubToken, repoUrl, {
-      [CONFIG_FILE_NAME]: JSON.stringify(mergedConfig, null, 2),
-    })
+  if (remoteChanged || localChanged) {
+    log.info("[Sync] Uploading state to repository...")
+
+    // If local has changes (additions or deletions), upload local state
+    // Otherwise upload merged state (which includes remote additions)
+    const stateToUpload = localChanged ? localState : mergedState
+
+    log.info(
+      `[Sync] Uploading ${localChanged ? "local" : "merged"} state (${stateToUpload.length} bytes)`,
+    )
+
+    await sync_update(
+      githubToken,
+      repoUrl,
+      stateToUpload,
+      undefined,
+      commitMessage,
+    )
+
+    // Optional: Upload musicfree.json for developer reference
+    try {
+      const jsonContent = JSON.stringify(mergedConfig, null, 2)
+      const encodedJson = new TextEncoder().encode(jsonContent)
+      await sync_update(
+        githubToken,
+        repoUrl,
+        encodedJson,
+        "musicfree.json",
+        commitMessage,
+      )
+      log.info("[Sync] JSON reference uploaded")
+    } catch (e) {
+      log.error("[Sync] Failed to upload JSON reference", e)
+    }
+
     log.info("[Sync] Upload completed")
   }
 
-  // Step 7: Download new files from remote (only if remote has new content)
+  // Step 7: Download new files if local changed
   if (localChanged) {
     log.info("[Sync] Detecting new items from remote...")
-
-    // Compare remote with local to find what's new from remote
-    const remoteDiff = diffConfigs(remoteConfig!, localConfig)
-
-    // Only download audios that were added from remote
-    const audioIdsToDownload = remoteDiff.addedAudios
+    const newAudioIds = detectNewAudios(localConfig, mergedConfig)
 
     // Download all if library was empty
     const isLibraryEmpty =
       localConfig.playlists.length <= 1 &&
       localConfig.playlists[0]?.audios.length === 0
 
-    if (audioIdsToDownload.size > 0 || isLibraryEmpty) {
+    if (newAudioIds.size > 0 || isLibraryEmpty) {
       log.info(
-        `[Sync] Downloading ${isLibraryEmpty ? "all" : audioIdsToDownload.size} new items from remote...`,
+        `[Sync] Downloading ${isLibraryEmpty ? "all" : newAudioIds.size} new items from remote...`,
       )
       await downloadMissingFiles(
         mergedConfig,
-        isLibraryEmpty ? new Set() : audioIdsToDownload,
+        isLibraryEmpty ? new Set() : newAudioIds,
       )
       log.info("[Sync] Download completed")
     } else {
       log.info("[Sync] No new items to download from remote")
     }
   }
+
+  // Cleanup
+  localYDoc.destroy()
+  remoteYDoc.destroy()
+  mergedYDoc.destroy()
 
   log.info("[Sync] ========== Sync finished ==========")
 
@@ -409,4 +518,15 @@ export async function syncWithGist(
     newGistConfig: { ...gistConfig, lastSyncTime: Date.now() },
     changed: localChanged,
   }
+}
+
+/**
+ * Compare two Yjs states for equality
+ */
+function areStatesEqual(state1: Uint8Array, state2: Uint8Array): boolean {
+  if (state1.length !== state2.length) return false
+  for (let i = 0; i < state1.length; i++) {
+    if (state1[i] !== state2[i]) return false
+  }
+  return true
 }

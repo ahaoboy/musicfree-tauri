@@ -70,6 +70,8 @@ pub fn run() {
             cmd::get_log_path,
             cmd::clear_log,
             cmd::get_log_size,
+            cmd::get_local_yjs,
+            cmd::save_local_yjs,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

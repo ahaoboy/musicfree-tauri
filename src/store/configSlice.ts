@@ -19,7 +19,7 @@ import {
   get_web_url,
   remove_file,
   GistConfig,
-  syncWithGist,
+  syncWithYjs,
 } from "../api"
 import logger from "../utils/logger"
 
@@ -38,6 +38,7 @@ export interface ConfigSliceState {
   // Sync state
   isSyncing: boolean
   gistConfig: GistConfig | null
+  hasPendingLocalChanges: boolean
 
   // Theme
   theme: ThemeMode
@@ -78,7 +79,11 @@ export interface ConfigSliceActions {
 
   // Gist actions
   setGistConfig: (config: GistConfig | null) => void
-  syncGist: (manual?: boolean, previousLocalConfig?: Config) => Promise<void>
+  syncGist: (
+    manual?: boolean,
+    forcePush?: boolean,
+    forcePull?: boolean,
+  ) => Promise<void>
 }
 
 export type ConfigSlice = ConfigSliceState & ConfigSliceActions
@@ -113,6 +118,7 @@ export const createConfigSlice: StateCreator<AppState, [], [], ConfigSlice> = (
   isConfigLoading: true,
   isSyncing: false,
   gistConfig: storage.getGistConfig(),
+  hasPendingLocalChanges: false,
   theme: storage.getTheme(),
   app_dir: null,
   app_version: null,
@@ -187,8 +193,16 @@ export const createConfigSlice: StateCreator<AppState, [], [], ConfigSlice> = (
       set({ config })
       log.info("Config saved successfully")
 
-      // Trigger background sync, passing old config to detect deletions
-      get().syncGist(false, oldConfig)
+      // Mark that we have pending local changes
+      set({ hasPendingLocalChanges: true })
+
+      // Trigger background sync (Yjs handles conflict resolution automatically)
+      // Don't await - let it run in background
+      get()
+        .syncGist(false)
+        .catch((error) => {
+          log.error("Background sync failed:", error)
+        })
     } catch (error) {
       log.error("Failed to save config:", error)
       throw error
@@ -656,7 +670,7 @@ export const createConfigSlice: StateCreator<AppState, [], [], ConfigSlice> = (
     set({ gistConfig: config })
   },
 
-  syncGist: async (manual = false, previousLocalConfig) => {
+  syncGist: async (manual = false, forcePush = false, forcePull = false) => {
     const { config, gistConfig, isSyncing } = get()
 
     if (!gistConfig) {
@@ -664,28 +678,37 @@ export const createConfigSlice: StateCreator<AppState, [], [], ConfigSlice> = (
       return
     }
 
+    // If this is a background sync and already syncing, skip it
     if (!manual && isSyncing) {
       log.info("Sync already in progress, skipping")
       return
     }
 
-    log.info(`Starting ${manual ? "manual" : "background"} sync...`)
+    const syncMode = forcePush
+      ? " (force push)"
+      : forcePull
+        ? " (force pull)"
+        : ""
+    log.info(`Starting ${manual ? "manual" : "background"} sync${syncMode}...`)
     try {
       set({ isSyncing: true })
 
-      const { updatedConfig, newGistConfig, changed } = await syncWithGist(
+      const { updatedConfig, newGistConfig, changed } = await syncWithYjs(
         config,
         gistConfig,
-        previousLocalConfig,
+        forcePush,
+        forcePull,
       )
 
       if (changed) {
         log.info("Applying synced config...")
         await save_config(updatedConfig)
-        set({ config: updatedConfig })
+        set({ config: updatedConfig, hasPendingLocalChanges: false })
         log.info("Synced config applied")
       } else {
         log.info("No local changes from sync")
+        // Clear pending flag even if no changes
+        set({ hasPendingLocalChanges: false })
       }
 
       get().setGistConfig(newGistConfig)

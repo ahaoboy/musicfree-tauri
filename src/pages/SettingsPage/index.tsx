@@ -19,6 +19,9 @@ import GitHub from "@mui/icons-material/GitHub"
 import FolderOpen from "@mui/icons-material/FolderOpen"
 import DeleteIcon from "@mui/icons-material/Delete"
 import SyncIcon from "@mui/icons-material/Sync"
+import BackupIcon from "@mui/icons-material/Backup"
+import CloudDownloadIcon from "@mui/icons-material/CloudDownload"
+import SettingsIcon from "@mui/icons-material/Settings"
 import {
   Dialog,
   DialogTitle,
@@ -485,21 +488,28 @@ export const SettingsPage: FC = () => {
             alignItems="center"
           >
             <Box>
-              <Typography>GitHub Sync</Typography>
-              {gistConfig?.lastSyncTime && (
-                <Typography variant="caption" color="text.secondary">
-                  Last synced:{" "}
-                  {new Date(gistConfig.lastSyncTime).toLocaleString()}
-                </Typography>
-              )}
+              <Typography>
+                Sync
+                {gistConfig?.lastSyncTime && (
+                  <Typography
+                    component="span"
+                    color="text.secondary"
+                    variant="body2"
+                  >
+                    {" "}
+                    ({new Date(gistConfig.lastSyncTime).toLocaleString()})
+                  </Typography>
+                )}
+              </Typography>
             </Box>
-            <Button
-              variant="outlined"
+            <IconButton
               onClick={() => setOpenSyncDialog(true)}
               disabled={isSyncing}
+              aria-label="Configure Sync"
+              size="small"
             >
-              Configure
-            </Button>
+              <SettingsIcon />
+            </IconButton>
           </Stack>
         </Paper>
       </Stack>
@@ -525,7 +535,11 @@ interface SyncDialogProps {
   config: GistConfig | null
   onSave: (config: GistConfig) => void
   isSyncing: boolean
-  syncGist: (manual?: boolean) => Promise<void>
+  syncGist: (
+    manual?: boolean,
+    forcePush?: boolean,
+    forcePull?: boolean,
+  ) => Promise<void>
 }
 
 const SyncDialog: FC<SyncDialogProps> = ({
@@ -538,8 +552,11 @@ const SyncDialog: FC<SyncDialogProps> = ({
 }) => {
   const [repoUrl, setRepoUrl] = useState(config?.repoUrl || "")
   const [token, setToken] = useState(config?.githubToken || "")
-  const [interval, setIntervalValue] = useState(config?.syncInterval || 1)
+  const [interval, setIntervalValue] = useState(config?.syncInterval || 60)
   const [loading, setLoading] = useState(false)
+
+  const message = useMessage()
+  const { showConfirm } = useConfirm()
 
   useEffect(() => {
     if (open && config) {
@@ -563,6 +580,89 @@ const SyncDialog: FC<SyncDialogProps> = ({
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleSyncNow = async () => {
+    try {
+      await syncGist(true, false, false)
+      message.success("Sync completed successfully")
+    } catch (error) {
+      console.error("Sync error:", error)
+
+      if (
+        error instanceof Error &&
+        error.message.includes("corrupted or in an incompatible format")
+      ) {
+        showConfirm({
+          title: "Remote Data Corrupted",
+          content:
+            "The remote sync data is corrupted or in an incompatible format.\n\n" +
+            "This may happen if:\n" +
+            "• The remote file was created with an older version\n" +
+            "• The file was manually edited\n" +
+            "• The file is corrupted\n\n" +
+            "Recommended action:\n" +
+            "Delete the 'musicfree.yjs' file from your GitHub repository and try syncing again to upload fresh data.",
+          okText: "OK",
+          onOk: () => {},
+        })
+      } else {
+        message.error(
+          `Sync failed: ${error instanceof Error ? error.message : String(error)}`,
+        )
+      }
+    }
+  }
+
+  const handleForcePush = async () => {
+    showConfirm({
+      title: "Force Push",
+      content:
+        "This will overwrite the remote data with your local data. Remote changes will be lost.\n\n" +
+        "Use this option if:\n" +
+        "• The remote data is corrupted\n" +
+        "• You want to replace remote data with local data\n\n" +
+        "This action cannot be undone.",
+      okText: "Force Push",
+      okType: "danger",
+      onOk: async () => {
+        try {
+          await syncGist(true, true, false)
+          message.success("Force push completed successfully")
+        } catch (error) {
+          console.error("Force push error:", error)
+          message.error(
+            `Force push failed: ${error instanceof Error ? error.message : String(error)}`,
+          )
+        }
+      },
+    })
+  }
+
+  const handleForcePull = async () => {
+    showConfirm({
+      title: "Force Pull",
+      content:
+        "This will overwrite your local data with the remote data. Local changes will be lost.\n\n" +
+        "Use this option if:\n" +
+        "• Your local data is corrupted\n" +
+        "• You want to replace local data with remote data\n\n" +
+        "This action cannot be undone.",
+      okText: "Force Pull",
+      okType: "danger",
+      onOk: async () => {
+        try {
+          await syncGist(true, false, true)
+          message.success("Force pull completed successfully")
+          window.location.reload()
+        } catch (error) {
+          console.error("Force pull error:", error)
+          message.error(
+            `Force pull failed: ${error instanceof Error ? error.message : String(error)}`,
+          )
+        }
+      },
+    })
   }
 
   return (
@@ -595,32 +695,46 @@ const SyncDialog: FC<SyncDialogProps> = ({
               onChange={(e) => setIntervalValue(Number(e.target.value))}
             >
               <MenuItem value={0}>Manual Only</MenuItem>
-              <MenuItem value={1}>1 Minute</MenuItem>
-              <MenuItem value={5}>5 Minutes</MenuItem>
               <MenuItem value={10}>10 Minutes</MenuItem>
-              <MenuItem value={30}>30 Minutes</MenuItem>
               <MenuItem value={60}>1 Hour</MenuItem>
+              <MenuItem value={1440}>1 Day</MenuItem>
             </Select>
           </FormControl>
         </Stack>
       </DialogContent>
       <DialogActions>
-        <Box sx={{ flex: 1 }}>
-          <Button
+        <Box sx={{ flex: 1, display: "flex", gap: 1 }}>
+          <IconButton
             color="success"
-            startIcon={
-              isSyncing ? (
-                <CircularProgress size={16} color="inherit" />
-              ) : (
-                <SyncIcon />
-              )
-            }
-            onClick={() => syncGist(true)}
+            onClick={handleSyncNow}
             disabled={isSyncing || !repoUrl || !token}
             size="small"
+            aria-label="Sync"
           >
-            Sync Now
-          </Button>
+            {isSyncing ? (
+              <CircularProgress size={20} color="inherit" />
+            ) : (
+              <SyncIcon />
+            )}
+          </IconButton>
+          <IconButton
+            color="warning"
+            onClick={handleForcePush}
+            disabled={isSyncing || !repoUrl || !token}
+            size="small"
+            aria-label="Force Push"
+          >
+            <BackupIcon />
+          </IconButton>
+          <IconButton
+            color="info"
+            onClick={handleForcePull}
+            disabled={isSyncing || !repoUrl || !token}
+            size="small"
+            aria-label="Force Pull"
+          >
+            <CloudDownloadIcon />
+          </IconButton>
         </Box>
         <Button onClick={onClose} color="inherit">
           Cancel

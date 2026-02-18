@@ -470,8 +470,12 @@ async fn copy_asset_if_needed(src_root: &Path, dest_root: &Path, relative_path: 
 }
 
 #[tauri::command]
-pub async fn sync_download(token: &str, sync_id: &str) -> AppResult<crate::sync::SyncResponse> {
-    crate::sync::download(token, sync_id)
+pub async fn sync_download(
+    token: &str,
+    repo: &str,
+    path: Option<String>,
+) -> AppResult<Vec<u8>> {
+    crate::sync::download(token, repo, path.as_deref())
         .await
         .map_err(AppError::from)
 }
@@ -479,12 +483,35 @@ pub async fn sync_download(token: &str, sync_id: &str) -> AppResult<crate::sync:
 #[tauri::command]
 pub async fn sync_update(
     token: &str,
-    sync_id: &str,
-    files: std::collections::HashMap<String, Option<String>>,
-) -> AppResult<crate::sync::SyncResponse> {
-    crate::sync::update(token, sync_id, files)
+    repo: &str,
+    content: Vec<u8>,
+    path: Option<String>,
+    message: Option<String>,
+) -> AppResult<()> {
+    crate::sync::update(token, repo, content, path.as_deref(), message.as_deref())
         .await
         .map_err(AppError::from)
+}
+
+#[tauri::command]
+pub async fn get_local_yjs(app_handle: tauri::AppHandle) -> AppResult<Vec<u8>> {
+    let dir = app_dir(app_handle).await?;
+    let p = crate::core::get_sync_path(dir);
+
+    if !tokio::fs::try_exists(&p).await.unwrap_or(false) {
+        return Ok(Vec::new());
+    }
+
+    let bin = tokio::fs::read(&p).await.map_err(AppError::Io)?;
+    Ok(bin)
+}
+
+#[tauri::command]
+pub async fn save_local_yjs(content: Vec<u8>, app_handle: tauri::AppHandle) -> AppResult<()> {
+    let dir = app_dir(app_handle).await?;
+    let p = crate::core::get_sync_path(dir);
+    tokio::fs::write(p, content).await.map_err(AppError::Io)?;
+    Ok(())
 }
 
 async fn get_dir_size(path: PathBuf) -> AppResult<u64> {

@@ -12,7 +12,7 @@ import {
   useLayoutEffect,
 } from "react"
 import { useNavigate, useLocation, useMatches } from "react-router-dom"
-import { Box, Tabs, Tab as MuiTab, Paper, Fade } from "@mui/material"
+import { Box, Tabs, Tab as MuiTab, Paper, Fade, Tooltip } from "@mui/material"
 import { QueueMusic, LibraryMusic, Search, Settings } from "@mui/icons-material"
 
 import {
@@ -57,22 +57,30 @@ export const AppLayout: FC = memo(() => {
   const gistConfig = useAppStore((state) => state.gistConfig)
   const loadConfig = useAppStore((state) => state.loadConfig)
 
-  // Auto sync interval
+  // Auto sync with absolute time checking
   useEffect(() => {
     if (!gistConfig || !gistConfig.syncInterval) return
 
-    const intervalMs = gistConfig.syncInterval * 60 * 1000
-    const timer = setInterval(() => {
-      // Get the latest isSyncing state from the store by checking it inside the interval
-      // Or we can rely on syncGist action itself which already has this check.
-      // But adding it here makes it explicit and avoids unnecessary action dispatch.
-      if (!useAppStore.getState().isSyncing) {
+    const checkAndSync = () => {
+      const now = Date.now()
+      const lastSync = gistConfig.lastSyncTime || 0
+      const intervalMs = gistConfig.syncInterval * 60 * 1000
+      const nextSyncTime = lastSync + intervalMs
+
+      // If it's time to sync and not currently syncing
+      if (now >= nextSyncTime && !useAppStore.getState().isSyncing) {
         syncGist()
       }
-    }, intervalMs)
+    }
+
+    // Check immediately on mount
+    checkAndSync()
+
+    // Then check every minute
+    const timer = setInterval(checkAndSync, 60 * 1000)
 
     return () => clearInterval(timer)
-  }, [gistConfig?.syncInterval, syncGist])
+  }, [gistConfig?.syncInterval, gistConfig?.lastSyncTime, syncGist])
 
   // Loading state with minimum display time and fade animation
   const [showLoading, setShowLoading] = useState(true)
@@ -269,21 +277,56 @@ export const AppLayout: FC = memo(() => {
             {...swipeHandlers}
           >
             {/* Sync Indicator */}
-            {isSyncing && (
-              <Box
-                sx={{
-                  position: "fixed",
-                  top: 12,
-                  left: 12,
-                  width: 8,
-                  height: 8,
-                  bgcolor: "success.main",
-                  borderRadius: "50%",
-                  zIndex: 10000,
-                  boxShadow: (theme) => `0 0 4px ${theme.palette.success.main}`,
-                }}
-              />
-            )}
+            <Fade in={isSyncing} unmountOnExit>
+              <Tooltip title="正在同步至 GitHub..." placement="right" arrow>
+                <Box
+                  sx={{
+                    position: "fixed",
+                    top: 16,
+                    left: 16,
+                    width: 10,
+                    height: 10,
+                    bgcolor: "success.main",
+                    borderRadius: "50%",
+                    zIndex: (theme) => theme.zIndex.tooltip + 1,
+                    cursor: "help",
+                    animation:
+                      "pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+                    "@keyframes pulse-ring": {
+                      "0%": {
+                        transform: "scale(0.8)",
+                        boxShadow: (theme) =>
+                          `0 0 0 0 ${theme.palette.success.main}66`,
+                      },
+                      "70%": {
+                        transform: "scale(1)",
+                        boxShadow: (theme) =>
+                          `0 0 0 10px ${theme.palette.success.main}00`,
+                      },
+                      "100%": {
+                        transform: "scale(0.8)",
+                        boxShadow: (theme) =>
+                          `0 0 0 0 ${theme.palette.success.main}00`,
+                      },
+                    },
+                    "&::after": {
+                      content: '""',
+                      position: "absolute",
+                      inset: 0,
+                      borderRadius: "50%",
+                      bgcolor: "success.main",
+                      animation:
+                        "pulse-dot 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+                    },
+                    "@keyframes pulse-dot": {
+                      "0%": { transform: "scale(0.95)", opacity: 0.8 },
+                      "50%": { transform: "scale(1)", opacity: 1 },
+                      "100%": { transform: "scale(0.95)", opacity: 0.8 },
+                    },
+                  }}
+                />
+              </Tooltip>
+            </Fade>
             {/* Tab bar - hide on special pages */}
             {!routeHandle.isSpecial && (
               <Paper

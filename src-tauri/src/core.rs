@@ -8,6 +8,7 @@ pub const AUDIOS_DIR: &str = "audios";
 pub const COVERS_DIR: &str = "covers";
 pub const CONFIG_FILE: &str = "musicfree.json";
 pub const LOG_FILE: &str = "musicfree.log";
+pub const SYNC_FILE_YJS: &str = "musicfree.yjs";
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LocalAudio {
@@ -46,4 +47,8 @@ pub fn get_config_path(app_dir: PathBuf) -> PathBuf {
 
 pub fn get_log_path(app_dir: PathBuf) -> PathBuf {
     app_dir.join(LOG_FILE)
+}
+
+pub fn get_sync_path(app_dir: PathBuf) -> PathBuf {
+    app_dir.join(SYNC_FILE_YJS)
 }

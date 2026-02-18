@@ -250,17 +250,36 @@ export function remove_file(path: string): Promise<void> {
   return invoke("remove_file", { path })
 }
 
-export function sync_download(token: string, syncId: string): Promise<any> {
-  return invoke("sync_download", { token, syncId })
+export function sync_download(
+  token: string,
+  repo: string,
+  path?: string,
+): Promise<Uint8Array> {
+  return invoke<number[]>("sync_download", { token, repo, path }).then(
+    (data) => new Uint8Array(data),
+  )
 }
 
 export function sync_update(
   token: string,
-  syncId: string,
-  files: Record<string, string | null>,
-): Promise<any> {
-  return invoke("sync_update", { token, syncId, files })
+  repo: string,
+  content: Uint8Array,
+  path?: string,
+  message?: string,
+): Promise<void> {
+  return invoke("sync_update", { token, repo, content, path, message })
 }
+
+export function get_local_yjs(): Promise<Uint8Array> {
+  return invoke<number[]>("get_local_yjs").then((data) => new Uint8Array(data))
+}
+
+export function save_local_yjs(content: Uint8Array): Promise<void> {
+  return invoke("save_local_yjs", { content })
+}
+
+// Export Yjs sync function
+export { syncWithYjs } from "./sync"
 
 // ============================================
 // LocalStorage Keys
