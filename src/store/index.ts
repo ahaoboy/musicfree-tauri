@@ -8,6 +8,7 @@ import {
 
 // Import slices
 import { createConfigSlice, ConfigSlice, applyTheme } from "./configSlice"
+export type { SyncStatus } from "./configSlice"
 import { createPlaybackSlice, PlaybackSlice } from "./playbackSlice"
 import { createSearchSlice, SearchSlice } from "./searchSlice"
 
@@ -92,3 +93,4 @@ export const usePlayMode = () => useAppStore((state) => state.currentPlayMode)
 export const useThemeMode = () => useAppStore((state) => state.theme)
 export const useCurrentTime = () => useAppStore((state) => state.currentTime)
 export const useDuration = () => useAppStore((state) => state.duration)
+export const useSyncStatus = () => useAppStore((state) => state.syncStatus)

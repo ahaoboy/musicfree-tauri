@@ -72,7 +72,6 @@ export type GistConfig = {
 export type FileInfo = {
   sha: string
   size: number
-  last_modified: string | null
 }
 
 export type ImportResult = {
@@ -300,7 +299,7 @@ export function save_local_yjs(content: Uint8Array): Promise<void> {
 }
 
 // Export Yjs sync functions
-export { syncWithYjs, persistLocalYjsState } from "./sync"
+export { syncWithYjs, persistLocalYjsState, SyncOfflineError } from "./sync"
 
 // ============================================
 // LocalStorage Keys

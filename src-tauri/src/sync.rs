@@ -24,7 +24,6 @@ struct RepoFileResponse {
 pub struct FileInfo {
     pub sha: String,
     pub size: u64,
-    pub last_modified: Option<String>,
 }
 
 /// Payload for creating/updating files in GitHub repo
@@ -36,22 +35,6 @@ struct UpdateFilePayload {
     sha: Option<String>, // Required for updates
     #[serde(skip_serializing_if = "Option::is_none")]
     branch: Option<String>,
-}
-
-/// GitHub commit entry used when fetching the latest commit for a file.
-#[derive(Debug, Deserialize)]
-struct GitHubCommitEntry {
-    commit: GitHubCommitDetail,
-}
-
-#[derive(Debug, Deserialize)]
-struct GitHubCommitDetail {
-    committer: Option<GitHubCommitter>,
-}
-
-#[derive(Debug, Deserialize)]
-struct GitHubCommitter {
-    date: Option<String>,
 }
 
 /// Parse GitHub repo URL to extract owner and repo name
@@ -86,10 +69,12 @@ fn parse_repo_url(repo_url: &str) -> Result<(String, String), SyncError> {
     Err(SyncError::InvalidRepoUrl(repo_url.to_string()))
 }
 
-/// Retrieve file metadata (SHA, size, last_modified) from the GitHub API
-/// **without** downloading the file content.  This allows the frontend to
-/// decide whether a full download is necessary by comparing the remote SHA
-/// against a locally cached value.
+/// Retrieve file metadata (SHA, size) from the GitHub API **without**
+/// downloading the file content.  This serves as both:
+/// 1. A reachability check for the GitHub API
+/// 2. A change-detection probe (compare SHA with cached value)
+///
+/// A single lightweight GET request.
 pub async fn get_file_info(
     token: &str,
     repo_url: &str,
@@ -99,14 +84,13 @@ pub async fn get_file_info(
     let client = Client::new();
     let file_name = file_path.unwrap_or(CONFIG_FILE_NAME);
 
-    // Step 1: Get file metadata (SHA + size) via the Contents API
-    let contents_url = format!(
+    let url = format!(
         "https://api.github.com/repos/{}/{}/contents/{}",
         owner, repo, file_name
     );
 
     let response = client
-        .get(&contents_url)
+        .get(&url)
         .header("Authorization", format!("Bearer {}", token))
         .header("User-Agent", "musicfree-tauri")
         .header("Accept", "application/vnd.github.v3+json")
@@ -130,34 +114,9 @@ pub async fn get_file_info(
 
     let repo_file: RepoFileResponse = response.json().await?;
 
-    // Step 2: Get the last commit date for this specific file
-    let commits_url = format!(
-        "https://api.github.com/repos/{}/{}/commits?path={}&per_page=1",
-        owner, repo, file_name
-    );
-
-    let last_modified = match client
-        .get(&commits_url)
-        .header("Authorization", format!("Bearer {}", token))
-        .header("User-Agent", "musicfree-tauri")
-        .header("Accept", "application/vnd.github.v3+json")
-        .send()
-        .await
-    {
-        Ok(resp) if resp.status().is_success() => {
-            let commits: Vec<GitHubCommitEntry> = resp.json().await.unwrap_or_default();
-            commits
-                .first()
-                .and_then(|c| c.commit.committer.as_ref())
-                .and_then(|cm| cm.date.clone())
-        }
-        _ => None,
-    };
-
     Ok(Some(FileInfo {
         sha: repo_file.sha,
         size: repo_file.size,
-        last_modified,
     }))
 }
 
@@ -206,8 +165,8 @@ pub async fn download(
     Ok(bytes.to_vec())
 }
 
-/// Upload/update file content to GitHub repository (binary format)
-/// Note: GitHub API requires base64 encoding for the content field
+/// Upload/update file content to GitHub repository (binary format).
+/// Note: GitHub API requires base64 encoding for the content field.
 pub async fn update(
     token: &str,
     repo_url: &str,

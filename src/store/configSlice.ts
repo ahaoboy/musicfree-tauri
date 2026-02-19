@@ -21,10 +21,21 @@ import {
   GistConfig,
   syncWithYjs,
   persistLocalYjsState,
+  SyncOfflineError,
 } from "../api"
 import logger from "../utils/logger"
 
 const log = logger.config
+
+// ============================================
+// Sync Status Type
+// ============================================
+export type SyncStatus =
+  | "idle" // No sync activity
+  | "syncing" // Sync in progress (green pulsing)
+  | "success" // Sync completed successfully (green solid, auto-clears)
+  | "error" // Sync failed while GitHub was reachable (red)
+  | "offline" // GitHub API unreachable, local-only save (yellow)
 
 // ============================================
 // Config Slice State Interface
@@ -38,6 +49,7 @@ export interface ConfigSliceState {
 
   // Sync state
   isSyncing: boolean
+  syncStatus: SyncStatus
   gistConfig: GistConfig | null
   hasPendingLocalChanges: boolean
 
@@ -119,6 +131,7 @@ export const createConfigSlice: StateCreator<AppState, [], [], ConfigSlice> = (
   config: get_default_config(),
   isConfigLoading: true,
   isSyncing: false,
+  syncStatus: "idle" as SyncStatus,
   gistConfig: storage.getGistConfig(),
   hasPendingLocalChanges: false,
   theme: storage.getTheme(),
@@ -697,14 +710,17 @@ export const createConfigSlice: StateCreator<AppState, [], [], ConfigSlice> = (
         ? " (force pull)"
         : ""
     log.info(`Starting ${manual ? "manual" : "background"} sync${syncMode}...`)
-    try {
-      set({ isSyncing: true })
 
+    try {
+      set({ isSyncing: true, syncStatus: "syncing" })
+
+      const { hasPendingLocalChanges } = get()
       const { updatedConfig, newGistConfig, changed } = await syncWithYjs(
         config,
         gistConfig,
         forcePush,
         forcePull,
+        hasPendingLocalChanges,
       )
 
       if (changed) {
@@ -714,14 +730,32 @@ export const createConfigSlice: StateCreator<AppState, [], [], ConfigSlice> = (
         log.info("Synced config applied")
       } else {
         log.info("No local changes from sync")
-        // Clear pending flag even if no changes
         set({ hasPendingLocalChanges: false })
       }
 
       get().setGistConfig(newGistConfig)
+      set({ syncStatus: "success" })
       log.info("Sync completed successfully")
+
+      // Auto-clear success status after 3 seconds
+      setTimeout(() => {
+        if (get().syncStatus === "success") {
+          set({ syncStatus: "idle" })
+        }
+      }, 3000)
     } catch (error) {
-      log.error("Sync failed:", error)
+      if (error instanceof SyncOfflineError) {
+        // GitHub unreachable — persist locally and show yellow indicator
+        log.warn("GitHub API unreachable – local-only sync")
+        await persistLocalYjsState(config).catch((e) =>
+          log.error("Failed to persist local Yjs state:", e),
+        )
+        set({ syncStatus: "offline", hasPendingLocalChanges: true })
+      } else {
+        // Real sync error (GitHub was reachable but sync failed) — show red
+        log.error("Sync failed:", error)
+        set({ syncStatus: "error" })
+      }
       if (manual) throw error
     } finally {
       set({ isSyncing: false })
