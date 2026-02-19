@@ -173,10 +173,15 @@ export const SettingsPage: FC = () => {
     }
   }, [message])
 
+  const importConfig = useAppStore((state) => state.importConfig)
+
   const handleImport = useCallback(async () => {
     setImporting(true)
     try {
-      const filename = await import_data()
+      const { config: importedConfig, filename } = await import_data()
+
+      await importConfig(importedConfig)
+
       message.success(`Successfully imported data from ${filename}`)
       await loadConfig()
     } catch (e: unknown) {
@@ -189,7 +194,7 @@ export const SettingsPage: FC = () => {
     } finally {
       setImporting(false)
     }
-  }, [message, loadConfig])
+  }, [message, loadConfig, importConfig])
 
   const handleToggleSaveLogs = useCallback(
     (checked: boolean) => {

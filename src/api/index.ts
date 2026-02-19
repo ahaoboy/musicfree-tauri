@@ -68,6 +68,12 @@ export type GistConfig = {
   lastSyncTime?: number
 }
 
+export type ImportResult = {
+  config: Config
+  filename: string
+  paths: string[]
+}
+
 export function get_default_config(): Config {
   return {
     playlists: [],
@@ -242,7 +248,7 @@ export function export_data(): Promise<string> {
   return invoke("export_data")
 }
 
-export function import_data(): Promise<string> {
+export function import_data(): Promise<ImportResult> {
   return invoke("import_data")
 }
 

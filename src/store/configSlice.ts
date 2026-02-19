@@ -84,6 +84,7 @@ export interface ConfigSliceActions {
     forcePush?: boolean,
     forcePull?: boolean,
   ) => Promise<void>
+  importConfig: (config: Config) => Promise<void>
 }
 
 export type ConfigSlice = ConfigSliceState & ConfigSliceActions
@@ -719,5 +720,80 @@ export const createConfigSlice: StateCreator<AppState, [], [], ConfigSlice> = (
     } finally {
       set({ isSyncing: false })
     }
+  },
+
+  importConfig: async (importedConfig: Config) => {
+    const { config } = get()
+    if (!config) return
+
+    let updatedPlaylists = [...config.playlists]
+
+    for (const playlist of importedConfig.playlists) {
+      const existingIndex = updatedPlaylists.findIndex(
+        (p) => p.id === playlist.id,
+      )
+
+      if (existingIndex >= 0) {
+        // Merge with existing playlist
+        const existing = updatedPlaylists[existingIndex]
+        const existingAudioMap = new Map(
+          existing.audios.map((a) => [a.audio.id, a]),
+        )
+
+        const mergedAudios: LocalAudio[] = []
+        const processedIds = new Set<string>()
+
+        // First pass: add all items from new playlist in order
+        for (const newLocalAudio of playlist.audios) {
+          const audioId = newLocalAudio.audio.id
+          processedIds.add(audioId)
+
+          const existingLocalAudio = existingAudioMap.get(audioId)
+          if (existingLocalAudio) {
+            mergedAudios.push({
+              ...existingLocalAudio,
+              audio: {
+                ...existingLocalAudio.audio,
+                ...newLocalAudio.audio,
+              },
+            })
+          } else {
+            mergedAudios.push(newLocalAudio)
+          }
+        }
+
+        // Second pass: add items that only exist in old playlist
+        for (const existingAudio of existing.audios) {
+          const audioId = existingAudio.audio.id
+          if (!processedIds.has(audioId)) {
+            mergedAudios.push(existingAudio)
+          }
+        }
+
+        const mergedPlaylist: LocalPlaylist = {
+          ...playlist,
+          audios: mergedAudios,
+          cover_path: playlist.cover_path || existing.cover_path,
+        }
+
+        updatedPlaylists[existingIndex] = mergedPlaylist
+      } else {
+        // Add new playlist to the front (but after special playlists)
+        const specialPlaylists = updatedPlaylists.filter(
+          (p) => p.id === FAVORITE_PLAYLIST_ID || p.id === AUDIO_PLAYLIST_ID,
+        )
+        const regularPlaylists = updatedPlaylists.filter(
+          (p) => p.id !== FAVORITE_PLAYLIST_ID && p.id !== AUDIO_PLAYLIST_ID,
+        )
+        updatedPlaylists = [...specialPlaylists, playlist, ...regularPlaylists]
+      }
+    }
+
+    const updatedConfig: Config = {
+      ...config,
+      playlists: updatedPlaylists,
+    }
+
+    await get().saveConfig(updatedConfig)
   },
 })

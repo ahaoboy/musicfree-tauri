@@ -3,10 +3,10 @@ use crate::core::{ASSETS_DIR, CONFIG_FILE, Config, LocalAudio, get_config_path};
 use crate::error::{AppError, AppResult};
 use chrono::Local;
 use musicfree::{Audio, Platform, Playlist};
-use std::collections::HashSet;
 use std::fs::File;
 use std::io::{Read, Write};
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
+use serde::{Deserialize, Serialize};
 use tauri::Manager;
 use walkdir::WalkDir;
 use zip::write::FileOptions;
@@ -284,8 +284,15 @@ pub async fn export_data(app_handle: tauri::AppHandle) -> AppResult<String> {
     Ok(zip_path.to_string_lossy().to_string())
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ImportResult {
+    pub config: Config,
+    pub filename: String,
+    pub paths: Vec<String>,
+}
+
 #[tauri::command]
-pub async fn import_data(app_handle: tauri::AppHandle) -> AppResult<String> {
+pub async fn import_data(app_handle: tauri::AppHandle) -> AppResult<ImportResult> {
     let app_dir = api::app_dir(&app_handle).await?;
     let download_dir = app_handle
         .path()
@@ -374,7 +381,7 @@ pub async fn import_data(app_handle: tauri::AppHandle) -> AppResult<String> {
     let import_config_path = temp_dir.join(CONFIG_FILE);
     if !tokio::fs::try_exists(&import_config_path).await.unwrap_or(false) {
         // Cleanup
-        let _ = tokio::fs::remove_dir_all(&temp_dir).await;
+        tokio::fs::remove_dir_all(&temp_dir).await.ok();
         return Err(AppError::Unknown(
             "Invalid backup: no config file".to_string(),
         ));
@@ -385,89 +392,49 @@ pub async fn import_data(app_handle: tauri::AppHandle) -> AppResult<String> {
         .map_err(AppError::Io)?;
     let import_config: Config = serde_json::from_str(&import_json).map_err(AppError::Serde)?;
 
-    let local_config_path = get_config_path(app_dir.clone());
-    let mut local_config: Config = if tokio::fs::try_exists(&local_config_path).await.unwrap_or(false)
-    {
-        let local_json = tokio::fs::read_to_string(&local_config_path)
-            .await
-            .map_err(AppError::Io)?;
-        serde_json::from_str(&local_json).unwrap_or_default()
-    } else {
-        Config::default()
-    };
+    // 4. Move all assets from temp_dir/assets to app_dir/assets
+    let temp_assets_dir = temp_dir.join(ASSETS_DIR);
+    let mut paths = Vec::new();
+    if tokio::fs::try_exists(&temp_assets_dir).await.unwrap_or(false) {
+        for entry in WalkDir::new(&temp_assets_dir) {
+            let entry = entry.map_err(|e| AppError::Io(e.into()))?;
+            let path = entry.path();
+            if path.is_file() {
+                let relative_path = path
+                    .strip_prefix(&temp_dir)
+                    .map_err(|e| AppError::PathError(e.to_string()))?;
 
-    // 4. Merge Logic
-    for import_playlist in import_config.playlists {
-        let target_playlist_opt = local_config
-            .playlists
-            .iter_mut()
-            .find(|p| p.id == import_playlist.id);
+                let relative_path_str = relative_path
+                    .to_str()
+                    .ok_or(AppError::InvalidUtf8)?
+                    .replace("\\", "/");
 
-        if let Some(target_playlist) = target_playlist_opt {
-            // Merge existing
-            let existing_ids: HashSet<String> = target_playlist
-                .audios
-                .iter()
-                .map(|a| a.audio.id.clone())
-                .collect();
+                paths.push(relative_path_str);
 
-            for audio in import_playlist.audios {
-                if !existing_ids.contains(&audio.audio.id) {
-                    // Check and copy asset file
-                    if let Some(ref relative_path) = audio.cover_path {
-                        copy_asset_if_needed(&temp_dir, &app_dir, relative_path).await;
-                    }
-                    copy_asset_if_needed(&temp_dir, &app_dir, &audio.path).await;
+                let dest_path = app_dir.join(relative_path);
 
-                    target_playlist.audios.push(audio);
+                if let Some(parent) = dest_path.parent() {
+                    tokio::fs::create_dir_all(parent).await.map_err(AppError::Io)?;
+                }
+
+                // Copy file if it doesn't exist
+                if !tokio::fs::try_exists(&dest_path).await.unwrap_or(false) {
+                    tokio::fs::copy(path, dest_path).await.map_err(AppError::Io)?;
                 }
             }
-        } else {
-            // Add new playlist
-            // Copy all assets
-            for audio in &import_playlist.audios {
-                if let Some(ref relative_path) = audio.cover_path {
-                    copy_asset_if_needed(&temp_dir, &app_dir, relative_path).await;
-                }
-                copy_asset_if_needed(&temp_dir, &app_dir, &audio.path).await;
-            }
-            // Add playlist if we need to copy cover for playlist itself?
-            if let Some(ref cover_path) = import_playlist.cover_path {
-                copy_asset_if_needed(&temp_dir, &app_dir, cover_path).await;
-            }
-
-            local_config.playlists.push(import_playlist);
         }
     }
 
-    // 5. Save
-    let s = serde_json::to_string_pretty(&local_config).map_err(AppError::Serde)?;
-    tokio::fs::write(local_config_path, s).await.map_err(AppError::Io)?;
+    // 5. Cleanup
+    tokio::fs::remove_dir_all(&temp_dir).await.map_err(AppError::Io)?;
 
-    // 6. Cleanup
-    let _ = tokio::fs::remove_dir_all(&temp_dir).await;
-
-    Ok(zip_filename)
+    Ok(ImportResult {
+        config: import_config,
+        filename: zip_filename,
+        paths,
+    })
 }
 
-async fn copy_asset_if_needed(src_root: &Path, dest_root: &Path, relative_path: &str) {
-    // Basic security check: ensure relative path doesn't escape
-    if relative_path.contains("..") {
-        return;
-    }
-
-    let src_file = src_root.join(relative_path);
-    let dest_file = dest_root.join(relative_path);
-
-    if tokio::fs::try_exists(&src_file).await.unwrap_or(false)
-        && !tokio::fs::try_exists(&dest_file).await.unwrap_or(false)
-    {
-        if let Some(parent) = dest_file.parent() {
-            let _ = tokio::fs::create_dir_all(parent).await;
-        }
-        let _ = tokio::fs::copy(src_file, dest_file).await;
-    }
-}
 
 #[tauri::command]
 pub async fn sync_download(
