@@ -21,6 +21,7 @@ import DeleteIcon from "@mui/icons-material/Delete"
 import SyncIcon from "@mui/icons-material/Sync"
 import BackupIcon from "@mui/icons-material/Backup"
 import CloudDownloadIcon from "@mui/icons-material/CloudDownload"
+import OpenInNewIcon from "@mui/icons-material/OpenInNew"
 import SettingsIcon from "@mui/icons-material/Settings"
 import {
   Dialog,
@@ -671,7 +672,25 @@ const SyncDialog: FC<SyncDialogProps> = ({
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="xs">
-      <DialogTitle>GitHub Repository Sync</DialogTitle>
+      <DialogTitle>
+        <Stack direction="row" alignItems="center" spacing={1}>
+          <span>GitHub</span>
+          {repoUrl && (
+            <IconButton
+              size="small"
+              onClick={() => {
+                const url = repoUrl.startsWith("http")
+                  ? repoUrl
+                  : `https://github.com/${repoUrl}`
+                openUrl(url)
+              }}
+              aria-label="Open Repository"
+            >
+              <OpenInNewIcon fontSize="small" />
+            </IconButton>
+          )}
+        </Stack>
+      </DialogTitle>
       <DialogContent>
         <Stack spacing={3} sx={{ mt: 1 }}>
           <TextField
