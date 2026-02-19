@@ -461,6 +461,17 @@ pub async fn sync_update(
 }
 
 #[tauri::command]
+pub async fn sync_file_info(
+    token: &str,
+    repo: &str,
+    path: Option<String>,
+) -> AppResult<Option<crate::sync::FileInfo>> {
+    crate::sync::get_file_info(token, repo, path.as_deref())
+        .await
+        .map_err(AppError::from)
+}
+
+#[tauri::command]
 pub async fn get_local_yjs(app_handle: tauri::AppHandle) -> AppResult<Vec<u8>> {
     let dir = app_dir(app_handle).await?;
     let p = crate::core::get_sync_path(dir);

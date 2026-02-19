@@ -66,6 +66,7 @@ pub fn run() {
             cmd::clear_cache,
             cmd::sync_download,
             cmd::sync_update,
+            cmd::sync_file_info,
             cmd::write_log,
             cmd::get_log_path,
             cmd::clear_log,

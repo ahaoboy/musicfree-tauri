@@ -17,6 +17,16 @@ struct RepoFileResponse {
     encoding: Option<String>,
 }
 
+/// Lightweight file metadata returned to the frontend for change detection.
+/// By comparing `sha` with a locally cached value, the frontend can skip
+/// expensive downloads when the remote file has not changed.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct FileInfo {
+    pub sha: String,
+    pub size: u64,
+    pub last_modified: Option<String>,
+}
+
 /// Payload for creating/updating files in GitHub repo
 #[derive(Serialize)]
 struct UpdateFilePayload {
@@ -26,6 +36,22 @@ struct UpdateFilePayload {
     sha: Option<String>, // Required for updates
     #[serde(skip_serializing_if = "Option::is_none")]
     branch: Option<String>,
+}
+
+/// GitHub commit entry used when fetching the latest commit for a file.
+#[derive(Debug, Deserialize)]
+struct GitHubCommitEntry {
+    commit: GitHubCommitDetail,
+}
+
+#[derive(Debug, Deserialize)]
+struct GitHubCommitDetail {
+    committer: Option<GitHubCommitter>,
+}
+
+#[derive(Debug, Deserialize)]
+struct GitHubCommitter {
+    date: Option<String>,
 }
 
 /// Parse GitHub repo URL to extract owner and repo name
@@ -60,6 +86,81 @@ fn parse_repo_url(repo_url: &str) -> Result<(String, String), SyncError> {
     Err(SyncError::InvalidRepoUrl(repo_url.to_string()))
 }
 
+/// Retrieve file metadata (SHA, size, last_modified) from the GitHub API
+/// **without** downloading the file content.  This allows the frontend to
+/// decide whether a full download is necessary by comparing the remote SHA
+/// against a locally cached value.
+pub async fn get_file_info(
+    token: &str,
+    repo_url: &str,
+    file_path: Option<&str>,
+) -> Result<Option<FileInfo>, SyncError> {
+    let (owner, repo) = parse_repo_url(repo_url)?;
+    let client = Client::new();
+    let file_name = file_path.unwrap_or(CONFIG_FILE_NAME);
+
+    // Step 1: Get file metadata (SHA + size) via the Contents API
+    let contents_url = format!(
+        "https://api.github.com/repos/{}/{}/contents/{}",
+        owner, repo, file_name
+    );
+
+    let response = client
+        .get(&contents_url)
+        .header("Authorization", format!("Bearer {}", token))
+        .header("User-Agent", "musicfree-tauri")
+        .header("Accept", "application/vnd.github.v3+json")
+        .send()
+        .await?;
+
+    let status = response.status();
+    if status.as_u16() == 404 {
+        return Ok(None); // File does not exist yet
+    }
+    if !status.is_success() {
+        let error_text = response
+            .text()
+            .await
+            .unwrap_or_else(|_| "Unknown error".to_string());
+        return Err(SyncError::GitHubApi(format!(
+            "Status {}: {}",
+            status, error_text
+        )));
+    }
+
+    let repo_file: RepoFileResponse = response.json().await?;
+
+    // Step 2: Get the last commit date for this specific file
+    let commits_url = format!(
+        "https://api.github.com/repos/{}/{}/commits?path={}&per_page=1",
+        owner, repo, file_name
+    );
+
+    let last_modified = match client
+        .get(&commits_url)
+        .header("Authorization", format!("Bearer {}", token))
+        .header("User-Agent", "musicfree-tauri")
+        .header("Accept", "application/vnd.github.v3+json")
+        .send()
+        .await
+    {
+        Ok(resp) if resp.status().is_success() => {
+            let commits: Vec<GitHubCommitEntry> = resp.json().await.unwrap_or_default();
+            commits
+                .first()
+                .and_then(|c| c.commit.committer.as_ref())
+                .and_then(|cm| cm.date.clone())
+        }
+        _ => None,
+    };
+
+    Ok(Some(FileInfo {
+        sha: repo_file.sha,
+        size: repo_file.size,
+        last_modified,
+    }))
+}
+
 pub async fn download(
     token: &str,
     repo_url: &str,
@@ -90,8 +191,14 @@ pub async fn download(
     }
 
     if !status.is_success() {
-        let error_text = response.text().await.unwrap_or_else(|_| "Unknown error".to_string());
-        return Err(SyncError::GitHubApi(format!("Status {}: {}", status, error_text)));
+        let error_text = response
+            .text()
+            .await
+            .unwrap_or_else(|_| "Unknown error".to_string());
+        return Err(SyncError::GitHubApi(format!(
+            "Status {}: {}",
+            status, error_text
+        )));
     }
 
     // Get raw binary data
@@ -140,8 +247,14 @@ pub async fn update(
         .await?;
 
     if !response.status().is_success() {
-        let error_text = response.text().await.unwrap_or_else(|_| "Unknown error".to_string());
-        return Err(SyncError::GitHubApi(format!("Failed to update {}: {}", file_name, error_text)));
+        let error_text = response
+            .text()
+            .await
+            .unwrap_or_else(|_| "Unknown error".to_string());
+        return Err(SyncError::GitHubApi(format!(
+            "Failed to update {}: {}",
+            file_name, error_text
+        )));
     }
 
     Ok(())

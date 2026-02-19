@@ -66,6 +66,13 @@ export type GistConfig = {
   githubToken: string
   syncInterval: number // in minutes
   lastSyncTime?: number
+  lastRemoteSha?: string // SHA of the remote yjs file at last sync, used for change detection
+}
+
+export type FileInfo = {
+  sha: string
+  size: number
+  last_modified: string | null
 }
 
 export type ImportResult = {
@@ -276,6 +283,14 @@ export function sync_update(
   return invoke("sync_update", { token, repo, content, path, message })
 }
 
+export function sync_file_info(
+  token: string,
+  repo: string,
+  path?: string,
+): Promise<FileInfo | null> {
+  return invoke("sync_file_info", { token, repo, path })
+}
+
 export function get_local_yjs(): Promise<Uint8Array> {
   return invoke<number[]>("get_local_yjs").then((data) => new Uint8Array(data))
 }
@@ -284,8 +299,8 @@ export function save_local_yjs(content: Uint8Array): Promise<void> {
   return invoke("save_local_yjs", { content })
 }
 
-// Export Yjs sync function
-export { syncWithYjs } from "./sync"
+// Export Yjs sync functions
+export { syncWithYjs, persistLocalYjsState } from "./sync"
 
 // ============================================
 // LocalStorage Keys

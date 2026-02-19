@@ -20,6 +20,7 @@ import {
   remove_file,
   GistConfig,
   syncWithYjs,
+  persistLocalYjsState,
 } from "../api"
 import logger from "../utils/logger"
 
@@ -190,15 +191,20 @@ export const createConfigSlice: StateCreator<AppState, [], [], ConfigSlice> = (
 
     log.info("Saving config...")
     try {
+      // 1. Save JSON config to disk first (local persistence)
       await save_config(config)
       set({ config })
       log.info("Config saved successfully")
 
-      // Mark that we have pending local changes
+      // 2. Persist Yjs state locally (before any network activity)
+      await persistLocalYjsState(config).catch((e) =>
+        log.error("Failed to persist local Yjs state:", e),
+      )
+
+      // 3. Mark that we have pending local changes
       set({ hasPendingLocalChanges: true })
 
-      // Trigger background sync (Yjs handles conflict resolution automatically)
-      // Don't await - let it run in background
+      // 4. Trigger background remote sync (don't await)
       get()
         .syncGist(false)
         .catch((error) => {

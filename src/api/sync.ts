@@ -6,6 +6,7 @@ import {
   LocalAudio,
   sync_download,
   sync_update,
+  sync_file_info,
   download_audio,
   download_cover,
   path_exists,
@@ -16,6 +17,10 @@ import logger from "../utils/logger"
 import { hostname, platform } from "@tauri-apps/plugin-os"
 
 const log = logger.sync
+
+// ============================================================
+// Yjs <-> Config Reconciliation
+// ============================================================
 
 /**
  * Reconcile a Yjs document with a Config object.
@@ -107,8 +112,9 @@ function reconcileYDocWithConfig(ydoc: Y.Doc, config: Config): void {
 }
 
 /**
- * Convert Yjs document to Config
- * Strictly follows Yjs structure without manual merging to ensure CRDT deletions are respected.
+ * Convert Yjs document to Config.
+ * Strictly follows Yjs structure without manual merging to ensure
+ * CRDT deletions are respected.
  */
 function yDocToConfig(ydoc: Y.Doc): Config {
   const yplaylists = ydoc.getArray<Y.Map<any>>("playlists")
@@ -147,6 +153,10 @@ function yDocToConfig(ydoc: Y.Doc): Config {
 
   return { playlists }
 }
+
+// ============================================================
+// File Download Helpers
+// ============================================================
 
 /**
  * Download missing files for audios that need them
@@ -224,6 +234,10 @@ function detectNewAudios(oldConfig: Config, newConfig: Config): Set<string> {
   return newAudioIds
 }
 
+// ============================================================
+// Utility Helpers
+// ============================================================
+
 /**
  * Generate a commit message based on device name and timestamp
  */
@@ -253,7 +267,84 @@ async function mergeWithLocalPersistence(yDoc: Y.Doc): Promise<void> {
 }
 
 /**
- * Sync with GitHub Repository using Yjs CRDT
+ * Compare two Yjs states for equality
+ */
+function areStatesEqual(state1: Uint8Array, state2: Uint8Array): boolean {
+  if (state1.length !== state2.length) return false
+  for (let i = 0; i < state1.length; i++) {
+    if (state1[i] !== state2[i]) return false
+  }
+  return true
+}
+
+/**
+ * Check if the local data is "empty" – i.e. a fresh device with no meaningful content.
+ * An empty device has either zero playlists or only one empty special playlist.
+ */
+function isLocalDataEmpty(config: Config): boolean {
+  if (config.playlists.length === 0) return true
+  // A single playlist with zero audios is treated as empty (default state)
+  if (
+    config.playlists.length === 1 &&
+    config.playlists[0].audios.length === 0
+  ) {
+    return true
+  }
+  return false
+}
+
+/**
+ * Check if a Yjs document is empty (no playlists or no data).
+ */
+function isYDocEmpty(yDoc: Y.Doc): boolean {
+  const yplaylists = yDoc.getArray<Y.Map<any>>("playlists")
+  if (yplaylists.length === 0) return true
+  // Check if all playlists have zero audios
+  let totalAudios = 0
+  yplaylists.forEach((yplaylist) => {
+    const yaudios = yplaylist.get("audios") as Y.Array<any>
+    if (yaudios && typeof yaudios.length === "number") {
+      totalAudios += yaudios.length
+    }
+  })
+  return totalAudios === 0
+}
+
+// ============================================================
+// Local Persistence (Step 1 of "save locally first")
+// ============================================================
+
+/**
+ * Persist the current config into the local Yjs file.
+ * This should be called after every local mutation, BEFORE attempting
+ * remote sync.  This ensures the device always has a consistent snapshot
+ * regardless of network availability.
+ */
+export async function persistLocalYjsState(config: Config): Promise<void> {
+  const yDoc = new Y.Doc()
+  await mergeWithLocalPersistence(yDoc)
+  reconcileYDocWithConfig(yDoc, config)
+  const state = Y.encodeStateAsUpdate(yDoc)
+  await save_local_yjs(state)
+  yDoc.destroy()
+}
+
+// ============================================================
+// Remote Sync
+// ============================================================
+
+/**
+ * Sync with GitHub Repository using Yjs CRDT.
+ *
+ * Key design decisions:
+ * 1. **Save locally first** – `persistLocalYjsState` should be called
+ *    before this function.  This function focuses on remote reconciliation.
+ * 2. **Empty-device protection** – If the local Yjs doc is empty but the
+ *    remote has data, we treat the remote as authoritative and pull it in
+ *    (equivalent to a force-pull).  This prevents a new/wiped device from
+ *    erasing the shared dataset.
+ * 3. **SHA-based skip** – When neither local nor remote data has changed
+ *    since last sync, the entire operation is skipped to save bandwidth.
  */
 export async function syncWithYjs(
   localConfig: Config,
@@ -268,27 +359,80 @@ export async function syncWithYjs(
   log.info("[Sync] ========== Starting Yjs sync ==========")
   const { githubToken, repoUrl } = gistConfig
 
+  // -------------------------------------------------------
+  // Step 0: Quick remote-change check (SHA comparison)
+  // -------------------------------------------------------
+  if (!forcePush && !forcePull) {
+    try {
+      const remoteInfo = await sync_file_info(githubToken, repoUrl)
+      if (remoteInfo && gistConfig.lastRemoteSha) {
+        const remoteUnchanged = remoteInfo.sha === gistConfig.lastRemoteSha
+        const localUnchanged = !!gistConfig.lastSyncTime // will be refined below
+
+        if (remoteUnchanged && localUnchanged) {
+          // Check if local data actually changed by comparing local Yjs
+          // with what we'd produce from the current config
+          const checkDoc = new Y.Doc()
+          await mergeWithLocalPersistence(checkDoc)
+          const savedState = Y.encodeStateAsUpdate(checkDoc)
+
+          const freshDoc = new Y.Doc()
+          await mergeWithLocalPersistence(freshDoc)
+          reconcileYDocWithConfig(freshDoc, localConfig)
+          const freshState = Y.encodeStateAsUpdate(freshDoc)
+
+          const localIdentical = areStatesEqual(savedState, freshState)
+          checkDoc.destroy()
+          freshDoc.destroy()
+
+          if (localIdentical) {
+            log.info(
+              "[Sync] Remote SHA unchanged and no local changes – skipping sync",
+            )
+            return {
+              updatedConfig: localConfig,
+              newGistConfig: gistConfig,
+              changed: false,
+            }
+          }
+        }
+      }
+    } catch (e) {
+      // Info check is optional – proceed with full sync on failure
+      log.warn("[Sync] Remote info check failed, proceeding with full sync", e)
+    }
+  }
+
+  // -------------------------------------------------------
   // Step 1: Load or Init local Yjs document
+  // -------------------------------------------------------
   const localYDoc = new Y.Doc()
 
-  // Always load from local persistence first to maintain history (especially deletions)
+  // Always load from local persistence first to maintain history
   await mergeWithLocalPersistence(localYDoc)
 
-  // Reconcile with the current config (JSON is the source of truth for the local user)
-  // This will record 'delete' operations if items were removed from config
+  // Reconcile with the current config (JSON is the source of truth for
+  // the local user). This records delete operations if items were removed.
   reconcileYDocWithConfig(localYDoc, localConfig)
 
   const localState = Y.encodeStateAsUpdate(localYDoc)
   const commitMessage = await getCommitMessage()
 
-  // Always save the current state locally after merging with memory
+  // Persist reconciled state locally (idempotent – already saved via
+  // persistLocalYjsState, but updating here after reconcile guarantees
+  // the latest snapshot is on disk)
   await save_local_yjs(localState).catch((e) =>
     log.error("[Sync] Failed to save local Yjs persistence", e),
   )
 
-  // If force push, skip remote download and just upload local
+  // Determine if local is effectively empty (new device / cleared data)
+  const localEmpty = isLocalDataEmpty(localConfig) && isYDocEmpty(localYDoc)
+
+  // -------------------------------------------------------
+  // Force Push
+  // -------------------------------------------------------
   if (forcePush) {
-    log.info("[Sync] Force push mode - uploading local state...")
+    log.info("[Sync] Force push mode – uploading local state...")
     await sync_update(
       githubToken,
       repoUrl,
@@ -296,31 +440,29 @@ export async function syncWithYjs(
       undefined,
       commitMessage,
     )
-    try {
-      const jsonContent = JSON.stringify(localConfig, null, 2)
-      const encodedJson = new TextEncoder().encode(jsonContent)
-      await sync_update(
-        githubToken,
-        repoUrl,
-        encodedJson,
-        "musicfree.json",
-        commitMessage,
-      )
-    } catch (e) {
-      log.error("[Sync] Failed to upload JSON reference", e)
-    }
+    await uploadJsonReference(localConfig, githubToken, repoUrl, commitMessage)
+
+    // Fetch SHA for future change detection
+    const newSha = await fetchRemoteSha(githubToken, repoUrl)
+
     log.info("[Sync] Force push completed")
     log.info("[Sync] ========== Sync finished ==========")
 
     localYDoc.destroy()
     return {
       updatedConfig: localConfig,
-      newGistConfig: { ...gistConfig, lastSyncTime: Date.now() },
+      newGistConfig: {
+        ...gistConfig,
+        lastSyncTime: Date.now(),
+        lastRemoteSha: newSha,
+      },
       changed: false,
     }
   }
 
-  // Step 2: Download remote Yjs state (binary format)
+  // -------------------------------------------------------
+  // Step 2: Download remote Yjs state
+  // -------------------------------------------------------
   log.info("[Sync] Downloading remote state...")
   const remoteBytes = await sync_download(githubToken, repoUrl)
 
@@ -338,7 +480,6 @@ export async function syncWithYjs(
     } catch (e) {
       log.error("[Sync] Failed to parse remote state", e)
 
-      // Throw a specific error for invalid remote data
       throw new Error(
         "Remote sync data is corrupted or in an incompatible format. " +
           "This may happen if:\n" +
@@ -352,7 +493,9 @@ export async function syncWithYjs(
     }
   }
 
-  // Step 3: Handle first-time sync (no valid remote)
+  // -------------------------------------------------------
+  // Step 3: No valid remote – upload local (if non-empty)
+  // -------------------------------------------------------
   if (!remoteYDoc || !remoteState) {
     log.info("[Sync] No valid remote state. Uploading local.")
 
@@ -363,19 +506,9 @@ export async function syncWithYjs(
       undefined,
       commitMessage,
     )
-    try {
-      const jsonContent = JSON.stringify(localConfig, null, 2)
-      const encodedJson = new TextEncoder().encode(jsonContent)
-      await sync_update(
-        githubToken,
-        repoUrl,
-        encodedJson,
-        "musicfree.json",
-        commitMessage,
-      )
-    } catch (e) {
-      log.error("[Sync] Failed to upload JSON reference", e)
-    }
+    await uploadJsonReference(localConfig, githubToken, repoUrl, commitMessage)
+
+    const newSha = await fetchRemoteSha(githubToken, repoUrl)
 
     log.info("[Sync] Upload completed")
     log.info("[Sync] ========== Sync finished ==========")
@@ -383,19 +516,41 @@ export async function syncWithYjs(
     localYDoc.destroy()
     return {
       updatedConfig: localConfig,
-      newGistConfig: { ...gistConfig, lastSyncTime: Date.now() },
+      newGistConfig: {
+        ...gistConfig,
+        lastSyncTime: Date.now(),
+        lastRemoteSha: newSha,
+      },
       changed: false,
     }
   }
 
-  // If force pull, use remote state directly
-  if (forcePull) {
-    log.info("[Sync] Force pull mode - using remote state...")
+  // -------------------------------------------------------
+  // Step 3b: Empty-device protection
+  //   If local data is empty but remote has content, treat this as a
+  //   force-pull to prevent accidentally wiping shared data.
+  // -------------------------------------------------------
+  const shouldForcePull = forcePull || localEmpty
+  if (localEmpty && !forcePull) {
+    log.info(
+      "[Sync] Local data is empty – treating as force pull to preserve remote data",
+    )
+  }
+
+  if (shouldForcePull) {
+    log.info("[Sync] Force pull mode – using remote state...")
     const remoteConfig = yDocToConfig(remoteYDoc)
+
+    // Persist remote state locally so subsequent syncs see the full history
+    await save_local_yjs(remoteState).catch((e) =>
+      log.error("[Sync] Failed to save remote state locally", e),
+    )
 
     // Download all files from remote
     log.info("[Sync] Downloading all items from remote...")
     await downloadMissingFiles(remoteConfig, new Set())
+
+    const newSha = await fetchRemoteSha(githubToken, repoUrl)
 
     localYDoc.destroy()
     remoteYDoc.destroy()
@@ -405,12 +560,18 @@ export async function syncWithYjs(
 
     return {
       updatedConfig: remoteConfig,
-      newGistConfig: { ...gistConfig, lastSyncTime: Date.now() },
+      newGistConfig: {
+        ...gistConfig,
+        lastSyncTime: Date.now(),
+        lastRemoteSha: newSha,
+      },
       changed: true,
     }
   }
 
+  // -------------------------------------------------------
   // Step 4: Merge using Yjs CRDT
+  // -------------------------------------------------------
   log.info("[Sync] Merging states using Yjs CRDT...")
 
   // Start with the remote document as the base
@@ -418,7 +579,6 @@ export async function syncWithYjs(
   Y.applyUpdate(mergedYDoc, remoteState)
 
   // Calculate the diff between local and remote
-  // We must use a State Vector (not the full update) to calculate the diff
   const remoteStateVector = Y.encodeStateVector(remoteYDoc!)
   const localDiff = Y.encodeStateAsUpdate(localYDoc, remoteStateVector)
 
@@ -435,78 +595,60 @@ export async function syncWithYjs(
     log.error("[Sync] Failed to save merged local Yjs persistence", e),
   )
 
+  // -------------------------------------------------------
   // Step 5: Detect what changed
+  // -------------------------------------------------------
   const localChanged = !areStatesEqual(localState, mergedState)
   const remoteChanged = !areStatesEqual(remoteState, mergedState)
 
   log.info(
-    `[Sync] Changes detected - Local: ${localChanged}, Remote: ${remoteChanged}`,
+    `[Sync] Changes detected – Local: ${localChanged}, Remote: ${remoteChanged}`,
   )
 
-  // Step 6: Update remote if needed
+  // -------------------------------------------------------
+  // Step 6: Upload merged state to remote if needed
+  //   Always upload the MERGED state so all devices converge.
+  // -------------------------------------------------------
+  let newSha = gistConfig.lastRemoteSha
   if (remoteChanged || localChanged) {
-    log.info("[Sync] Uploading state to repository...")
-
-    // If local has changes (additions or deletions), upload local state
-    // Otherwise upload merged state (which includes remote additions)
-    const stateToUpload = localChanged ? localState : mergedState
-
-    log.info(
-      `[Sync] Uploading ${localChanged ? "local" : "merged"} state (${stateToUpload.length} bytes)`,
-    )
+    log.info(`[Sync] Uploading merged state (${mergedState.length} bytes)...`)
 
     await sync_update(
       githubToken,
       repoUrl,
-      stateToUpload,
+      mergedState,
       undefined,
       commitMessage,
     )
 
-    // Optional: Upload musicfree.json for developer reference
-    try {
-      const jsonContent = JSON.stringify(mergedConfig, null, 2)
-      const encodedJson = new TextEncoder().encode(jsonContent)
-      await sync_update(
-        githubToken,
-        repoUrl,
-        encodedJson,
-        "musicfree.json",
-        commitMessage,
-      )
-      log.info("[Sync] JSON reference uploaded")
-    } catch (e) {
-      log.error("[Sync] Failed to upload JSON reference", e)
-    }
+    await uploadJsonReference(mergedConfig, githubToken, repoUrl, commitMessage)
+
+    newSha = await fetchRemoteSha(githubToken, repoUrl)
 
     log.info("[Sync] Upload completed")
   }
 
-  // Step 7: Download new files if local changed
+  // -------------------------------------------------------
+  // Step 7: Download new files if local config changed
+  // -------------------------------------------------------
   if (localChanged) {
     log.info("[Sync] Detecting new items from remote...")
     const newAudioIds = detectNewAudios(localConfig, mergedConfig)
 
-    // Download all if library was empty
-    const isLibraryEmpty =
-      localConfig.playlists.length <= 1 &&
-      localConfig.playlists[0]?.audios.length === 0
-
-    if (newAudioIds.size > 0 || isLibraryEmpty) {
+    if (newAudioIds.size > 0) {
       log.info(
-        `[Sync] Downloading ${isLibraryEmpty ? "all" : newAudioIds.size} new items from remote...`,
+        `[Sync] Downloading ${newAudioIds.size} new items from remote...`,
       )
-      await downloadMissingFiles(
-        mergedConfig,
-        isLibraryEmpty ? new Set() : newAudioIds,
-      )
+      await downloadMissingFiles(mergedConfig, newAudioIds)
       log.info("[Sync] Download completed")
     } else {
       log.info("[Sync] No new items to download from remote")
     }
   }
 
+  // -------------------------------------------------------
   // Cleanup
+  // -------------------------------------------------------
   localYDoc.destroy()
   remoteYDoc.destroy()
   mergedYDoc.destroy()
@@ -515,18 +657,51 @@ export async function syncWithYjs(
 
   return {
     updatedConfig: mergedConfig,
-    newGistConfig: { ...gistConfig, lastSyncTime: Date.now() },
+    newGistConfig: {
+      ...gistConfig,
+      lastSyncTime: Date.now(),
+      lastRemoteSha: newSha,
+    },
     changed: localChanged,
   }
 }
 
+// ============================================================
+// Internal helpers
+// ============================================================
+
 /**
- * Compare two Yjs states for equality
+ * Upload a human-readable JSON reference file along-side the Yjs binary.
+ * This is purely for developer inspection and has no functional impact.
  */
-function areStatesEqual(state1: Uint8Array, state2: Uint8Array): boolean {
-  if (state1.length !== state2.length) return false
-  for (let i = 0; i < state1.length; i++) {
-    if (state1[i] !== state2[i]) return false
+async function uploadJsonReference(
+  config: Config,
+  token: string,
+  repo: string,
+  commitMessage: string,
+): Promise<void> {
+  try {
+    const jsonContent = JSON.stringify(config, null, 2)
+    const encodedJson = new TextEncoder().encode(jsonContent)
+    await sync_update(token, repo, encodedJson, "musicfree.json", commitMessage)
+    log.info("[Sync] JSON reference uploaded")
+  } catch (e) {
+    log.error("[Sync] Failed to upload JSON reference", e)
   }
-  return true
+}
+
+/**
+ * Fetch the current SHA of the remote Yjs file for change detection.
+ * Returns undefined on failure so callers can proceed gracefully.
+ */
+async function fetchRemoteSha(
+  token: string,
+  repo: string,
+): Promise<string | undefined> {
+  try {
+    const info = await sync_file_info(token, repo)
+    return info?.sha
+  } catch {
+    return undefined
+  }
 }
