@@ -276,8 +276,6 @@ export const AppLayout: FC = memo(() => {
             }}
             {...swipeHandlers}
           >
-            {/* Sync Indicator */}
-            <SyncIndicator />
             {/* Tab bar - hide on special pages */}
             {!routeHandle.isSpecial && (
               <Paper
@@ -287,8 +285,10 @@ export const AppLayout: FC = memo(() => {
                   borderBottom: 1,
                   borderColor: "divider",
                   zIndex: 1,
+                  position: "relative",
                 }}
               >
+                <SyncIndicator />
                 <Tabs
                   value={currentTab}
                   onChange={handleTabChange}

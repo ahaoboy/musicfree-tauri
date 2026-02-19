@@ -737,12 +737,12 @@ export const createConfigSlice: StateCreator<AppState, [], [], ConfigSlice> = (
       set({ syncStatus: "success" })
       log.info("Sync completed successfully")
 
-      // Auto-clear success status after 3 seconds
+      // Auto-clear success status after a brief moment (Fade handles smooth exit)
       setTimeout(() => {
         if (get().syncStatus === "success") {
           set({ syncStatus: "idle" })
         }
-      }, 3000)
+      }, 800)
     } catch (error) {
       if (error instanceof SyncOfflineError) {
         // GitHub unreachable — persist locally and show yellow indicator
@@ -751,10 +751,22 @@ export const createConfigSlice: StateCreator<AppState, [], [], ConfigSlice> = (
           log.error("Failed to persist local Yjs state:", e),
         )
         set({ syncStatus: "offline", hasPendingLocalChanges: true })
+        // Auto-clear offline status after 5 seconds
+        setTimeout(() => {
+          if (get().syncStatus === "offline") {
+            set({ syncStatus: "idle" })
+          }
+        }, 5000)
       } else {
         // Real sync error (GitHub was reachable but sync failed) — show red
         log.error("Sync failed:", error)
         set({ syncStatus: "error" })
+        // Auto-clear error status after 5 seconds
+        setTimeout(() => {
+          if (get().syncStatus === "error") {
+            set({ syncStatus: "idle" })
+          }
+        }, 5000)
       }
       if (manual) throw error
     } finally {
