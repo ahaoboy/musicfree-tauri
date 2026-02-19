@@ -28,6 +28,48 @@ import logger from "../utils/logger"
 const log = logger.config
 
 // ============================================
+// Debounce / Mutex for Background Sync
+// ============================================
+
+/** Timer handle for debouncing background sync calls */
+let backgroundSyncTimer: ReturnType<typeof setTimeout> | null = null
+
+/** Debounce interval (ms) — coalesces rapid background syncs */
+const BACKGROUND_SYNC_DEBOUNCE_MS = 2000
+
+/** Promise chain to serialize sync execution (mutex) */
+let syncMutex: Promise<void> = Promise.resolve()
+
+/**
+ * Schedule a debounced background sync.
+ * Cancels any previously scheduled sync and waits for the debounce period
+ * before executing. This prevents flooding the GitHub API when the user
+ * performs rapid operations (e.g. deleting multiple items).
+ */
+function scheduleDebouncedSync(syncFn: () => Promise<void>): void {
+  if (backgroundSyncTimer !== null) {
+    clearTimeout(backgroundSyncTimer)
+  }
+  backgroundSyncTimer = setTimeout(() => {
+    backgroundSyncTimer = null
+    // Chain onto the mutex so we don't overlap with an in-flight sync
+    syncMutex = syncMutex
+      .then(() => syncFn())
+      .catch((error) => {
+        log.error("Debounced background sync failed:", error)
+      })
+  }, BACKGROUND_SYNC_DEBOUNCE_MS)
+}
+
+/** Cancel any pending debounced sync (used before manual sync) */
+function cancelDebouncedSync(): void {
+  if (backgroundSyncTimer !== null) {
+    clearTimeout(backgroundSyncTimer)
+    backgroundSyncTimer = null
+  }
+}
+
+// ============================================
 // Sync Status Type
 // ============================================
 export type SyncStatus =
@@ -92,7 +134,7 @@ export interface ConfigSliceActions {
 
   // Gist actions
   setGistConfig: (config: GistConfig | null) => void
-  syncGist: (
+  syncGithub: (
     manual?: boolean,
     forcePush?: boolean,
     forcePull?: boolean,
@@ -217,12 +259,9 @@ export const createConfigSlice: StateCreator<AppState, [], [], ConfigSlice> = (
       // 3. Mark that we have pending local changes
       set({ hasPendingLocalChanges: true })
 
-      // 4. Trigger background remote sync (don't await)
-      get()
-        .syncGist(false)
-        .catch((error) => {
-          log.error("Background sync failed:", error)
-        })
+      // 4. Trigger debounced background remote sync
+      //    Coalesces rapid changes into a single sync after quiescence
+      scheduleDebouncedSync(() => get().syncGithub(false))
     } catch (error) {
       log.error("Failed to save config:", error)
       throw error
@@ -690,7 +729,7 @@ export const createConfigSlice: StateCreator<AppState, [], [], ConfigSlice> = (
     set({ gistConfig: config })
   },
 
-  syncGist: async (manual = false, forcePush = false, forcePull = false) => {
+  syncGithub: async (manual = false, forcePush = false, forcePull = false) => {
     const { config, gistConfig, isSyncing } = get()
 
     if (!gistConfig) {
@@ -702,6 +741,12 @@ export const createConfigSlice: StateCreator<AppState, [], [], ConfigSlice> = (
     if (!manual && isSyncing) {
       log.info("Sync already in progress, skipping")
       return
+    }
+
+    // Manual syncs cancel any pending debounced background sync
+    // to avoid the debounced sync firing right after the manual one
+    if (manual) {
+      cancelDebouncedSync()
     }
 
     const syncMode = forcePush

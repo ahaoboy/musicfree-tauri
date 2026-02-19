@@ -20,7 +20,6 @@ import {
   ErrorBoundary,
   PageErrorBoundary,
   LoadingFallback,
-  SyncIndicator,
 } from "../components"
 import { NavigationContext, NavigationContextType } from "../contexts"
 import { useAppStore } from "../store"
@@ -53,7 +52,7 @@ export const AppLayout: FC = memo(() => {
   // Store subscriptions
   const currentAudio = useAppStore((state) => state.currentAudio)
   const isConfigLoading = useAppStore((state) => state.isConfigLoading)
-  const syncGist = useAppStore((state) => state.syncGist)
+  const syncGithub = useAppStore((state) => state.syncGithub)
   const gistConfig = useAppStore((state) => state.gistConfig)
   const loadConfig = useAppStore((state) => state.loadConfig)
 
@@ -69,7 +68,7 @@ export const AppLayout: FC = memo(() => {
 
       // If it's time to sync and not currently syncing
       if (now >= nextSyncTime && !useAppStore.getState().isSyncing) {
-        syncGist()
+        syncGithub()
       }
     }
 
@@ -80,7 +79,7 @@ export const AppLayout: FC = memo(() => {
     const timer = setInterval(checkAndSync, 60 * 1000)
 
     return () => clearInterval(timer)
-  }, [gistConfig?.syncInterval, gistConfig?.lastSyncTime, syncGist])
+  }, [gistConfig?.syncInterval, gistConfig?.lastSyncTime, syncGithub])
 
   // Loading state with minimum display time and fade animation
   const [showLoading, setShowLoading] = useState(true)
@@ -288,7 +287,6 @@ export const AppLayout: FC = memo(() => {
                   position: "relative",
                 }}
               >
-                <SyncIndicator />
                 <Tabs
                   value={currentTab}
                   onChange={handleTabChange}

@@ -58,7 +58,9 @@ function getStatusConfig(status: SyncStatus): {
 }
 
 /**
- * SyncIndicator component displays a status indicator for synchronization.
+ * SyncIndicator component displays an inline status dot for synchronization.
+ *
+ * Placed next to the Sync settings button on the Settings page.
  *
  * Colors:
  * - **Green (pulsing)**: Sync in progress
@@ -79,19 +81,16 @@ export const SyncIndicator: FC = memo(() => {
 
   return (
     <Fade in={visible} timeout={{ enter: 300, exit: 800 }} unmountOnExit>
-      <Tooltip title={tooltip} placement="right" arrow>
+      <Tooltip title={tooltip} placement="top" arrow>
         <Box
           sx={{
-            position: "absolute",
-            top: "50%",
-            left: "8px",
-            transform: "translateY(-50%)",
-            width: 10,
-            height: 10,
+            display: "inline-block",
+            width: 8,
+            height: 8,
             bgcolor: color,
             borderRadius: "50%",
-            zIndex: (theme) => theme.zIndex.tooltip + 1,
             cursor: "help",
+            flexShrink: 0,
             transition: "background-color 0.3s ease, box-shadow 0.3s ease",
             // Only pulse when actively syncing
             ...(animate && {
@@ -99,17 +98,19 @@ export const SyncIndicator: FC = memo(() => {
             }),
             "@keyframes sync-pulse": {
               "0%": {
-                transform: "translateY(-50%) scale(0.85)",
-                boxShadow: (theme) => `0 0 0 0 ${theme.palette.success.main}80`,
+                transform: "scale(0.85)",
+                boxShadow: (theme: any) =>
+                  `0 0 0 0 ${theme.palette.success.main}80`,
               },
               "50%": {
-                transform: "translateY(-50%) scale(1.1)",
-                boxShadow: (theme) =>
+                transform: "scale(1.1)",
+                boxShadow: (theme: any) =>
                   `0 0 0 6px ${theme.palette.success.main}00`,
               },
               "100%": {
-                transform: "translateY(-50%) scale(0.85)",
-                boxShadow: (theme) => `0 0 0 0 ${theme.palette.success.main}00`,
+                transform: "scale(0.85)",
+                boxShadow: (theme: any) =>
+                  `0 0 0 0 ${theme.palette.success.main}00`,
               },
             },
           }}

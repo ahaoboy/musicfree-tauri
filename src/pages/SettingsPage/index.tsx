@@ -52,7 +52,7 @@ import {
 } from "../../api"
 import { useConfirm } from "../../hooks"
 import { useMessage } from "../../contexts/MessageContext"
-import { CopyButton } from "../../components"
+import { CopyButton, SyncIndicator } from "../../components"
 import prettyBytes from "pretty-bytes"
 import { useTheme } from "../../hooks/useTheme"
 import { setSaveToFile, getSaveToFile } from "../../utils/logger"
@@ -92,7 +92,7 @@ export const SettingsPage: FC = () => {
 
   const gistConfig = useAppStore((state) => state.gistConfig)
   const setGistConfig = useAppStore((state) => state.setGistConfig)
-  const syncGist = useAppStore((state) => state.syncGist)
+  const syncGithub = useAppStore((state) => state.syncGithub)
   const isSyncing = useAppStore((state) => state.isSyncing)
 
   // Load storage size
@@ -524,14 +524,17 @@ export const SettingsPage: FC = () => {
                 )}
               </Typography>
             </Box>
-            <IconButton
-              onClick={() => setOpenSyncDialog(true)}
-              disabled={isSyncing}
-              aria-label="Configure Sync"
-              size="small"
-            >
-              <SettingsIcon />
-            </IconButton>
+            <Stack direction="row" spacing={1} alignItems="center">
+              <SyncIndicator />
+              <IconButton
+                onClick={() => setOpenSyncDialog(true)}
+                disabled={isSyncing}
+                aria-label="Configure Sync"
+                size="small"
+              >
+                <SettingsIcon />
+              </IconButton>
+            </Stack>
           </Stack>
         </Paper>
       </Stack>
@@ -541,7 +544,7 @@ export const SettingsPage: FC = () => {
         onClose={() => setOpenSyncDialog(false)}
         config={gistConfig}
         isSyncing={isSyncing}
-        syncGist={syncGist}
+        syncGithub={syncGithub}
         onSave={(config) => {
           setGistConfig(config)
           setOpenSyncDialog(false)
@@ -557,7 +560,7 @@ interface SyncDialogProps {
   config: GistConfig | null
   onSave: (config: GistConfig) => void
   isSyncing: boolean
-  syncGist: (
+  syncGithub: (
     manual?: boolean,
     forcePush?: boolean,
     forcePull?: boolean,
@@ -570,7 +573,7 @@ const SyncDialog: FC<SyncDialogProps> = ({
   config,
   onSave,
   isSyncing,
-  syncGist,
+  syncGithub,
 }) => {
   const [repoUrl, setRepoUrl] = useState(config?.repoUrl || "")
   const [token, setToken] = useState(config?.githubToken || "")
@@ -606,7 +609,7 @@ const SyncDialog: FC<SyncDialogProps> = ({
 
   const handleSyncNow = async () => {
     try {
-      await syncGist(true, false, false)
+      await syncGithub(true, false, false)
       message.success("Sync completed successfully")
     } catch (error) {
       console.error("Sync error:", error)
@@ -649,7 +652,7 @@ const SyncDialog: FC<SyncDialogProps> = ({
       okType: "danger",
       onOk: async () => {
         try {
-          await syncGist(true, true, false)
+          await syncGithub(true, true, false)
           message.success("Force push completed successfully")
         } catch (error) {
           console.error("Force push error:", error)
@@ -674,7 +677,7 @@ const SyncDialog: FC<SyncDialogProps> = ({
       okType: "danger",
       onOk: async () => {
         try {
-          await syncGist(true, false, true)
+          await syncGithub(true, false, true)
           message.success("Force pull completed successfully")
           window.location.reload()
         } catch (error) {
