@@ -392,3 +392,7 @@ export function clear_log(): Promise<void> {
 export function get_log_size(): Promise<number> {
   return invoke("get_log_size")
 }
+
+export function read_log(): Promise<string> {
+  return invoke("read_log")
+}

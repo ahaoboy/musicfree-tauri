@@ -18,6 +18,7 @@ import SettingsSystemDaydream from "@mui/icons-material/SettingsSystemDaydream"
 import GitHub from "@mui/icons-material/GitHub"
 import FolderOpen from "@mui/icons-material/FolderOpen"
 import DeleteIcon from "@mui/icons-material/Delete"
+import ContentCopy from "@mui/icons-material/ContentCopy"
 import SyncIcon from "@mui/icons-material/Sync"
 import BackupIcon from "@mui/icons-material/Backup"
 import CloudDownloadIcon from "@mui/icons-material/CloudDownload"
@@ -47,6 +48,7 @@ import {
   get_log_size,
   clear_log,
   get_log_path,
+  read_log,
 } from "../../api"
 import { useConfirm } from "../../hooks"
 import { useMessage } from "../../contexts/MessageContext"
@@ -235,6 +237,22 @@ export const SettingsPage: FC = () => {
     } catch (e) {
       console.error(e)
       message.error("Failed to open log file")
+    }
+  }, [message])
+
+  const handleCopyLog = useCallback(async () => {
+    try {
+      const content = await read_log()
+      if (!content) {
+        message.warning("Log file is empty")
+        return
+      }
+      const { writeText } = await import("@tauri-apps/plugin-clipboard-manager")
+      await writeText(content)
+      message.success("Log content copied to clipboard")
+    } catch (e) {
+      console.error(e)
+      message.error("Failed to copy log content")
     }
   }, [message])
 
@@ -437,12 +455,7 @@ export const SettingsPage: FC = () => {
               <DeleteIcon />
             </IconButton>
           </Stack>
-        </Paper>
-      </Stack>
-
-      {/* Log Section */}
-      <Stack spacing={2}>
-        <Paper variant="outlined" sx={{ p: 2 }}>
+          <Divider sx={{ my: 1 }} />
           <Stack
             direction="row"
             justifyContent="space-between"
@@ -457,7 +470,16 @@ export const SettingsPage: FC = () => {
               </Stack>
             </Box>
             <Stack direction="row" spacing={1} alignItems="center">
-              {CurrentPlatform !== "android" && (
+              {CurrentPlatform === "android" ? (
+                <IconButton
+                  onClick={handleCopyLog}
+                  disabled={logSize === 0}
+                  aria-label="Copy Log"
+                  size="small"
+                >
+                  <ContentCopy />
+                </IconButton>
+              ) : (
                 <IconButton
                   onClick={handleOpenLog}
                   disabled={logSize === 0}
@@ -481,12 +503,7 @@ export const SettingsPage: FC = () => {
               </IconButton>
             </Stack>
           </Stack>
-        </Paper>
-      </Stack>
-
-      {/* Sync Section */}
-      <Stack spacing={2}>
-        <Paper variant="outlined" sx={{ p: 2 }}>
+          <Divider sx={{ my: 1 }} />
           <Stack
             direction="row"
             justifyContent="space-between"
@@ -714,6 +731,7 @@ const SyncDialog: FC<SyncDialogProps> = ({
             <InputLabel>Sync Interval</InputLabel>
             <Select
               value={interval}
+              defaultValue={60}
               label="Sync Interval"
               onChange={(e) => setIntervalValue(Number(e.target.value))}
             >

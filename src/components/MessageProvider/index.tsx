@@ -58,6 +58,7 @@ export const MessageProvider: React.FC<{ children: React.ReactNode }> = ({
         autoHideDuration={duration}
         onClose={handleClose}
         anchorOrigin={{ vertical: "top", horizontal: "center" }}
+        sx={{ top: "env(safe-area-inset-top, 0px)" }}
       >
         <Alert
           onClose={handleClose}

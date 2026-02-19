@@ -568,3 +568,18 @@ pub async fn get_log_size(app_handle: tauri::AppHandle) -> AppResult<u64> {
 
     Ok(0)
 }
+
+#[tauri::command]
+pub async fn read_log(app_handle: tauri::AppHandle) -> AppResult<String> {
+    let dir = app_dir(app_handle).await?;
+    let log_path = crate::core::get_log_path(dir);
+
+    if tokio::fs::try_exists(&log_path).await.unwrap_or(false) {
+        let content = tokio::fs::read_to_string(&log_path)
+            .await
+            .map_err(AppError::Io)?;
+        return Ok(content);
+    }
+
+    Ok(String::new())
+}
