@@ -16,6 +16,7 @@
     "clipboard-manager:default",
     "clipboard-manager:allow-write-text",
     "os:default",
+    "os:allow-hostname",
     {
       "identifier": "opener:allow-open-path",
       "allow": [

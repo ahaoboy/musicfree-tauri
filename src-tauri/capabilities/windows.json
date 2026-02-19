@@ -23,6 +23,7 @@
     "updater:allow-check",
     "updater:allow-download-and-install",
     "os:default",
+    "os:allow-hostname",
     {
       "identifier": "opener:allow-open-path",
       "allow": [
