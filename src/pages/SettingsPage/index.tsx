@@ -162,8 +162,7 @@ export const SettingsPage: FC = () => {
     setExporting(true)
     try {
       const path = await export_data()
-      const filename = path.replaceAll("\\", "/").split("/").at(-1)
-      message.success(`Data exported to Downloads/${filename}`)
+      message.success(`Data exported to\n${path}`)
       revealItemInDir(path)
     } catch (e) {
       console.error(e)
