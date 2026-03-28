@@ -85,15 +85,17 @@ export const PlaylistsPage: FC = () => {
           active={isActive}
           isFavorite={playlist.id === FAVORITE_PLAYLIST_ID}
           actions={
-            canDelete ? (
-              <MoreActionsDropdown
-                size="medium"
-                url={playlist.download_url}
-                onDelete={() =>
-                  handleDeletePlaylist(playlist.id, playlist.title)
-                }
-              />
-            ) : undefined
+            <MoreActionsDropdown
+              size="medium"
+              url={playlist.download_url}
+              showSave={true}
+              playlistId={playlist.id}
+              onDelete={
+                canDelete
+                  ? () => handleDeletePlaylist(playlist.id, playlist.title)
+                  : undefined
+              }
+            />
           }
         />
       )

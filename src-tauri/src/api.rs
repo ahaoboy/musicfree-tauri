@@ -153,6 +153,70 @@ pub fn get_used_paths(config: &Config) -> HashSet<String> {
     used_paths
 }
 
+pub fn get_save_filename(audio: &musicfree::Audio) -> String {
+    let id = format!("{:x}", md5::compute(&audio.download_url));
+    let id_prefix = &id[..6.min(id.len())];
+    // Sanitize title for filesystem safety
+    let safe_title = audio
+        .title
+        .replace(['/', '\\', ':', '*', '?', '"', '<', '>', '|'], "_");
+    format!(
+        "{}-{}{}",
+        safe_title,
+        id_prefix,
+        audio
+            .format
+            .clone()
+            .unwrap_or(musicfree::core::AudioFormat::Mp3)
+            .extension()
+    )
+}
+
+pub async fn save_audio(
+    playlist: &crate::core::LocalPlaylist,
+    audio: &crate::core::LocalAudio,
+    app_dir: PathBuf,
+    target_dir: PathBuf,
+) -> AppResult<String> {
+    let filename = get_save_filename(&audio.audio);
+    let playlist_title = playlist
+        .title
+        .clone()
+        .unwrap_or_else(|| "Unknown".to_string())
+        .replace(['/', '\\', ':', '*', '?', '"', '<', '>', '|'], "_");
+
+    // Build target path: target_dir / Platform / playlist_title / filename
+    let dest_path = target_dir
+        .join(format!("{:?}", audio.audio.platform))
+        .join(&playlist_title)
+        .join(&filename);
+
+    // Source path: app_dir / audio.path
+    let src_path = app_dir.join(&audio.path);
+
+    if !tokio::fs::try_exists(&src_path).await.unwrap_or(false) {
+        return Err(AppError::Unknown(format!(
+            "Source audio file not found: {}",
+            src_path.display()
+        )));
+    }
+
+    // Create destination directory
+    if let Some(parent) = dest_path.parent()
+        && !tokio::fs::try_exists(parent).await.unwrap_or(false) {
+            tokio::fs::create_dir_all(parent)
+                .await
+                .map_err(AppError::Io)?;
+        }
+
+    // Copy file
+    tokio::fs::copy(&src_path, &dest_path)
+        .await
+        .map_err(AppError::Io)?;
+
+    Ok(dest_path.to_string_lossy().to_string())
+}
+
 pub async fn get_cache_files(app_handle: &tauri::AppHandle, config: &Config) -> AppResult<Vec<PathBuf>> {
     let app_dir = app_dir(app_handle).await?;
     let assets_dir = app_dir.join(ASSETS_DIR);

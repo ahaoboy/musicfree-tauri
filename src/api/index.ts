@@ -396,3 +396,10 @@ export function get_log_size(): Promise<number> {
 export function read_log(): Promise<string> {
   return invoke("read_log")
 }
+
+export function save_audio(
+  playlistId: string,
+  audioId?: string,
+): Promise<string[]> {
+  return invoke("save_audio", { playlistId, audioId })
+}

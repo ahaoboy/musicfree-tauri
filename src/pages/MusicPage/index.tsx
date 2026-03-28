@@ -92,6 +92,9 @@ export const MusicPage: FC = () => {
               size="medium"
               url={audio.audio.download_url}
               filePath={audio.path}
+              showSave={true}
+              playlistId={AUDIO_PLAYLIST_ID}
+              audioId={audio.audio.id}
               onDelete={() => handleDelete(audio.audio.id, audio.audio.title)}
             />
           }

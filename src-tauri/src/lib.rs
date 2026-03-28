@@ -74,6 +74,7 @@ pub fn run() {
             cmd::read_log,
             cmd::get_local_yjs,
             cmd::save_local_yjs,
+            cmd::save_audio,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

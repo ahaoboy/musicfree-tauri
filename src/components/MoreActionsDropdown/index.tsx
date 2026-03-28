@@ -4,23 +4,26 @@ import {
   MenuItem,
   ListItemIcon,
   ListItemText,
-  Snackbar,
-  Alert,
   Button,
 } from "@mui/material"
 import { MoreVert, ContentCopy, Delete, Source } from "@mui/icons-material"
+import SaveIcon from "@mui/icons-material/Save"
 import { writeText } from "@tauri-apps/plugin-clipboard-manager"
 import { openUrl, revealItemInDir } from "@tauri-apps/plugin-opener"
 import { join } from "@tauri-apps/api/path"
-import { CurrentPlatform } from "../../api"
+import { CurrentPlatform, save_audio } from "../../api"
 import { useAdaptiveSize, AdaptiveSize } from "../../hooks"
 import { useAppStore } from "../../store"
+import { useMessage } from "../../contexts/MessageContext"
 import OpenInNewIcon from "@mui/icons-material/OpenInNew"
 
 export interface MoreActionsDropdownProps {
   url?: string
   filePath?: string
   onDelete?: () => void
+  showSave?: boolean
+  playlistId?: string
+  audioId?: string
   disabled?: boolean
   className?: string
   size?: AdaptiveSize
@@ -30,6 +33,9 @@ export const MoreActionsDropdown: FC<MoreActionsDropdownProps> = ({
   url,
   filePath,
   onDelete,
+  showSave = false,
+  playlistId,
+  audioId,
   disabled = false,
   className,
   size = "medium",
@@ -37,11 +43,7 @@ export const MoreActionsDropdown: FC<MoreActionsDropdownProps> = ({
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
   const open = Boolean(anchorEl)
 
-  const [snackbarOpen, setSnackbarOpen] = useState(false)
-  const [snackbarMessage, setSnackbarMessage] = useState("")
-  const [snackbarSeverity, setSnackbarSeverity] = useState<"success" | "error">(
-    "success",
-  )
+  const message = useMessage()
 
   const appDir = useAppStore((state) => state.app_dir)
   const isAndroid = CurrentPlatform === "android"
@@ -64,15 +66,6 @@ export const MoreActionsDropdown: FC<MoreActionsDropdownProps> = ({
     setAnchorEl(null)
   }
 
-  const showMessage = (
-    msg: string,
-    severity: "success" | "error" = "success",
-  ) => {
-    setSnackbarMessage(msg)
-    setSnackbarSeverity(severity)
-    setSnackbarOpen(true)
-  }
-
   const handleCopyUrl = useCallback(
     async (e: React.MouseEvent) => {
       e.stopPropagation()
@@ -81,14 +74,14 @@ export const MoreActionsDropdown: FC<MoreActionsDropdownProps> = ({
 
       try {
         await writeText(url)
-        showMessage("URL copied to clipboard")
+        message.success("URL copied to clipboard")
       } catch (error) {
         console.error("Failed to copy URL:", error)
-        showMessage("Failed to copy URL", "error")
+        message.error("Failed to copy URL")
       }
       handleClose()
     },
-    [url],
+    [url, message],
   )
 
   const handleOpenInBrowser = useCallback(
@@ -101,11 +94,11 @@ export const MoreActionsDropdown: FC<MoreActionsDropdownProps> = ({
         await openUrl(url)
       } catch (error) {
         console.error("Failed to open URL:", error)
-        showMessage("Failed to open URL in browser", "error")
+        message.error("Failed to open URL in browser")
       }
       handleClose()
     },
-    [url],
+    [url, message],
   )
 
   const handleShowInFolder = useCallback(
@@ -122,11 +115,11 @@ export const MoreActionsDropdown: FC<MoreActionsDropdownProps> = ({
         await revealItemInDir(fullPath)
       } catch (error) {
         console.error("Failed to open file location:", error)
-        showMessage("Failed to open file location", "error")
+        message.error("Failed to open file location")
       }
       handleClose()
     },
-    [filePath, appDir],
+    [filePath, appDir, message],
   )
 
   const handleDelete = useCallback(
@@ -136,6 +129,28 @@ export const MoreActionsDropdown: FC<MoreActionsDropdownProps> = ({
       handleClose()
     },
     [onDelete],
+  )
+
+  const handleSave = useCallback(
+    async (e: React.MouseEvent) => {
+      e.stopPropagation()
+
+      if (!playlistId) return
+
+      try {
+        const savedPaths = await save_audio(playlistId, audioId)
+        if (savedPaths.length === 1) {
+          message.success(`Saved to\n${savedPaths[0]}`)
+        } else {
+          message.success(`Saved ${savedPaths.length} files to\n${savedPaths[0]}`)
+        }
+      } catch (error) {
+        console.error("Failed to save audio:", error)
+        message.error(`Failed to save: ${error}`)
+      }
+      handleClose()
+    },
+    [playlistId, audioId, message],
   )
 
   const { buttonSize, iconSize, muiSize } = useAdaptiveSize(size)
@@ -192,6 +207,14 @@ export const MoreActionsDropdown: FC<MoreActionsDropdownProps> = ({
             <ListItemText>File</ListItemText>
           </MenuItem>
         )}
+        {showSave && (
+          <MenuItem onClick={handleSave} disabled={!playlistId}>
+            <ListItemIcon>
+              <SaveIcon />
+            </ListItemIcon>
+            <ListItemText>Save</ListItemText>
+          </MenuItem>
+        )}
         {onDelete && (
           <MenuItem onClick={handleDelete} sx={{ color: "error.main" }}>
             <ListItemIcon>
@@ -201,20 +224,6 @@ export const MoreActionsDropdown: FC<MoreActionsDropdownProps> = ({
           </MenuItem>
         )}
       </Menu>
-      <Snackbar
-        open={snackbarOpen}
-        autoHideDuration={3000}
-        onClose={() => setSnackbarOpen(false)}
-        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-      >
-        <Alert
-          onClose={() => setSnackbarOpen(false)}
-          severity={snackbarSeverity}
-          sx={{ width: "100%" }}
-        >
-          {snackbarMessage}
-        </Alert>
-      </Snackbar>
     </>
   )
 }

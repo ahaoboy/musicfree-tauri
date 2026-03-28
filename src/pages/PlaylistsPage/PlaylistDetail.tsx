@@ -100,6 +100,9 @@ export const PlaylistDetail: FC = () => {
               size="medium"
               url={audio.audio.download_url}
               filePath={audio.path}
+              showSave={true}
+              playlistId={playlist?.id}
+              audioId={audio.audio.id}
               onDelete={() =>
                 handleDeleteAudio(audio.audio.id, audio.audio.title)
               }

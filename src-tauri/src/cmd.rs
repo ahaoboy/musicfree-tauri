@@ -583,3 +583,48 @@ pub async fn read_log(app_handle: tauri::AppHandle) -> AppResult<String> {
 
     Ok(String::new())
 }
+
+#[tauri::command]
+pub async fn save_audio(
+    playlist_id: String,
+    audio_id: Option<String>,
+    app_handle: tauri::AppHandle,
+) -> AppResult<Vec<String>> {
+    let app_dir = app_dir(app_handle.clone()).await?;
+    let config = get_config(app_handle.clone()).await?;
+
+    let playlist = config
+        .playlists
+        .iter()
+        .find(|p| p.id.as_deref() == Some(&playlist_id))
+        .ok_or_else(|| AppError::Unknown(format!("Playlist not found: {}", playlist_id)))?;
+
+    let download_dir = app_handle
+        .path()
+        .download_dir()
+        .map_err(|e| AppError::Unknown(e.to_string()))?;
+
+    let audios_to_save: Vec<_> = if let Some(ref id) = audio_id {
+        playlist
+            .audios
+            .iter()
+            .filter(|a| a.audio.id == *id)
+            .collect()
+    } else {
+        playlist.audios.iter().collect()
+    };
+
+    if audios_to_save.is_empty() {
+        return Err(AppError::Unknown(
+            format!("No audio found to save in playlist: {}", playlist_id),
+        ));
+    }
+
+    let mut saved_paths = Vec::new();
+    for audio in audios_to_save {
+        let saved_path = api::save_audio(playlist, audio, app_dir.clone(), download_dir.clone()).await?;
+        saved_paths.push(saved_path);
+    }
+
+    Ok(saved_paths)
+}

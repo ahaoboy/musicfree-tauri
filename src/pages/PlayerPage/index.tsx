@@ -194,6 +194,9 @@ export const PlayerPage: FC = () => {
         <MoreActionsDropdown
           size="large"
           url={currentAudio.audio.download_url}
+          showSave={true}
+          playlistId={currentPlaylistId ?? undefined}
+          audioId={currentAudio.audio.id}
           onDelete={handleDelete}
           disabled={!currentAudio.audio.download_url && !currentPlaylistId}
         />
