@@ -157,9 +157,7 @@ pub fn get_save_filename(audio: &musicfree::Audio) -> String {
     let id = format!("{:x}", md5::compute(&audio.download_url));
     let id_prefix = &id[..6.min(id.len())];
     // Sanitize title for filesystem safety
-    let safe_title = audio
-        .title
-        .replace(['/', '\\', ':', '*', '?', '"', '<', '>', '|'], "_");
+    let safe_title = sanitize_filename::sanitize(&audio.title);
     format!(
         "{}-{}{}",
         safe_title,
@@ -179,11 +177,12 @@ pub async fn save_audio(
     target_dir: PathBuf,
 ) -> AppResult<String> {
     let filename = get_save_filename(&audio.audio);
-    let playlist_title = playlist
-        .title
-        .clone()
-        .unwrap_or_else(|| "Unknown".to_string())
-        .replace(['/', '\\', ':', '*', '?', '"', '<', '>', '|'], "_");
+    let playlist_title = sanitize_filename::sanitize(
+        playlist
+            .title
+            .as_deref()
+            .unwrap_or("Unknown")
+    );
 
     // Build target path: target_dir / Platform / playlist_title / filename
     let dest_path = target_dir

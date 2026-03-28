@@ -64,7 +64,14 @@ export const MessageProvider: React.FC<{ children: React.ReactNode }> = ({
           onClose={handleClose}
           severity={severity}
           variant="filled"
-          sx={{ width: "100%" }}
+          sx={{
+            width: "100%",
+            "& .MuiAlert-message": {
+              whiteSpace: "pre-wrap",
+              wordBreak: "break-word",
+              overflowWrap: "anywhere",
+            },
+          }}
         >
           {message}
         </Alert>

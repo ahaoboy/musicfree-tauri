@@ -141,8 +141,17 @@ export const MoreActionsDropdown: FC<MoreActionsDropdownProps> = ({
         const savedPaths = await save_audio(playlistId, audioId)
         if (savedPaths.length === 1) {
           message.success(`Saved to\n${savedPaths[0]}`)
+          writeText(savedPaths[0]).catch((e) =>
+            console.error("Failed to copy to clipboard", e),
+          )
         } else {
-          message.success(`Saved ${savedPaths.length} files to\n${savedPaths[0]}`)
+          message.success(
+            `Saved ${savedPaths.length} files to\n${savedPaths[0]}`,
+          )
+          // For multiple files, we can copy all paths separated by newlines
+          writeText(savedPaths.join("\n")).catch((e) =>
+            console.error("Failed to copy to clipboard", e),
+          )
         }
       } catch (error) {
         console.error("Failed to save audio:", error)
