@@ -1,6 +1,7 @@
 import { FC } from "react"
 import { Box, Typography, Button } from "@mui/material"
-import { ErrorOutline, Refresh, Home } from "@mui/icons-material"
+import { Refresh, Home } from "@mui/icons-material"
+import ErrorOutlineOutlinedIcon from "@mui/icons-material/ErrorOutlineOutlined"
 import { useNavigate } from "react-router-dom"
 import { ErrorBoundary } from "../ErrorBoundary"
 
@@ -26,14 +27,13 @@ const PageErrorFallback: FC<PageErrorFallbackProps> = ({ error, onReset }) => {
       }}
       className="page"
     >
-      <ErrorOutline color="error" sx={{ fontSize: 64, mb: 2 }} />
+      <ErrorOutlineOutlinedIcon color="error" sx={{ fontSize: 64, mb: 2 }} />
       <Typography variant="h5" gutterBottom>
         Page Error
       </Typography>
       <Typography
         variant="body1"
         color="text.secondary"
-        paragraph
         sx={{ mb: 4 }}
       >
         {error.message || "Failed to load this page"}
