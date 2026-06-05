@@ -3,6 +3,7 @@ use std::path::PathBuf;
 use musicfree::{Audio, Platform};
 use serde::{Deserialize, Serialize};
 
+pub const APP_NAME: &str = "musicfree";
 pub const ASSETS_DIR: &str = "assets";
 pub const AUDIOS_DIR: &str = "audios";
 pub const COVERS_DIR: &str = "covers";

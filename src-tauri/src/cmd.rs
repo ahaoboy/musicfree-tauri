@@ -1,5 +1,5 @@
 use crate::api::{self};
-use crate::core::{ASSETS_DIR, CONFIG_FILE, Config, LocalAudio, get_config_path};
+use crate::core::{APP_NAME, ASSETS_DIR, CONFIG_FILE, Config, LocalAudio, get_config_path};
 use crate::error::{AppError, AppResult};
 use chrono::Local;
 use musicfree::{Audio, Platform, Playlist};
@@ -601,8 +601,9 @@ pub async fn save_audio(
 
     let download_dir = app_handle
         .path()
-        .download_dir()
-        .map_err(|e| AppError::Unknown(e.to_string()))?;
+        .home_dir()
+        .map_err(|e| AppError::Unknown(e.to_string()))?
+        .join(APP_NAME);
 
     let audios_to_save: Vec<_> = if let Some(ref id) = audio_id {
         playlist
