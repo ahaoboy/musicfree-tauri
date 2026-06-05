@@ -1,5 +1,5 @@
 use crate::api::{self};
-use crate::core::{APP_NAME, ASSETS_DIR, CONFIG_FILE, Config, LocalAudio, get_config_path};
+use crate::core::{ASSETS_DIR, CONFIG_FILE, Config, LocalAudio, get_config_path};
 use crate::error::{AppError, AppResult};
 use chrono::Local;
 use musicfree::{Audio, Platform, Playlist};
@@ -206,11 +206,7 @@ pub async fn clear_cache(app_handle: tauri::AppHandle) -> AppResult<()> {
 pub async fn export_data(app_handle: tauri::AppHandle) -> AppResult<String> {
     let app_dir = api::app_dir(&app_handle).await?;
     let config = get_config(app_handle.clone()).await?;
-    let download_dir = app_handle
-        .path()
-        .home_dir()
-        .map_err(|e| AppError::Unknown(e.to_string()))?
-        .join(APP_NAME);
+    let download_dir = api::external_dir(&app_handle)?;
 
     // Ensure download dir exists
     if !tokio::fs::try_exists(&download_dir).await.unwrap_or(false) {
@@ -295,10 +291,7 @@ pub struct ImportResult {
 #[tauri::command]
 pub async fn import_data(app_handle: tauri::AppHandle) -> AppResult<ImportResult> {
     let app_dir = api::app_dir(&app_handle).await?;
-    let download_dir = app_handle
-        .path()
-        .download_dir()
-        .map_err(|e| AppError::Unknown(e.to_string()))?;
+    let download_dir = api::external_dir(&app_handle)?;
 
     // 1. Find latest musicfree-*.zip
     let mut latest_zip: Option<(PathBuf, std::time::SystemTime)> = None;
@@ -600,11 +593,7 @@ pub async fn save_audio(
         .find(|p| p.id.as_deref() == Some(&playlist_id))
         .ok_or_else(|| AppError::Unknown(format!("Playlist not found: {}", playlist_id)))?;
 
-    let download_dir = app_handle
-        .path()
-        .home_dir()
-        .map_err(|e| AppError::Unknown(e.to_string()))?
-        .join(APP_NAME);
+    let download_dir = api::external_dir(&app_handle)?;
 
     let audios_to_save: Vec<_> = if let Some(ref id) = audio_id {
         playlist

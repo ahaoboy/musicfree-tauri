@@ -22,6 +22,14 @@ pub async fn app_dir(app_handle: &tauri::AppHandle) -> AppResult<PathBuf> {
     Ok(app_data_dir)
 }
 
+pub fn external_dir(app_handle: &tauri::AppHandle) -> AppResult<PathBuf> {
+    Ok(app_handle
+        .path()
+        .home_dir()
+        .map_err(|e| AppError::Unknown(e.to_string()))?
+        .join(crate::core::APP_NAME))
+}
+
 async fn write<P: AsRef<Path>, C: AsRef<[u8]>>(p: P, c: C) -> std::io::Result<()> {
     let p = p.as_ref();
     if let Some(d) = p.parent()

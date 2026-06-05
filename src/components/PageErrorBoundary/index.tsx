@@ -31,11 +31,7 @@ const PageErrorFallback: FC<PageErrorFallbackProps> = ({ error, onReset }) => {
       <Typography variant="h5" gutterBottom>
         Page Error
       </Typography>
-      <Typography
-        variant="body1"
-        color="text.secondary"
-        sx={{ mb: 4 }}
-      >
+      <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
         {error.message || "Failed to load this page"}
       </Typography>
       <Box sx={{ display: "flex", gap: 2 }}>
