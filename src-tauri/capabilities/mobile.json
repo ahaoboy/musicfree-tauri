@@ -17,6 +17,14 @@
     "clipboard-manager:default",
     "clipboard-manager:allow-write-text",
     "os:default",
-    "os:allow-hostname"
+    "os:allow-hostname",
+    {
+      "identifier": "fs:scope",
+      "allow": [
+        {
+          "path": "**/*"
+        }
+      ]
+    }
   ]
 }

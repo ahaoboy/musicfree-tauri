@@ -1,9 +1,11 @@
+pub mod android;
 pub mod api;
 pub mod cmd;
 pub mod core;
 pub mod error;
 pub mod sync;
 
+use android::request_storage_permission;
 use std::path::Path;
 use std::io::SeekFrom;
 use tauri::http::{Response, StatusCode};
@@ -75,6 +77,7 @@ pub fn run() {
             cmd::get_local_yjs,
             cmd::save_local_yjs,
             cmd::save_audio,
+            request_storage_permission,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -166,7 +166,7 @@ function yDocToConfig(ydoc: Y.Doc): Config {
     if (yaudios && typeof yaudios.forEach === "function") {
       yaudios.forEach((yaudio) => {
         const audioData = yaudio.get("audio")
-        if (!audioData || !audioData.id) return
+        if (!audioData?.id) return
 
         audios.push({
           audio: audioData,

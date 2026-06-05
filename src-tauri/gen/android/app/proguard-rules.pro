@@ -19,3 +19,16 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+
+
+-keep class app.tauri.** { *; }
+-keep class tauri.** { *; }
+-keep class android.os.Environment {
+    public static boolean isExternalStorageManager();
+}
+-keep class android.content.Intent { *; }
+-keep class android.net.Uri { *; }
+-keep class com.ahaoboy.musicfree.MainActivity {
+    public boolean hasAllFilesPermission();
+    public void requestAllFilesPermission();
+}

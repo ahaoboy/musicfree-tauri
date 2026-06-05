@@ -19,33 +19,33 @@
     "icon": "tauri icon ./public/icon-android.png && cp public/icon.ico src-tauri/icons/icon.ico"
   },
   "dependencies": {
-    "@biomejs/biome": "2.4.2",
+    "@biomejs/biome": "2.4.16",
     "@emotion/react": "11.14.0",
     "@emotion/styled": "11.14.1",
-    "@fontsource/roboto": "5.2.9",
+    "@fontsource/roboto": "5.2.10",
     "@mui/icons-material": "7.3.8",
     "@mui/material": "7.3.8",
-    "@tauri-apps/api": "2.10.1",
+    "@tauri-apps/api": "2.11.0",
     "@tauri-apps/plugin-clipboard-manager": "2.3.2",
-    "@tauri-apps/plugin-fs": "2.4.5",
-    "@tauri-apps/plugin-opener": "2.5.3",
+    "@tauri-apps/plugin-fs": "2.5.1",
+    "@tauri-apps/plugin-opener": "2.5.4",
     "@tauri-apps/plugin-os": "2.3.2",
-    "lru-cache": "11.2.6",
+    "lru-cache": "11.5.1",
     "pretty-bytes": "7.1.0",
-    "react": "19.2.4",
-    "react-dom": "19.2.4",
-    "react-router": "7.13.0",
-    "react-router-dom": "7.13.0",
+    "react": "19.2.7",
+    "react-dom": "19.2.7",
+    "react-router": "7.16.0",
+    "react-router-dom": "7.16.0",
     "react-window": "2.2.7",
-    "yjs": "13.6.29",
-    "zustand": "5.0.11"
+    "yjs": "13.6.31",
+    "zustand": "5.0.14"
   },
   "devDependencies": {
-    "@tauri-apps/cli": "2.10.0",
-    "@types/react": "19.2.14",
+    "@tauri-apps/cli": "2.11.2",
+    "@types/react": "19.2.16",
     "@types/react-dom": "19.2.3",
-    "@vitejs/plugin-react": "5.1.4",
-    "typescript": "5.9.3",
-    "vite": "7.3.1"
+    "@vitejs/plugin-react": "6.0.2",
+    "typescript": "6.0.3",
+    "vite": "8.0.16"
   }
 }

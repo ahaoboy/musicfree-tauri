@@ -58,7 +58,7 @@ export const AppLayout: FC = memo(() => {
 
   // Auto sync with absolute time checking
   useEffect(() => {
-    if (!gistConfig || !gistConfig.syncInterval) return
+    if (!gistConfig?.syncInterval) return
 
     const checkAndSync = () => {
       const now = Date.now()

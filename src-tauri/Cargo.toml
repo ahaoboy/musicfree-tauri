@@ -64,10 +64,13 @@ git-version = "0.3"
 const-str = "1"
 tauri-plugin-opener = "2"
 tauri-plugin-os = "2"
-zip = "7"
+zip = "8"
 walkdir = "2"
 chrono = "0.4"
 # icu_normalizer = { version = "=2.0.1", optional = true }
+
+[target.'cfg(target_os = "android")'.dependencies]
+jni = "0.22"
 
 # FIXME: https://github.com/aws/aws-lc-rs/issues/1006
 # [patch.crates-io]
