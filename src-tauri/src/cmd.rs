@@ -208,8 +208,9 @@ pub async fn export_data(app_handle: tauri::AppHandle) -> AppResult<String> {
     let config = get_config(app_handle.clone()).await?;
     let download_dir = app_handle
         .path()
-        .download_dir()
-        .map_err(|e| AppError::Unknown(e.to_string()))?;
+        .home_dir()
+        .map_err(|e| AppError::Unknown(e.to_string()))?
+        .join(APP_NAME);
 
     // Ensure download dir exists
     if !tokio::fs::try_exists(&download_dir).await.unwrap_or(false) {
