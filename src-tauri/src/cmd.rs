@@ -7,7 +7,6 @@ use std::fs::File;
 use std::io::{Read, Write};
 use std::path::PathBuf;
 use serde::{Deserialize, Serialize};
-use tauri::Manager;
 use walkdir::WalkDir;
 use zip::write::FileOptions;
 

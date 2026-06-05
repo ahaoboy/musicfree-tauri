@@ -273,19 +273,19 @@ export const SettingsPage: FC = () => {
           fullWidth
         >
           <MenuItem value="light">
-            <Stack direction="row" spacing={1} alignItems="center">
+            <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
               <LightMode fontSize="small" />
               <Typography>Light</Typography>
             </Stack>
           </MenuItem>
           <MenuItem value="dark">
-            <Stack direction="row" spacing={1} alignItems="center">
+            <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
               <DarkMode fontSize="small" />
               <Typography>Dark</Typography>
             </Stack>
           </MenuItem>
           <MenuItem value="system">
-            <Stack direction="row" spacing={1} alignItems="center">
+            <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
               <SettingsSystemDaydream fontSize="small" />
               <Typography>System</Typography>
             </Stack>
@@ -298,8 +298,7 @@ export const SettingsPage: FC = () => {
         <Paper variant="outlined" sx={{ p: 2 }}>
           <Stack
             direction="row"
-            justifyContent="space-between"
-            alignItems="center"
+            sx={{ justifyContent: "space-between", alignItems: "center" }}
           >
             <Typography>Downloaded</Typography>
             <Typography color="text.secondary">
@@ -314,8 +313,7 @@ export const SettingsPage: FC = () => {
         <Paper variant="outlined" sx={{ p: 2 }}>
           <Stack
             direction="row"
-            justifyContent="space-between"
-            alignItems="center"
+            sx={{ justifyContent: "space-between", alignItems: "center" }}
           >
             <Typography>Version</Typography>
             <Typography color="text.secondary">
@@ -325,8 +323,7 @@ export const SettingsPage: FC = () => {
           <Divider sx={{ my: 1 }} />
           <Stack
             direction="row"
-            justifyContent="space-between"
-            alignItems="center"
+            sx={{ justifyContent: "space-between", alignItems: "center" }}
           >
             <Typography>Repository</Typography>
             <Stack direction="row" spacing={1}>
@@ -347,8 +344,7 @@ export const SettingsPage: FC = () => {
           <Divider sx={{ my: 1 }} />
           <Stack
             direction="row"
-            justifyContent="space-between"
-            alignItems="center"
+            sx={{ justifyContent: "space-between", alignItems: "center" }}
           >
             <Typography>App Directory</Typography>
             <Stack direction="row" spacing={1}>
@@ -378,8 +374,7 @@ export const SettingsPage: FC = () => {
         <Paper variant="outlined" sx={{ p: 2 }}>
           <Stack
             direction="row"
-            justifyContent="space-between"
-            alignItems="center"
+            sx={{ justifyContent: "space-between", alignItems: "center" }}
           >
             <Box>
               <Typography>Backup & Restore</Typography>
@@ -404,11 +399,10 @@ export const SettingsPage: FC = () => {
           <Divider sx={{ my: 1 }} />
           <Stack
             direction="row"
-            justifyContent="space-between"
-            alignItems="center"
+            sx={{ justifyContent: "space-between", alignItems: "center" }}
           >
             <Box>
-              <Stack direction="row" spacing={1} alignItems="center">
+              <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
                 <Typography>Clear Cache</Typography>
                 <Typography color="text.secondary" variant="body2">
                   (
@@ -431,11 +425,10 @@ export const SettingsPage: FC = () => {
           <Divider sx={{ my: 1 }} />
           <Stack
             direction="row"
-            justifyContent="space-between"
-            alignItems="center"
+            sx={{ justifyContent: "space-between", alignItems: "center" }}
           >
             <Box>
-              <Stack direction="row" spacing={1} alignItems="center">
+              <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
                 <Typography>Clear Storage</Typography>
                 <Typography color="text.secondary" variant="body2">
                   (
@@ -458,18 +451,17 @@ export const SettingsPage: FC = () => {
           <Divider sx={{ my: 1 }} />
           <Stack
             direction="row"
-            justifyContent="space-between"
-            alignItems="center"
+            sx={{ justifyContent: "space-between", alignItems: "center" }}
           >
             <Box>
-              <Stack direction="row" spacing={1} alignItems="center">
+              <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
                 <Typography>Log</Typography>
                 <Typography color="text.secondary" variant="body2">
                   ({prettyBytes(logSize)})
                 </Typography>
               </Stack>
             </Box>
-            <Stack direction="row" spacing={1} alignItems="center">
+            <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
               {CurrentPlatform === "android" ? (
                 <IconButton
                   onClick={handleCopyLog}
@@ -506,8 +498,7 @@ export const SettingsPage: FC = () => {
           <Divider sx={{ my: 1 }} />
           <Stack
             direction="row"
-            justifyContent="space-between"
-            alignItems="center"
+            sx={{ justifyContent: "space-between", alignItems: "center" }}
           >
             <Box>
               <Typography>
@@ -524,7 +515,7 @@ export const SettingsPage: FC = () => {
                 )}
               </Typography>
             </Box>
-            <Stack direction="row" spacing={1} alignItems="center">
+            <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
               <SyncIndicator />
               <IconButton
                 onClick={() => setOpenSyncDialog(true)}
@@ -693,7 +684,7 @@ const SyncDialog: FC<SyncDialogProps> = ({
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="xs">
       <DialogTitle>
-        <Stack direction="row" alignItems="center" spacing={1}>
+        <Stack direction="row" sx={{ alignItems: "center" }} spacing={1}>
           <span>GitHub</span>
           {repoUrl && (
             <IconButton

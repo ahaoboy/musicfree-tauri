@@ -497,7 +497,7 @@ export const SearchPage: FC = () => {
 
       // Status badges
       const statusBadges = (
-        <Stack direction="row" spacing={0.5} alignItems="center">
+        <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
           {downloading && (
             <CircularProgress
               size={12}

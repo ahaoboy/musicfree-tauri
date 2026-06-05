@@ -433,11 +433,6 @@ export const useTheme = () => {
                 transform: "scale(0.96)",
               },
             }),
-            containedPrimary: {
-              "&:hover": {
-                backgroundColor: mode === "light" ? "#818cf8" : "#a5b4fc",
-              },
-            },
           },
         },
         MuiCard: {

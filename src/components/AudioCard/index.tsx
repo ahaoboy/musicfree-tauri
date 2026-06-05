@@ -204,7 +204,7 @@ export const AudioCard: FC<AudioCardProps> = memo(
               overflow: "hidden",
             }}
           >
-            <Typography variant="body1" fontWeight="bold" noWrap>
+            <Typography variant="body1" sx={{ fontWeight: "bold" }} noWrap>
               {title}
             </Typography>
 

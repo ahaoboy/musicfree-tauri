@@ -120,9 +120,9 @@ export const PlayerPage: FC = () => {
       >
         <Stack
           direction="row"
-          alignItems="center"
-          justifyContent="space-between"
           sx={{
+            alignItems: "center",
+            justifyContent: "space-between",
             p: 1.5,
             pt: "max(env(safe-area-inset-top), 12px)",
           }}
@@ -164,13 +164,13 @@ export const PlayerPage: FC = () => {
       {/* Header */}
       <Stack
         direction="row"
-        alignItems="center"
-        justifyContent="space-between"
-        spacing={1}
         sx={{
+          alignItems: "center",
+          justifyContent: "space-between",
           p: 1.5,
           pt: "max(env(safe-area-inset-top), 12px)",
         }}
+        spacing={1}
       >
         <BackButton size="large" />
         <Box
@@ -203,7 +203,9 @@ export const PlayerPage: FC = () => {
       </Stack>
 
       {/* Cover */}
-      <Stack flex={1} alignItems="center" justifyContent="center" sx={{ p: 3 }}>
+      <Stack
+        sx={{ flex: 1, alignItems: "center", justifyContent: "center", p: 3 }}
+      >
         <Avatar
           src={coverUrl || DEFAULT_COVER_URL}
           variant="rounded"
@@ -220,9 +222,13 @@ export const PlayerPage: FC = () => {
         </Avatar>
 
         <Stack
-          alignItems="center"
+          sx={{
+            alignItems: "center",
+            width: "100%",
+            px: 3,
+            textAlign: "center",
+          }}
           spacing={1}
-          sx={{ width: "100%", px: 3, textAlign: "center" }}
         >
           <Typography
             variant="h5"
@@ -238,7 +244,7 @@ export const PlayerPage: FC = () => {
           >
             {currentAudio.audio.title}
           </Typography>
-          <Stack direction="row" alignItems="center" spacing={1}>
+          <Stack direction="row" sx={{ alignItems: "center" }} spacing={1}>
             <PlatformIcon platform={currentAudio.audio.platform} size={36} />
           </Stack>
         </Stack>
@@ -250,7 +256,7 @@ export const PlayerPage: FC = () => {
         spacing={2}
       >
         {/* Progress */}
-        <Stack direction="row" alignItems="center" spacing={2}>
+        <Stack direction="row" sx={{ alignItems: "center" }} spacing={2}>
           <Typography
             variant="caption"
             color="text.secondary"

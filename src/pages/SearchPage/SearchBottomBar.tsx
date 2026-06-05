@@ -55,7 +55,7 @@ export const SearchBottomBar: FC<SearchBottomBarProps> = ({
         subtitle={audioCount.toString()}
         active={false}
         actions={
-          <Stack direction="row" alignItems="center" spacing={1}>
+          <Stack direction="row" sx={{ alignItems: "center" }} spacing={1}>
             <Checkbox
               checked={isAllSelected}
               indeterminate={isSomeSelected}

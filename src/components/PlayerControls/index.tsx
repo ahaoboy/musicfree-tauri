@@ -68,7 +68,7 @@ export const PlayerControls: FC<PlayerControlsProps> = ({
     return (
       <Stack
         direction="row"
-        alignItems="center"
+        sx={{ alignItems: "center" }}
         spacing={gap}
         className={className}
       >
@@ -95,11 +95,9 @@ export const PlayerControls: FC<PlayerControlsProps> = ({
   return (
     <Stack
       direction="row"
-      alignItems="center"
-      justifyContent={align}
+      sx={{ alignItems: "center", justifyContent: align, width: "100%" }}
       spacing={gap}
       className={className}
-      sx={{ width: "100%" }}
     >
       {showPlayMode && (
         <PlayModeButton
