@@ -1,5 +1,5 @@
 import { createTheme, useColorScheme, Theme, SxProps } from "@mui/material"
-import { useMemo } from "react"
+import { useMemo, useRef } from "react"
 
 // Types for theme customization
 declare module "@mui/material/styles" {
@@ -344,7 +344,20 @@ const darkPalette = {
 // ─── Theme Hook ──────────────────────────────────────────────────────────────
 
 export const useTheme = () => {
-  const { mode = "system", setMode } = useColorScheme()
+  const colorScheme = useColorScheme()
+  // On Android with Activity keep-alive, useColorScheme can briefly return
+  // undefined during rapid show/hide cycles. Cache the last known good mode.
+  const lastMode = useRef<"light" | "dark" | "system">("system")
+
+  const rawMode = colorScheme?.mode
+  const mode: "light" | "dark" | "system" =
+    rawMode === "light" || rawMode === "dark" || rawMode === "system"
+      ? rawMode
+      : lastMode.current
+  lastMode.current = mode
+
+  const setMode = colorScheme?.setMode ?? (() => {})
+
   const theme = useMemo(() => {
     return createTheme({
       colorSchemes: {

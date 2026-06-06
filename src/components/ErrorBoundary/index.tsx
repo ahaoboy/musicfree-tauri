@@ -3,9 +3,14 @@ import { Box, Typography, Container, Paper } from "@mui/material"
 import ErrorOutlineOutlinedIcon from "@mui/icons-material/ErrorOutlineOutlined"
 import { Button } from "@mui/material"
 
+interface FallbackProps {
+  error: Error | null
+  onReset: () => void
+}
+
 interface Props {
   children: ReactNode
-  fallback?: ReactNode
+  fallback?: ReactNode | ((props: FallbackProps) => ReactNode)
   onReset?: () => void
 }
 
@@ -39,6 +44,12 @@ export class ErrorBoundary extends Component<Props, State> {
   render() {
     if (this.state.hasError) {
       if (this.props.fallback) {
+        if (typeof this.props.fallback === "function") {
+          return this.props.fallback({
+            error: this.state.error,
+            onReset: this.handleReset,
+          })
+        }
         return this.props.fallback
       }
 

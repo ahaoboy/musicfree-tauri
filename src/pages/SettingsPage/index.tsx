@@ -62,6 +62,10 @@ const REPO_URL = "https://github.com/ahaoboy/musicfree-tauri"
 // Settings page - app configuration
 export const SettingsPage: FC = () => {
   const { mode, setMode } = useTheme()
+  // Guard against invalid mode during rapid Activity show/hide on Android
+  const safeMode: string = ["light", "dark", "system"].includes(mode)
+    ? mode
+    : "system"
   // const setThemeMode = useAppStore((state) => state.setThemeMode)
   const loadConfig = useAppStore((state) => state.loadConfig)
 
@@ -268,8 +272,10 @@ export const SettingsPage: FC = () => {
       {/* Theme Section */}
       <Stack spacing={2}>
         <Select
-          value={mode}
-          onChange={(e) => setMode(e.target.value)}
+          value={safeMode}
+          onChange={(e) =>
+            setMode(e.target.value as "light" | "dark" | "system")
+          }
           fullWidth
         >
           <MenuItem value="light">

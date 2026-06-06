@@ -1,17 +1,21 @@
-import { FC } from "react"
-import { Box, Typography, Button } from "@mui/material"
-import { Refresh, Home } from "@mui/icons-material"
+import { FC, useState } from "react"
+import { Box, Typography, Button, Collapse } from "@mui/material"
+import { Refresh, Home, ExpandMore, ExpandLess } from "@mui/icons-material"
 import ErrorOutlineOutlinedIcon from "@mui/icons-material/ErrorOutlineOutlined"
 import { useNavigate } from "react-router-dom"
 import { ErrorBoundary } from "../ErrorBoundary"
 
 interface PageErrorFallbackProps {
-  error: Error
+  error: Error | null
   onReset: () => void
 }
 
 const PageErrorFallback: FC<PageErrorFallbackProps> = ({ error, onReset }) => {
   const navigate = useNavigate()
+  const [showStack, setShowStack] = useState(false)
+
+  const errorMessage = error?.message || "Failed to load this page"
+  const errorStack = error?.stack
 
   return (
     <Box
@@ -31,9 +35,47 @@ const PageErrorFallback: FC<PageErrorFallbackProps> = ({ error, onReset }) => {
       <Typography variant="h5" gutterBottom>
         Page Error
       </Typography>
-      <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
-        {error.message || "Failed to load this page"}
+      <Typography
+        variant="body1"
+        color="text.secondary"
+        sx={{ mb: 1, maxWidth: 480 }}
+      >
+        {errorMessage}
       </Typography>
+
+      {errorStack && (
+        <>
+          <Button
+            size="small"
+            onClick={() => setShowStack(!showStack)}
+            endIcon={showStack ? <ExpandLess /> : <ExpandMore />}
+            sx={{ mb: 1, textTransform: "none" }}
+          >
+            {showStack ? "Hide" : "Show"} Details
+          </Button>
+          <Collapse in={showStack} sx={{ width: "100%", mb: 3 }}>
+            <Box
+              component="pre"
+              sx={{
+                p: 2,
+                fontSize: 11,
+                fontFamily: "monospace",
+                bgcolor: "action.hover",
+                borderRadius: 1,
+                overflow: "auto",
+                maxHeight: 200,
+                maxWidth: 480,
+                textAlign: "left",
+                whiteSpace: "pre-wrap",
+                wordBreak: "break-all",
+              }}
+            >
+              {errorStack}
+            </Box>
+          </Collapse>
+        </>
+      )}
+
       <Box sx={{ display: "flex", gap: 2 }}>
         <Button
           key="retry"
@@ -71,12 +113,12 @@ export const PageErrorBoundary: FC<PageErrorBoundaryProps> = ({
 }) => {
   return (
     <ErrorBoundary
-      fallback={
+      fallback={({ error, onReset: handleReset }) => (
         <PageErrorFallback
-          error={new Error("Page failed to load")}
-          onReset={onReset || (() => window.location.reload())}
+          error={error}
+          onReset={onReset || handleReset || (() => window.location.reload())}
         />
-      }
+      )}
       onReset={onReset}
     >
       {children}
