@@ -141,19 +141,19 @@ export const AppLayout: FC = memo(() => {
   useEffect(() => {
     const restoreScroll = () => {
       const el = document.querySelector(".page")
-      if (el) {
-        const saved = scrollPositions.current.get(location.pathname)
-        if (saved !== undefined) {
-          isRestoringScroll.current = true
-          requestAnimationFrame(() => {
-            el.scrollTop = saved
-            setTimeout(() => {
-              isRestoringScroll.current = false
-            }, 100)
-          })
-        } else {
-          el.scrollTop = 0
-        }
+      if (!el) return
+
+      const saved = scrollPositions.current.get(location.pathname)
+      if (saved !== undefined) {
+        isRestoringScroll.current = true
+        requestAnimationFrame(() => {
+          el.scrollTop = saved
+          setTimeout(() => {
+            isRestoringScroll.current = false
+          }, 100)
+        })
+      } else {
+        el.scrollTop = 0
       }
     }
     // Wait for next tick to ensure component is updated

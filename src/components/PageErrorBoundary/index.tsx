@@ -1,9 +1,16 @@
-import { FC, useState } from "react"
+import { FC, useState, useCallback } from "react"
 import { Box, Typography, Button, Collapse } from "@mui/material"
-import { Refresh, Home, ExpandMore, ExpandLess } from "@mui/icons-material"
+import {
+  Refresh,
+  Home,
+  ExpandMore,
+  ExpandLess,
+  ContentCopy,
+} from "@mui/icons-material"
 import ErrorOutlineOutlinedIcon from "@mui/icons-material/ErrorOutlineOutlined"
 import { useNavigate } from "react-router-dom"
 import { ErrorBoundary } from "../ErrorBoundary"
+import { copyToClipboard } from "../../utils"
 
 interface PageErrorFallbackProps {
   error: Error | null
@@ -16,6 +23,11 @@ const PageErrorFallback: FC<PageErrorFallbackProps> = ({ error, onReset }) => {
 
   const errorMessage = error?.message || "Failed to load this page"
   const errorStack = error?.stack
+
+  const handleCopyError = useCallback(async () => {
+    const text = [errorMessage, errorStack].filter(Boolean).join("\n\n")
+    await copyToClipboard(text)
+  }, [errorMessage, errorStack])
 
   return (
     <Box
@@ -78,7 +90,13 @@ const PageErrorFallback: FC<PageErrorFallbackProps> = ({ error, onReset }) => {
 
       <Box sx={{ display: "flex", gap: 2 }}>
         <Button
-          key="retry"
+          variant="outlined"
+          startIcon={<ContentCopy />}
+          onClick={handleCopyError}
+        >
+          Copy
+        </Button>
+        <Button
           variant="contained"
           color="primary"
           startIcon={<Refresh />}
@@ -87,7 +105,6 @@ const PageErrorFallback: FC<PageErrorFallbackProps> = ({ error, onReset }) => {
           Retry
         </Button>
         <Button
-          key="home"
           variant="outlined"
           startIcon={<Home />}
           onClick={() => navigate("/playlists")}

@@ -1,8 +1,8 @@
 import { FC, useState, useCallback, ReactNode } from "react"
 import { Snackbar, Alert, Button } from "@mui/material"
 import { ContentCopy, Check } from "@mui/icons-material"
-import { writeText } from "@tauri-apps/plugin-clipboard-manager"
 import { useAdaptiveSize, AdaptiveSize } from "../../hooks"
+import { copyToClipboard } from "../../utils"
 
 interface CopyButtonProps {
   /** Text to copy to clipboard */
@@ -65,7 +65,7 @@ export const CopyButton: FC<CopyButtonProps> = ({
     if (!text || disabled) return
 
     try {
-      await writeText(text)
+      await copyToClipboard(text)
       setCopied(true)
       setSnackbarMessage(successMessage)
       setSnackbarSeverity("success")

@@ -8,10 +8,10 @@ import {
 } from "@mui/material"
 import { MoreVert, ContentCopy, Delete, Source } from "@mui/icons-material"
 import SaveIcon from "@mui/icons-material/Save"
-import { writeText } from "@tauri-apps/plugin-clipboard-manager"
 import { openUrl, revealItemInDir } from "@tauri-apps/plugin-opener"
 import { join } from "@tauri-apps/api/path"
 import { CurrentPlatform, save_audio } from "../../api"
+import { copyToClipboard } from "../../utils"
 import { useAdaptiveSize, AdaptiveSize } from "../../hooks"
 import { useAppStore } from "../../store"
 import { useMessage } from "../../contexts/MessageContext"
@@ -73,7 +73,7 @@ export const MoreActionsDropdown: FC<MoreActionsDropdownProps> = ({
       if (!url) return
 
       try {
-        await writeText(url)
+        await copyToClipboard(url)
         message.success("URL copied to clipboard")
       } catch (error) {
         console.error("Failed to copy URL:", error)
@@ -141,7 +141,7 @@ export const MoreActionsDropdown: FC<MoreActionsDropdownProps> = ({
         const savedPaths = await save_audio(playlistId, audioId)
         if (savedPaths.length === 1) {
           message.success(`Saved to\n${savedPaths[0]}`)
-          writeText(savedPaths[0]).catch((e) =>
+          copyToClipboard(savedPaths[0]).catch((e) =>
             console.error("Failed to copy to clipboard", e),
           )
         } else {
@@ -149,7 +149,7 @@ export const MoreActionsDropdown: FC<MoreActionsDropdownProps> = ({
             `Saved ${savedPaths.length} files to\n${savedPaths[0]}`,
           )
           // For multiple files, we can copy all paths separated by newlines
-          writeText(savedPaths.join("\n")).catch((e) =>
+          copyToClipboard(savedPaths.join("\n")).catch((e) =>
             console.error("Failed to copy to clipboard", e),
           )
         }

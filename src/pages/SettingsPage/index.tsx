@@ -56,6 +56,7 @@ import { CopyButton, SyncIndicator } from "../../components"
 import prettyBytes from "pretty-bytes"
 import { useTheme } from "../../hooks/useTheme"
 import { setSaveToFile, getSaveToFile } from "../../utils/logger"
+import { copyToClipboard } from "../../utils"
 
 const REPO_URL = "https://github.com/ahaoboy/musicfree-tauri"
 
@@ -251,8 +252,7 @@ export const SettingsPage: FC = () => {
         message.warning("Log file is empty")
         return
       }
-      const { writeText } = await import("@tauri-apps/plugin-clipboard-manager")
-      await writeText(content)
+      await copyToClipboard(content)
       message.success("Log content copied to clipboard")
     } catch (e) {
       console.error(e)
