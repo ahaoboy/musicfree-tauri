@@ -11,29 +11,41 @@ import "@fontsource/roboto/500.css"
 import "@fontsource/roboto/700.css"
 import { is_android } from "./api"
 import { invoke } from "@tauri-apps/api/core"
+import { useMessage } from "./contexts/MessageContext"
 
-const App: FC = () => {
-  const { theme } = useTheme()
+/** Inner component that can use context providers for app initialization */
+const AppInitializer: FC = () => {
+  const message = useMessage()
 
-  // Request Android storage permission on app startup (non-blocking)
   useEffect(() => {
     if (is_android()) {
       invoke<boolean>("request_storage_permission")
         .then((granted) => {
-          console.log("Storage permission granted:", granted)
+          if (!granted) {
+            message.warning(
+              "Storage permission denied. Some features may not work correctly.",
+              5000,
+            )
+          }
         })
         .catch((err) => {
-          console.error("Failed to request storage permission:", err)
+          message.error(`Storage permission request failed: ${String(err)}`, 5000)
         })
     }
-  }, [])
+  }, [message])
+
+  return <RouterProvider router={router} />
+}
+
+const App: FC = () => {
+  const { theme } = useTheme()
 
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <MessageProvider>
         <ConfirmProvider>
-          <RouterProvider router={router} />
+          <AppInitializer />
         </ConfirmProvider>
       </MessageProvider>
     </ThemeProvider>

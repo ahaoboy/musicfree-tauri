@@ -1,4 +1,5 @@
 import { create } from "zustand"
+import { useMemo } from "react"
 import { LocalAudio, LocalPlaylist, FAVORITE_PLAYLIST_ID, AUDIO_PLAYLIST_ID } from "../api"
 
 // Import slices
@@ -60,19 +61,22 @@ export const useUserPlaylists = (): LocalPlaylist[] => {
 // Get playlists for PlaylistsPage (FAVORITE + user playlists)
 export const usePlaylistsPageData = (): LocalPlaylist[] => {
   const playlists = useAppStore((state) => state.config.playlists)
-  const filtered = playlists.filter((p) => p.id !== AUDIO_PLAYLIST_ID)
-  // Filter out empty FAVORITE playlist
-  const withFavorites = filtered.filter((p) => p.id !== FAVORITE_PLAYLIST_ID || p.audios.length > 0)
 
-  // Always place FAVORITE_PLAYLIST_ID first
-  const favoriteIndex = withFavorites.findIndex((p) => p.id === FAVORITE_PLAYLIST_ID)
-  if (favoriteIndex > 0) {
-    const favorite = withFavorites[favoriteIndex]
-    withFavorites.splice(favoriteIndex, 1)
-    withFavorites.unshift(favorite)
-  }
+  return useMemo(() => {
+    const filtered = playlists.filter((p) => p.id !== AUDIO_PLAYLIST_ID)
+    // Filter out empty FAVORITE playlist
+    const withFavorites = filtered.filter(
+      (p) => p.id !== FAVORITE_PLAYLIST_ID || p.audios.length > 0,
+    )
 
-  return withFavorites
+    // Always place FAVORITE_PLAYLIST_ID first (non-mutating)
+    const favorite = withFavorites.find((p) => p.id === FAVORITE_PLAYLIST_ID)
+    if (favorite && withFavorites.indexOf(favorite) > 0) {
+      return [favorite, ...withFavorites.filter((p) => p.id !== FAVORITE_PLAYLIST_ID)]
+    }
+
+    return withFavorites
+  }, [playlists])
 }
 
 export const useCurrentAudio = () => useAppStore((state) => state.currentAudio)

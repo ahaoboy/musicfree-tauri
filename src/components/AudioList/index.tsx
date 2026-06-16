@@ -1,7 +1,13 @@
-import { ReactElement, useRef, CSSProperties, useEffect, memo } from "react"
+import { ReactElement, useRef, CSSProperties, useEffect, useCallback } from "react"
 import { List, ListImperativeAPI } from "react-window"
 import { Box, SxProps, Theme } from "@mui/material"
 import { useTheme } from "../../hooks/useTheme"
+
+interface RowData<T> {
+  items: T[]
+  renderItem: (item: T, index: number) => ReactElement
+  getItemId: (item: T) => string
+}
 
 interface AudioListProps<T = unknown> {
   /**
@@ -40,35 +46,6 @@ interface AudioListProps<T = unknown> {
   style?: CSSProperties
 }
 
-// Row component for react-window, moved outside to prevent re-creation on every render
-const RowComponent = memo(({ index, style, items, renderItem, getItemId, ariaAttributes }: any) => {
-  const item = items?.[index]
-
-  if (!item) return null
-
-  const itemId = getItemId(item)
-
-  return (
-    <Box
-      style={{
-        ...style,
-        padding: "4px 8px",
-        boxSizing: "border-box",
-      }}
-      data-item-id={itemId}
-      {...ariaAttributes}
-    >
-      {renderItem(item, index)}
-    </Box>
-  )
-})
-
-RowComponent.displayName = "RowComponent"
-
-/**
- * Virtual audio list component with highlight and auto-scroll functionality
- * Optimized for performance: uses react-window and stable row components.
- */
 export function AudioList<T>({
   items,
   renderItem,
@@ -81,6 +58,34 @@ export function AudioList<T>({
   const { theme } = useTheme()
   const listRef = useRef<ListImperativeAPI>(null)
   const finalItemHeight = itemHeight ?? theme.custom.audioItemHeight
+
+  // Row render function for react-window v2 (must be a plain function, not a component)
+  // react-window v2 passes `{ index, style, ariaAttributes, ...rowProps }` to this function
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- react-window passes dynamic props
+  const rowComponent = useCallback(
+    ({ index, style, ariaAttributes, items, renderItem, getItemId }: any) => {
+      const item = items?.[index]
+
+      if (!item) return null
+
+      const itemId = getItemId(item)
+
+      return (
+        <Box
+          style={{
+            ...style,
+            padding: "4px 8px",
+            boxSizing: "border-box",
+          }}
+          data-item-id={itemId}
+          {...ariaAttributes}
+        >
+          {renderItem(item, index)}
+        </Box>
+      )
+    },
+    [],
+  )
 
   // Scroll to highlighted item when highlight changes
   useEffect(() => {
@@ -110,12 +115,11 @@ export function AudioList<T>({
     }
   }, [highlightId, items, getItemId])
 
-  // Row props for the list rows
-  const rowProps = {
+  // Row data passed via rowProps (react-window v2 API)
+  const rowData: RowData<T> = {
     items,
     renderItem,
     getItemId,
-    highlightId,
   }
 
   return (
@@ -131,16 +135,16 @@ export function AudioList<T>({
     >
       <List
         listRef={listRef}
-        rowComponent={RowComponent as any}
+        rowComponent={rowComponent}
         rowCount={items.length}
-        rowHeight={finalItemHeight as any}
-        rowProps={rowProps as any}
+        rowHeight={finalItemHeight}
+        rowProps={rowData as unknown as Record<string, unknown>}
         overscanCount={6}
         style={{
           height: "100%",
           width: "100%",
           overflowX: "hidden",
-          overflowY: "overlay", // WebKit: scrollbar overlays content, doesn't consume width
+          overflowY: "overlay",
         }}
       />
     </Box>

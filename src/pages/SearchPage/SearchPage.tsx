@@ -11,19 +11,11 @@ import Clear from "@mui/icons-material/Clear"
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward"
 
 import { SearchBottomBar } from "./SearchBottomBar"
-import {
-  LocalPlaylist,
-  AUDIO_PLAYLIST_ID,
-  download_cover,
-  LocalAudio,
-  Audio,
-  Playlist,
-} from "../../api"
+import { useSearchLogic } from "./useSearchLogic"
+import { AUDIO_PLAYLIST_ID, Audio } from "../../api"
 
 import { useAppStore } from "../../store"
-import logger from "../../utils/logger"
-
-const log = logger.search
+import { useShallow } from "zustand/react/shallow"
 import { AudioCard, AudioList } from "../../components"
 import { useAdaptiveSize } from "../../hooks"
 import { isLongDuration } from "../../utils/audio"
@@ -58,38 +50,48 @@ export const SearchPage: FC = () => {
   const { buttonSize, iconSize, muiSize } = useAdaptiveSize("medium")
   const iconStyle = { fontSize: iconSize }
 
-  // Store State
-  const searchText = useAppStore((state) => state.searchText)
-  const playlist = useAppStore((state) => state.searchPlaylist)
-  const searching = useAppStore((state) => state.searchSearching)
-  const playlistCoverUrl = useAppStore((state) => state.searchPlaylistCoverUrl)
-
-  const downloadingIds = useAppStore((state) => state.searchDownloadingIds)
-  const downloadedIds = useAppStore((state) => state.searchDownloadedIds)
-  const failedIds = useAppStore((state) => state.searchFailedIds)
-  const skippedIds = useAppStore((state) => state.searchSkippedIds)
-  const downloadingAll = useAppStore((state) => state.searchDownloadingAll)
-  const downloadedAudios = useAppStore((state) => state.searchDownloadedAudios)
-  const selectedIds = useAppStore((state) => state.searchSelectedIds)
-
-  // Store Actions
-  const setSearchText = useAppStore((state) => state.setSearchText)
-  const search = useAppStore((state) => state.search)
-  const clearSearchRuntimeData = useAppStore((state) => state.clearSearchRuntimeData)
-  const toggleSelect = useAppStore((state) => state.toggleSearchSelect)
-  const toggleSelectAll = useAppStore((state) => state.toggleSearchSelectAll)
-  const clearSelection = useAppStore((state) => state.clearSearchSelection)
-
-  const startDownload = useAppStore((state) => state.startDownload)
-  const abortDownload = useAppStore((state) => state.abortDownload)
-  const downloadMultiple = useAppStore((state) => state.downloadMultiple)
-  const clearSearchFailedAndSkippedIds = useAppStore(
-    (state) => state.clearSearchFailedAndSkippedIds,
+  // Store State & Actions — merged into single subscription to avoid unnecessary re-renders
+  const {
+    searchText,
+    playlist,
+    searching,
+    playlistCoverUrl,
+    downloadingIds,
+    downloadedIds,
+    failedIds,
+    skippedIds,
+    downloadingAll,
+    selectedIds,
+    setSearchText,
+    search,
+    clearSearchRuntimeData,
+    toggleSelect,
+    toggleSelectAll,
+    abortDownload,
+    clearSearchFailedAndSkippedIds,
+    configPlaylists,
+  } = useAppStore(
+    useShallow((state) => ({
+      searchText: state.searchText,
+      playlist: state.searchPlaylist,
+      searching: state.searchSearching,
+      playlistCoverUrl: state.searchPlaylistCoverUrl,
+      downloadingIds: state.searchDownloadingIds,
+      downloadedIds: state.searchDownloadedIds,
+      failedIds: state.searchFailedIds,
+      skippedIds: state.searchSkippedIds,
+      downloadingAll: state.searchDownloadingAll,
+      selectedIds: state.searchSelectedIds,
+      setSearchText: state.setSearchText,
+      search: state.search,
+      clearSearchRuntimeData: state.clearSearchRuntimeData,
+      toggleSelect: state.toggleSearchSelect,
+      toggleSelectAll: state.toggleSearchSelectAll,
+      abortDownload: state.abortDownload,
+      clearSearchFailedAndSkippedIds: state.clearSearchFailedAndSkippedIds,
+      configPlaylists: state.config.playlists,
+    })),
   )
-
-  const addAudiosToConfig = useAppStore((state) => state.addAudiosToConfig)
-  const addPlaylistToConfig = useAppStore((state) => state.addPlaylistToConfig)
-  const configPlaylists = useAppStore((state) => state.config.playlists)
 
   // Clear on unmount
   useEffect(() => {
@@ -140,6 +142,9 @@ export const SearchPage: FC = () => {
     return audioPlaylist?.audios || []
   }, [configPlaylists])
 
+  // Extracted search & download logic hook
+  const { handleDownloadSingle, handleDownloadAll } = useSearchLogic()
+
   // Check if audio exists in CONFIG (Library)
   const checkInLibrary = useCallback(
     (audioId: string): boolean => {
@@ -168,20 +173,6 @@ export const SearchPage: FC = () => {
   )
 
   const getAudioId = useCallback((audio: Audio) => audio.id, [])
-
-  const handleDownloadSingle = useCallback(
-    async (audioId: string) => {
-      if (!playlist) return
-      const audio = playlist.audios.find((a) => a.id === audioId)
-      if (!audio) return
-
-      const localAudio = await startDownload(audio)
-      if (localAudio) {
-        await addAudiosToConfig([localAudio])
-      }
-    },
-    [playlist, startDownload, addAudiosToConfig],
-  )
 
   // Get long pending audios among selected (duration > 30m and not in library/downloaded)
   const longPendingSelectedIds = useMemo(() => {
@@ -223,168 +214,6 @@ export const SearchPage: FC = () => {
     toggleSelect,
     clearSearchFailedAndSkippedIds,
   ])
-
-  const handleDownloadAll = useCallback(async () => {
-    if (!playlist || selectedIds.size === 0) return
-
-    log.info("Starting download/add process...")
-    log.info(`Selected IDs: ${selectedIds.size}`)
-
-    const selectedAudios = playlist.audios.filter((a) => selectedIds.has(a.id))
-
-    // Determine mode
-    const selectedFailedIds = Array.from(selectedIds).filter((id) => failedIds.has(id))
-    const selectedSkippedIds = Array.from(selectedIds).filter((id) => skippedIds.has(id))
-    const selectedPendingIds = Array.from(selectedIds).filter(
-      (id) => !downloadedIds.has(id) && !failedIds.has(id) && !skippedIds.has(id),
-    )
-
-    const isRetryMode =
-      (selectedFailedIds.length > 0 || selectedSkippedIds.length > 0) &&
-      selectedPendingIds.length === 0
-    const isAddMode =
-      selectedPendingIds.length === 0 &&
-      selectedFailedIds.length === 0 &&
-      selectedSkippedIds.length === 0
-
-    log.info(`Mode: ${isRetryMode ? "Retry" : isAddMode ? "Add" : "Download"}`)
-    log.info(
-      `Pending: ${selectedPendingIds.length}, Failed: ${selectedFailedIds.length}, Skipped: ${selectedSkippedIds.length}`,
-    )
-
-    // Collect existing audios for "Add" mode
-    const existingAudios: LocalAudio[] = []
-    if (isAddMode) {
-      log.info("Add mode: collecting existing audios...")
-      for (const id of selectedIds) {
-        if (downloadedAudios.has(id)) {
-          const audio = downloadedAudios.get(id)!
-          existingAudios.push(audio)
-          log.info(`Found in downloadedAudios: ${audio.audio.title}`)
-        } else {
-          const cfg = configAudios.find((a) => a.audio.id === id)
-          if (cfg) {
-            existingAudios.push(cfg)
-            log.info(`Found in config: ${cfg.audio.title}`)
-          }
-        }
-      }
-      log.info(`Total existing audios: ${existingAudios.length}`)
-    }
-
-    const knownExisting = configAudios.filter((a) => selectedIds.has(a.audio.id))
-
-    if (isAddMode) {
-      const result = {
-        downloadedAudios: [],
-        existingAudios,
-      }
-      await processDownloadResult(result, playlist, isAddMode)
-    } else {
-      const result = await downloadMultiple(selectedAudios, knownExisting, isRetryMode)
-
-      if (result.failedCount === 0) {
-        await processDownloadResult(result, playlist, isAddMode)
-      }
-    }
-  }, [
-    playlist,
-    selectedIds,
-    failedIds,
-    skippedIds,
-    downloadedIds,
-    downloadedAudios,
-    configAudios,
-    downloadMultiple,
-  ])
-
-  const processDownloadResult = async (
-    result: { downloadedAudios: LocalAudio[]; existingAudios: LocalAudio[] },
-    currentPlaylist: Playlist,
-    isAddMode: boolean,
-  ) => {
-    log.info("Processing download result...")
-    log.info(
-      `Downloaded: ${result.downloadedAudios.length}, Existing: ${result.existingAudios.length}`,
-    )
-
-    const allAudios = [...result.downloadedAudios, ...result.existingAudios]
-    const isPlaylist = currentPlaylist.audios.length > 1
-
-    log.info(`Is playlist: ${isPlaylist}, Total audios: ${allAudios.length}`)
-
-    if (isPlaylist && allAudios.length > 0) {
-      log.info("Processing as playlist...")
-      let coverPath: string | null = null
-      if (currentPlaylist.cover) {
-        try {
-          coverPath = await download_cover(currentPlaylist.cover, currentPlaylist.platform)
-        } catch (e) {
-          log.error("Failed to download playlist cover:", e)
-        }
-      } else {
-        const first = result.downloadedAudios[0] || result.existingAudios[0]
-        if (first?.audio.cover) {
-          try {
-            coverPath = await download_cover(first.audio.cover, first.audio.platform)
-          } catch (e) {
-            log.error("download_cover failed", e)
-          }
-        }
-      }
-
-      const audioMap = new Map(allAudios.map((a) => [a.audio.id, a]))
-      const finalAudios = currentPlaylist.audios
-        .map((a: Audio) => audioMap.get(a.id))
-        .filter(Boolean) as LocalAudio[]
-
-      const localPlaylist: LocalPlaylist = {
-        id: currentPlaylist.id || currentPlaylist.title || new Date().toISOString(),
-        title: currentPlaylist.title,
-        cover_path: coverPath,
-        cover: currentPlaylist.cover,
-        audios: finalAudios,
-        platform: currentPlaylist.platform,
-        download_url: currentPlaylist.download_url,
-      }
-
-      log.info(`Adding playlist to config: ${localPlaylist.title}`)
-      await addPlaylistToConfig(localPlaylist)
-      clearSelection()
-      navigate(`/playlists?highlight=${encodeURIComponent(localPlaylist.id!)}`)
-    } else if (!isPlaylist && allAudios.length > 0) {
-      log.info("Processing as single audio...")
-
-      // In Add mode, we need to add existing audios to config if they're not already there
-      if (isAddMode && result.existingAudios.length > 0) {
-        log.info("Add mode: checking if audios need to be added to config...")
-        const audiosToAdd: LocalAudio[] = []
-
-        for (const audio of result.existingAudios) {
-          const inConfig = configAudios.some((a) => a.audio.id === audio.audio.id)
-          if (!inConfig) {
-            log.info(`Audio not in config, will add: ${audio.audio.title}`)
-            audiosToAdd.push(audio)
-          } else {
-            log.info(`Audio already in config: ${audio.audio.title}`)
-          }
-        }
-
-        if (audiosToAdd.length > 0) {
-          log.info(`Adding ${audiosToAdd.length} audios to config`)
-          await addAudiosToConfig(audiosToAdd)
-        }
-      } else if (result.downloadedAudios.length > 0) {
-        log.info(`Adding ${result.downloadedAudios.length} downloaded audios to config`)
-        await addAudiosToConfig(result.downloadedAudios)
-      }
-
-      clearSelection()
-      navigate(`/music?highlight=${encodeURIComponent(allAudios[0].audio.id)}`)
-    }
-
-    log.info("Process complete")
-  }
 
   // Selection helpers
   const isAllSelected = useMemo(() => {

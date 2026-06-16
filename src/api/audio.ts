@@ -88,10 +88,13 @@ function audioBufferToWav(buffer: AudioBuffer): Blob {
 
 export async function getWavUrl(videoUrl: string) {
   const audioContext = new AudioContext()
-  const response = await fetch(videoUrl)
-  const arrayBuffer = await response.arrayBuffer()
-  const audioBuffer = await audioContext.decodeAudioData(arrayBuffer)
-  const blob = audioBufferToWav(audioBuffer)
-  const assetUrl = URL.createObjectURL(blob)
-  return assetUrl
+  try {
+    const response = await fetch(videoUrl)
+    const arrayBuffer = await response.arrayBuffer()
+    const audioBuffer = await audioContext.decodeAudioData(arrayBuffer)
+    const blob = audioBufferToWav(audioBuffer)
+    return URL.createObjectURL(blob)
+  } finally {
+    audioContext.close()
+  }
 }

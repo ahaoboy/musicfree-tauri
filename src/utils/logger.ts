@@ -34,13 +34,13 @@ class Logger {
     this.saveToFile = options.saveToFile ?? false
   }
 
-  private formatMessage(_level: LogLevel, message: string, ..._args: any[]): string {
+  private formatMessage(_level: LogLevel, message: string, ..._args: unknown[]): string {
     const timestamp = new Date().toISOString().split("T")[1].split(".")[0]
     const prefix = this.prefix ? `[${this.prefix}]` : ""
     return `${timestamp} ${prefix} ${message}`
   }
 
-  private async saveLog(level: LogLevel, message: string, ...args: any[]): Promise<void> {
+  private async saveLog(level: LogLevel, message: string, ...args: unknown[]): Promise<void> {
     if (!globalSaveToFile && !this.saveToFile) return
 
     try {
@@ -54,7 +54,7 @@ class Logger {
     }
   }
 
-  private log(level: LogLevel, message: string, ...args: any[]): void {
+  private log(level: LogLevel, message: string, ...args: unknown[]): void {
     if (!this.enabled) return
 
     const formattedMessage = this.formatMessage(level, message, ...args)
@@ -78,19 +78,19 @@ class Logger {
     this.saveLog(level, message, ...args)
   }
 
-  debug(message: string, ...args: any[]): void {
+  debug(message: string, ...args: unknown[]): void {
     this.log("debug", message, ...args)
   }
 
-  info(message: string, ...args: any[]): void {
+  info(message: string, ...args: unknown[]): void {
     this.log("info", message, ...args)
   }
 
-  warn(message: string, ...args: any[]): void {
+  warn(message: string, ...args: unknown[]): void {
     this.log("warn", message, ...args)
   }
 
-  error(message: string, ...args: any[]): void {
+  error(message: string, ...args: unknown[]): void {
     this.log("error", message, ...args)
   }
 
