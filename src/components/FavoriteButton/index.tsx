@@ -9,14 +9,7 @@ interface FavoriteButtonProps {
   /** Audio to favorite/unfavorite */
   audio: LocalAudio | null | undefined
   variant?: "text" | "outlined" | "contained"
-  color?:
-    | "inherit"
-    | "primary"
-    | "secondary"
-    | "success"
-    | "error"
-    | "info"
-    | "warning"
+  color?: "inherit" | "primary" | "secondary" | "success" | "error" | "info" | "warning"
   /** Additional className */
   className?: string
   /** Button size */
@@ -46,9 +39,7 @@ export const FavoriteButton: FC<FavoriteButtonProps> = ({
   disabled,
 }) => {
   const toggleFavorite = useAppStore((state) => state.toggleFavorite)
-  const isFavorited = useAppStore(
-    (state) => audio && state.isFavoritedAudio(audio.audio.id),
-  )
+  const isFavorited = useAppStore((state) => audio && state.isFavoritedAudio(audio.audio.id))
 
   const handleClick = useCallback(
     (e: MouseEvent<HTMLElement>) => {
@@ -63,11 +54,7 @@ export const FavoriteButton: FC<FavoriteButtonProps> = ({
     [audio, toggleFavorite, isFavorited, onClick, stopPropagation],
   )
 
-  const {
-    buttonSize,
-    iconSize: finalIconSize,
-    muiSize,
-  } = useAdaptiveSize(size, iconSize)
+  const { buttonSize, iconSize: finalIconSize, muiSize } = useAdaptiveSize(size, iconSize)
 
   const iconStyle = { fontSize: finalIconSize }
 

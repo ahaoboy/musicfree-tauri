@@ -1,13 +1,6 @@
 import { FC, useCallback, useMemo, useEffect, useRef, useState } from "react"
 import { useNavigate } from "react-router-dom"
-import {
-  Stack,
-  Box,
-  TextField,
-  InputAdornment,
-  CircularProgress,
-  Button,
-} from "@mui/material"
+import { Stack, Box, TextField, InputAdornment, CircularProgress, Button } from "@mui/material"
 import Download from "@mui/icons-material/Download"
 import Refresh from "@mui/icons-material/Refresh"
 import Add from "@mui/icons-material/Add"
@@ -82,9 +75,7 @@ export const SearchPage: FC = () => {
   // Store Actions
   const setSearchText = useAppStore((state) => state.setSearchText)
   const search = useAppStore((state) => state.search)
-  const clearSearchRuntimeData = useAppStore(
-    (state) => state.clearSearchRuntimeData,
-  )
+  const clearSearchRuntimeData = useAppStore((state) => state.clearSearchRuntimeData)
   const toggleSelect = useAppStore((state) => state.toggleSearchSelect)
   const toggleSelectAll = useAppStore((state) => state.toggleSearchSelectAll)
   const clearSelection = useAppStore((state) => state.clearSearchSelection)
@@ -118,9 +109,7 @@ export const SearchPage: FC = () => {
   useEffect(() => {
     // Find newly added downloading IDs
     const prevIds = prevDownloadingIdsRef.current
-    const newDownloadingIds = Array.from(downloadingIds).filter(
-      (id) => !prevIds.has(id),
-    )
+    const newDownloadingIds = Array.from(downloadingIds).filter((id) => !prevIds.has(id))
 
     // Update ref for next comparison
     prevDownloadingIdsRef.current = new Set(downloadingIds)
@@ -147,9 +136,7 @@ export const SearchPage: FC = () => {
 
   // Get existing audios from config
   const configAudios = useMemo(() => {
-    const audioPlaylist = configPlaylists.find(
-      (p) => p.id === AUDIO_PLAYLIST_ID,
-    )
+    const audioPlaylist = configPlaylists.find((p) => p.id === AUDIO_PLAYLIST_ID)
     return audioPlaylist?.audios || []
   }, [configPlaylists])
 
@@ -246,15 +233,10 @@ export const SearchPage: FC = () => {
     const selectedAudios = playlist.audios.filter((a) => selectedIds.has(a.id))
 
     // Determine mode
-    const selectedFailedIds = Array.from(selectedIds).filter((id) =>
-      failedIds.has(id),
-    )
-    const selectedSkippedIds = Array.from(selectedIds).filter((id) =>
-      skippedIds.has(id),
-    )
+    const selectedFailedIds = Array.from(selectedIds).filter((id) => failedIds.has(id))
+    const selectedSkippedIds = Array.from(selectedIds).filter((id) => skippedIds.has(id))
     const selectedPendingIds = Array.from(selectedIds).filter(
-      (id) =>
-        !downloadedIds.has(id) && !failedIds.has(id) && !skippedIds.has(id),
+      (id) => !downloadedIds.has(id) && !failedIds.has(id) && !skippedIds.has(id),
     )
 
     const isRetryMode =
@@ -290,9 +272,7 @@ export const SearchPage: FC = () => {
       log.info(`Total existing audios: ${existingAudios.length}`)
     }
 
-    const knownExisting = configAudios.filter((a) =>
-      selectedIds.has(a.audio.id),
-    )
+    const knownExisting = configAudios.filter((a) => selectedIds.has(a.audio.id))
 
     if (isAddMode) {
       const result = {
@@ -301,11 +281,7 @@ export const SearchPage: FC = () => {
       }
       await processDownloadResult(result, playlist, isAddMode)
     } else {
-      const result = await downloadMultiple(
-        selectedAudios,
-        knownExisting,
-        isRetryMode,
-      )
+      const result = await downloadMultiple(selectedAudios, knownExisting, isRetryMode)
 
       if (result.failedCount === 0) {
         await processDownloadResult(result, playlist, isAddMode)
@@ -342,10 +318,7 @@ export const SearchPage: FC = () => {
       let coverPath: string | null = null
       if (currentPlaylist.cover) {
         try {
-          coverPath = await download_cover(
-            currentPlaylist.cover,
-            currentPlaylist.platform,
-          )
+          coverPath = await download_cover(currentPlaylist.cover, currentPlaylist.platform)
         } catch (e) {
           log.error("Failed to download playlist cover:", e)
         }
@@ -353,11 +326,10 @@ export const SearchPage: FC = () => {
         const first = result.downloadedAudios[0] || result.existingAudios[0]
         if (first?.audio.cover) {
           try {
-            coverPath = await download_cover(
-              first.audio.cover,
-              first.audio.platform,
-            )
-          } catch (_e) {}
+            coverPath = await download_cover(first.audio.cover, first.audio.platform)
+          } catch (e) {
+            log.error("download_cover failed", e)
+          }
         }
       }
 
@@ -367,10 +339,7 @@ export const SearchPage: FC = () => {
         .filter(Boolean) as LocalAudio[]
 
       const localPlaylist: LocalPlaylist = {
-        id:
-          currentPlaylist.id ||
-          currentPlaylist.title ||
-          new Date().toISOString(),
+        id: currentPlaylist.id || currentPlaylist.title || new Date().toISOString(),
         title: currentPlaylist.title,
         cover_path: coverPath,
         cover: currentPlaylist.cover,
@@ -392,9 +361,7 @@ export const SearchPage: FC = () => {
         const audiosToAdd: LocalAudio[] = []
 
         for (const audio of result.existingAudios) {
-          const inConfig = configAudios.some(
-            (a) => a.audio.id === audio.audio.id,
-          )
+          const inConfig = configAudios.some((a) => a.audio.id === audio.audio.id)
           if (!inConfig) {
             log.info(`Audio not in config, will add: ${audio.audio.title}`)
             audiosToAdd.push(audio)
@@ -408,9 +375,7 @@ export const SearchPage: FC = () => {
           await addAudiosToConfig(audiosToAdd)
         }
       } else if (result.downloadedAudios.length > 0) {
-        log.info(
-          `Adding ${result.downloadedAudios.length} downloaded audios to config`,
-        )
+        log.info(`Adding ${result.downloadedAudios.length} downloaded audios to config`)
         await addAudiosToConfig(result.downloadedAudios)
       }
 
@@ -424,9 +389,7 @@ export const SearchPage: FC = () => {
   // Selection helpers
   const isAllSelected = useMemo(() => {
     if (!playlist) return false
-    return (
-      playlist.audios.length > 0 && selectedIds.size === playlist.audios.length
-    )
+    return playlist.audios.length > 0 && selectedIds.size === playlist.audios.length
   }, [playlist, selectedIds])
 
   const isSomeSelected = useMemo(() => {
@@ -438,30 +401,19 @@ export const SearchPage: FC = () => {
   const showClearButton = useMemo(() => {
     if (!playlist || downloadingAll) return false
     return (
-      Array.from(selectedIds).some(
-        (id) => failedIds.has(id) || skippedIds.has(id),
-      ) || longPendingSelectedIds.size > 0
+      Array.from(selectedIds).some((id) => failedIds.has(id) || skippedIds.has(id)) ||
+      longPendingSelectedIds.size > 0
     )
-  }, [
-    playlist,
-    downloadingAll,
-    selectedIds,
-    failedIds,
-    skippedIds,
-    longPendingSelectedIds,
-  ])
+  }, [playlist, downloadingAll, selectedIds, failedIds, skippedIds, longPendingSelectedIds])
 
   // Button logic
   const { downloadButtonText, downloadButtonIcon } = useMemo(() => {
     const selectedArray = Array.from(selectedIds)
-    const alreadyDownloadedCount = selectedArray.filter((id) =>
-      downloadedIds.has(id),
-    ).length
+    const alreadyDownloadedCount = selectedArray.filter((id) => downloadedIds.has(id)).length
     const failedCount = selectedArray.filter((id) => failedIds.has(id)).length
     const skippedCount = selectedArray.filter((id) => skippedIds.has(id)).length
     const pendingCount = selectedArray.filter(
-      (id) =>
-        !downloadedIds.has(id) && !failedIds.has(id) && !skippedIds.has(id),
+      (id) => !downloadedIds.has(id) && !failedIds.has(id) && !skippedIds.has(id),
     ).length
 
     let text = ""
@@ -499,30 +451,13 @@ export const SearchPage: FC = () => {
       const statusBadges = (
         <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
           {downloading && (
-            <CircularProgress
-              size={12}
-              sx={{ color: "primary.main" }}
-              title="Downloading"
-            />
+            <CircularProgress size={12} sx={{ color: "primary.main" }} title="Downloading" />
           )}
           {downloaded && (
-            <Box
-              sx={{ ...statusDotSx, bgcolor: "success.main" }}
-              title="Downloaded"
-            />
+            <Box sx={{ ...statusDotSx, bgcolor: "success.main" }} title="Downloaded" />
           )}
-          {failed && (
-            <Box
-              sx={{ ...statusDotSx, bgcolor: "error.main" }}
-              title="Failed"
-            />
-          )}
-          {skipped && (
-            <Box
-              sx={{ ...statusDotSx, bgcolor: "warning.main" }}
-              title="Skipped"
-            />
-          )}
+          {failed && <Box sx={{ ...statusDotSx, bgcolor: "error.main" }} title="Failed" />}
+          {skipped && <Box sx={{ ...statusDotSx, bgcolor: "warning.main" }} title="Skipped" />}
         </Stack>
       )
 
@@ -747,9 +682,7 @@ export const SearchPage: FC = () => {
               playlistCoverUrl={playlistCoverUrl}
               isAllSelected={isAllSelected}
               isSomeSelected={isSomeSelected}
-              onToggleSelectAll={(checked: boolean) =>
-                toggleSelectAll(playlist.audios, checked)
-              }
+              onToggleSelectAll={(checked: boolean) => toggleSelectAll(playlist.audios, checked)}
               showClearButton={showClearButton}
               longPendingCount={longPendingSelectedIds.size}
               onClear={handleClearSpecial}

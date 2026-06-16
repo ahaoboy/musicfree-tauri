@@ -9,14 +9,7 @@ interface PlayModeButtonProps {
   /** Button variant */
   variant?: "text" | "outlined" | "contained"
   /** Button color */
-  color?:
-    | "inherit"
-    | "primary"
-    | "secondary"
-    | "success"
-    | "error"
-    | "info"
-    | "warning"
+  color?: "inherit" | "primary" | "secondary" | "success" | "error" | "info" | "warning"
   /** Additional className */
   className?: string
   /** Button size */
@@ -55,12 +48,7 @@ export const PlayModeButton: FC<PlayModeButtonProps> = ({
 
       togglePlayMode()
 
-      const modes: PlayMode[] = [
-        "sequence",
-        "list-loop",
-        "single-loop",
-        "shuffle",
-      ]
+      const modes: PlayMode[] = ["sequence", "list-loop", "single-loop", "shuffle"]
       const currentMode = currentPlayMode || "sequence"
       const currentIndex = modes.indexOf(currentMode)
       const newMode = modes[(currentIndex + 1) % modes.length]
@@ -69,11 +57,7 @@ export const PlayModeButton: FC<PlayModeButtonProps> = ({
     [togglePlayMode, currentPlayMode, onClick, stopPropagation],
   )
 
-  const {
-    buttonSize,
-    iconSize: finalIconSize,
-    muiSize,
-  } = useAdaptiveSize(size, iconSize)
+  const { buttonSize, iconSize: finalIconSize, muiSize } = useAdaptiveSize(size, iconSize)
 
   const iconStyle = { fontSize: finalIconSize }
 

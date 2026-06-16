@@ -6,10 +6,7 @@ export type AdaptiveSize = "small" | "medium" | "large" | "xlarge"
 /**
  * Standard hook for calculating button and icon sizes consistently across components
  */
-export const useAdaptiveSize = (
-  size: AdaptiveSize = "medium",
-  iconOverride?: number,
-) => {
+export const useAdaptiveSize = (size: AdaptiveSize = "medium", iconOverride?: number) => {
   const { theme } = useTheme()
 
   return useMemo(() => {
@@ -25,12 +22,7 @@ export const useAdaptiveSize = (
       iconSize: iconOverride ?? iconSize,
       muiSize,
     }
-  }, [
-    size,
-    iconOverride,
-    theme.custom.actionButtonSize,
-    theme.custom.actionIconSize,
-  ])
+  }, [size, iconOverride, theme.custom.actionButtonSize, theme.custom.actionIconSize])
 }
 
 export default useAdaptiveSize

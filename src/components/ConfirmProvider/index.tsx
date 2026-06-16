@@ -9,9 +9,7 @@ import {
 } from "@mui/material"
 import { ConfirmContext, ConfirmOptions } from "../../contexts/ConfirmContext"
 
-export const ConfirmProvider: React.FC<{ children: React.ReactNode }> = ({
-  children,
-}) => {
+export const ConfirmProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [open, setOpen] = useState(false)
   const [options, setOptions] = useState<ConfirmOptions | null>(null)
   const [loading, setLoading] = useState(false)
@@ -57,9 +55,7 @@ export const ConfirmProvider: React.FC<{ children: React.ReactNode }> = ({
         >
           <DialogTitle id="confirm-dialog-title">{options.title}</DialogTitle>
           <DialogContent>
-            <DialogContentText id="confirm-dialog-description">
-              {options.content}
-            </DialogContentText>
+            <DialogContentText id="confirm-dialog-description">{options.content}</DialogContentText>
           </DialogContent>
           <DialogActions>
             <Button onClick={handleClose} color="inherit" disabled={loading}>

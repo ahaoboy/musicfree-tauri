@@ -15,12 +15,7 @@ import { useNavigate, useLocation, useMatches } from "react-router-dom"
 import { Box, Tabs, Tab as MuiTab, Paper, Fade } from "@mui/material"
 import { QueueMusic, LibraryMusic, Search, Settings } from "@mui/icons-material"
 
-import {
-  PlayerCard,
-  ErrorBoundary,
-  PageErrorBoundary,
-  LoadingFallback,
-} from "../components"
+import { PlayerCard, ErrorBoundary, PageErrorBoundary, LoadingFallback } from "../components"
 import { NavigationContext, NavigationContextType } from "../contexts"
 import { useAppStore } from "../store"
 import { useSwipe, SwipeDirection } from "../hooks"
@@ -41,9 +36,7 @@ export const AppLayout: FC = memo(() => {
 
   // Navigation state
   const [isInDetailView, setIsInDetailView] = useState(false)
-  const [onBackFromDetail, setOnBackFromDetail] = useState<(() => void) | null>(
-    null,
-  )
+  const [onBackFromDetail, setOnBackFromDetail] = useState<(() => void) | null>(null)
 
   // Scroll restoration refs
   const scrollPositions = useRef<Map<string, number>>(new Map())
@@ -120,9 +113,7 @@ export const AppLayout: FC = memo(() => {
   // Show player card only on specific pages
   const showPlayerCard = useMemo(() => {
     return (
-      routeHandle.tabKey === "playlists" ||
-      routeHandle.tabKey === "music" ||
-      routeHandle.isDetail
+      routeHandle.tabKey === "playlists" || routeHandle.tabKey === "music" || routeHandle.isDetail
     )
   }, [routeHandle])
 
@@ -334,26 +325,18 @@ export const AppLayout: FC = memo(() => {
                   {/* Persistent tab pages */}
                   <Activity
                     mode={
-                      currentTab === "playlists" && !routeHandle.isDetail
-                        ? "visible"
-                        : "hidden"
+                      currentTab === "playlists" && !routeHandle.isDetail ? "visible" : "hidden"
                     }
                   >
                     <PlaylistsPage />
                   </Activity>
-                  <Activity
-                    mode={currentTab === "music" ? "visible" : "hidden"}
-                  >
+                  <Activity mode={currentTab === "music" ? "visible" : "hidden"}>
                     <MusicPage />
                   </Activity>
-                  <Activity
-                    mode={currentTab === "search" ? "visible" : "hidden"}
-                  >
+                  <Activity mode={currentTab === "search" ? "visible" : "hidden"}>
                     <SearchPage />
                   </Activity>
-                  <Activity
-                    mode={currentTab === "settings" ? "visible" : "hidden"}
-                  >
+                  <Activity mode={currentTab === "settings" ? "visible" : "hidden"}>
                     <SettingsPage />
                   </Activity>
 

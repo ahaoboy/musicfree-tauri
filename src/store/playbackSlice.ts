@@ -80,12 +80,7 @@ export type PlaybackSlice = PlaybackSliceState & PlaybackSliceActions
 // ============================================
 // Create Playback Slice
 // ============================================
-export const createPlaybackSlice: StateCreator<
-  AppState,
-  [],
-  [],
-  PlaybackSlice
-> = (set, get) => ({
+export const createPlaybackSlice: StateCreator<AppState, [], [], PlaybackSlice> = (set, get) => ({
   // Initial state
   currentAudio: null,
   currentPlaylistId: null,
@@ -189,10 +184,7 @@ export const createPlaybackSlice: StateCreator<
       onSeekForward: (offset) => {
         const skipTime = offset || 10
         get().seekTo(
-          Math.min(
-            audioElement.currentTime + skipTime,
-            audioElement.duration || Infinity,
-          ),
+          Math.min(audioElement.currentTime + skipTime, audioElement.duration || Infinity),
         )
       },
     })
@@ -225,12 +217,7 @@ export const createPlaybackSlice: StateCreator<
     addToHistory: boolean = true,
     autoPlay: boolean = true,
   ) => {
-    const {
-      currentAudio,
-      audioElement,
-      playbackHistory,
-      deviceListenersInitialized,
-    } = get()
+    const { currentAudio, audioElement, playbackHistory, deviceListenersInitialized } = get()
 
     // Initialize device listeners on first play
     if (!deviceListenersInitialized) {
@@ -238,11 +225,7 @@ export const createPlaybackSlice: StateCreator<
     }
 
     // Add current audio to history if different
-    if (
-      addToHistory &&
-      currentAudio &&
-      currentAudio.audio.id !== audio.audio.id
-    ) {
+    if (addToHistory && currentAudio && currentAudio.audio.id !== audio.audio.id) {
       const newHistory = [...playbackHistory, currentAudio]
       // Limit history
       if (newHistory.length > MAX_HISTORY_SIZE) {
@@ -302,18 +285,12 @@ export const createPlaybackSlice: StateCreator<
           // Wait for loadedmetadata before playing
           await new Promise<void>((resolve, reject) => {
             const onLoadedMetadata = () => {
-              audioElement.removeEventListener(
-                "loadedmetadata",
-                onLoadedMetadata,
-              )
+              audioElement.removeEventListener("loadedmetadata", onLoadedMetadata)
               audioElement.removeEventListener("error", onError)
               resolve()
             }
             const onError = (e: Event) => {
-              audioElement.removeEventListener(
-                "loadedmetadata",
-                onLoadedMetadata,
-              )
+              audioElement.removeEventListener("loadedmetadata", onLoadedMetadata)
               audioElement.removeEventListener("error", onError)
               reject(e)
             }
@@ -398,9 +375,7 @@ export const createPlaybackSlice: StateCreator<
     const playlist = config.playlists.find((p) => p.id === currentPlaylistId)
     if (!playlist || playlist.audios.length === 0) return null
 
-    const currentIndex = playlist.audios.findIndex(
-      (a) => a.audio.id === currentAudio.audio.id,
-    )
+    const currentIndex = playlist.audios.findIndex((a) => a.audio.id === currentAudio.audio.id)
 
     let nextAudio: LocalAudio | null = null
 
@@ -453,12 +428,7 @@ export const createPlaybackSlice: StateCreator<
     const nextAudio = switchToNextAudio()
 
     if (nextAudio && currentPlaylistId) {
-      await get().playAudio(
-        nextAudio,
-        currentPlaylistId,
-        true,
-        force || isPlaying,
-      )
+      await get().playAudio(nextAudio, currentPlaylistId, true, force || isPlaying)
     }
   },
 
@@ -467,12 +437,7 @@ export const createPlaybackSlice: StateCreator<
     const prevAudio = switchToPrevAudio()
 
     if (prevAudio && currentPlaylistId) {
-      await get().playAudio(
-        prevAudio,
-        currentPlaylistId,
-        false,
-        force || isPlaying,
-      )
+      await get().playAudio(prevAudio, currentPlaylistId, false, force || isPlaying)
     }
   },
 
@@ -482,12 +447,7 @@ export const createPlaybackSlice: StateCreator<
 
   togglePlayMode: () => {
     const { currentPlayMode } = get()
-    const modes: PlayMode[] = [
-      "sequence",
-      "list-loop",
-      "single-loop",
-      "shuffle",
-    ]
+    const modes: PlayMode[] = ["sequence", "list-loop", "single-loop", "shuffle"]
     const currentMode = currentPlayMode || storage.getPlayMode()
     const currentIndex = modes.indexOf(currentMode)
     const nextMode = modes[(currentIndex + 1) % modes.length]

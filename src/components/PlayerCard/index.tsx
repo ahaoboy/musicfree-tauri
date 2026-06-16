@@ -42,9 +42,7 @@ export const PlayerCard: FC<PlayerCardProps> = memo(({ audio }) => {
       avatarSize={theme.custom.avatarSize.player}
       showBorder={false}
       onClick={handleCardClick}
-      actions={
-        <PlayerControls audio={audio} layout="mini" size="large" gap={1} />
-      }
+      actions={<PlayerControls audio={audio} layout="mini" size="large" gap={1} />}
     />
   )
 })

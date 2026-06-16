@@ -124,10 +124,7 @@ export function clear_cache(): Promise<void> {
   return invoke("clear_cache")
 }
 
-export function download_cover(
-  url: string,
-  platform: string,
-): Promise<string | null> {
+export function download_cover(url: string, platform: string): Promise<string | null> {
   return invoke("download_cover", { url, platform })
 }
 
@@ -229,9 +226,7 @@ export function is_favorite_audio(audio: LocalAudio, config: Config): boolean {
 // Helper to get system theme
 export const get_system_theme = (): "light" | "dark" => {
   if (typeof window !== "undefined") {
-    return window.matchMedia("(prefers-color-scheme: dark)").matches
-      ? "dark"
-      : "light"
+    return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"
   }
   return "light"
 }
@@ -243,10 +238,7 @@ export function app_version(): Promise<string> {
 export function exists_audio(audio: Audio): Promise<string | null> {
   return invoke("exists_audio", { audio })
 }
-export function exists_cover(
-  url: string,
-  platform: Platform,
-): Promise<string | null> {
+export function exists_cover(url: string, platform: Platform): Promise<string | null> {
   return invoke("exists_cover", { url, platform })
 }
 
@@ -262,11 +254,7 @@ export function remove_file(path: string): Promise<void> {
   return invoke("remove_file", { path })
 }
 
-export function sync_download(
-  token: string,
-  repo: string,
-  path?: string,
-): Promise<Uint8Array> {
+export function sync_download(token: string, repo: string, path?: string): Promise<Uint8Array> {
   return invoke<number[]>("sync_download", { token, repo, path }).then(
     (data) => new Uint8Array(data),
   )
@@ -345,9 +333,7 @@ export const storage = {
     localStorage.setItem(STORAGE_KEYS.PLAY_MODE, mode)
   },
   getPlayMode: (): PlayMode => {
-    return (
-      (localStorage.getItem(STORAGE_KEYS.PLAY_MODE) as PlayMode) || "sequence"
-    )
+    return (localStorage.getItem(STORAGE_KEYS.PLAY_MODE) as PlayMode) || "sequence"
   },
   setTheme: (theme: ThemeMode) => {
     localStorage.setItem(STORAGE_KEYS.THEME, theme)
@@ -373,11 +359,7 @@ export const storage = {
 }
 
 // Log API
-export function write_log(
-  level: string,
-  module: string,
-  message: string,
-): Promise<void> {
+export function write_log(level: string, module: string, message: string): Promise<void> {
   return invoke("write_log", { level, module, message })
 }
 
@@ -397,9 +379,6 @@ export function read_log(): Promise<string> {
   return invoke("read_log")
 }
 
-export function save_audio(
-  playlistId: string,
-  audioId?: string,
-): Promise<string[]> {
+export function save_audio(playlistId: string, audioId?: string): Promise<string[]> {
   return invoke("save_audio", { playlistId, audioId })
 }

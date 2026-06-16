@@ -6,14 +6,7 @@ import { useAdaptiveSize, AdaptiveSize } from "../../hooks"
 
 interface PlayButtonProps {
   variant?: "text" | "outlined" | "contained"
-  color?:
-    | "inherit"
-    | "primary"
-    | "secondary"
-    | "success"
-    | "error"
-    | "info"
-    | "warning"
+  color?: "inherit" | "primary" | "secondary" | "success" | "error" | "info" | "warning"
   /** Additional className */
   className?: string
   /** Button size */
@@ -58,11 +51,7 @@ export const PlayButton: FC<PlayButtonProps> = ({
     [togglePlay, isPlaying, onClick, stopPropagation],
   )
 
-  const {
-    buttonSize,
-    iconSize: finalIconSize,
-    muiSize,
-  } = useAdaptiveSize(size, iconSize)
+  const { buttonSize, iconSize: finalIconSize, muiSize } = useAdaptiveSize(size, iconSize)
 
   const iconStyle = { fontSize: finalIconSize }
 
@@ -83,11 +72,7 @@ export const PlayButton: FC<PlayButtonProps> = ({
         borderRadius: 2,
       }}
     >
-      {isPlaying ? (
-        <PauseCircle style={iconStyle} />
-      ) : (
-        <PlayCircle style={iconStyle} />
-      )}
+      {isPlaying ? <PauseCircle style={iconStyle} /> : <PlayCircle style={iconStyle} />}
     </Button>
   )
 }

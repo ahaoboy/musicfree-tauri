@@ -134,11 +134,7 @@ export interface ConfigSliceActions {
 
   // Gist actions
   setGistConfig: (config: GistConfig | null) => void
-  syncGithub: (
-    manual?: boolean,
-    forcePush?: boolean,
-    forcePull?: boolean,
-  ) => Promise<void>
+  syncGithub: (manual?: boolean, forcePush?: boolean, forcePull?: boolean) => Promise<void>
   importConfig: (config: Config) => Promise<void>
 }
 
@@ -152,23 +148,16 @@ export type ConfigSlice = ConfigSliceState & ConfigSliceActions
 export const applyTheme = (mode?: ThemeMode | null) => {
   if (typeof document !== "undefined") {
     const effectiveMode = mode || "auto"
-    const actualTheme =
-      effectiveMode === "auto" ? get_system_theme() : effectiveMode
+    const actualTheme = effectiveMode === "auto" ? get_system_theme() : effectiveMode
 
-    document.documentElement.setAttribute(
-      "data-prefers-color-scheme",
-      actualTheme,
-    )
+    document.documentElement.setAttribute("data-prefers-color-scheme", actualTheme)
   }
 }
 
 // ============================================
 // Create Config Slice
 // ============================================
-export const createConfigSlice: StateCreator<AppState, [], [], ConfigSlice> = (
-  set,
-  get,
-) => ({
+export const createConfigSlice: StateCreator<AppState, [], [], ConfigSlice> = (set, get) => ({
   // Initial state
   config: get_default_config(),
   isConfigLoading: true,
@@ -202,9 +191,7 @@ export const createConfigSlice: StateCreator<AppState, [], [], ConfigSlice> = (
       if (storedAudio && storedPlaylistId) {
         const playlist = config.playlists.find((p) => p.id === storedPlaylistId)
         if (playlist) {
-          const audio = playlist.audios.find(
-            (a) => a.audio.id === storedAudio.audio.id,
-          )
+          const audio = playlist.audios.find((a) => a.audio.id === storedAudio.audio.id)
           if (audio) {
             restoredAudio = audio
             restoredPlaylistId = storedPlaylistId
@@ -291,17 +278,13 @@ export const createConfigSlice: StateCreator<AppState, [], [], ConfigSlice> = (
     const { config } = get()
     if (!config) return
 
-    const existingIndex = config.playlists.findIndex(
-      (p) => p.id === playlist.id,
-    )
+    const existingIndex = config.playlists.findIndex((p) => p.id === playlist.id)
     let updatedPlaylists: LocalPlaylist[]
 
     if (existingIndex >= 0) {
       // Merge with existing playlist
       const existing = config.playlists[existingIndex]
-      const existingAudioMap = new Map(
-        existing.audios.map((a) => [a.audio.id, a]),
-      )
+      const existingAudioMap = new Map(existing.audios.map((a) => [a.audio.id, a]))
 
       const mergedAudios: LocalAudio[] = []
       const processedIds = new Set<string>()
@@ -424,10 +407,7 @@ export const createConfigSlice: StateCreator<AppState, [], [], ConfigSlice> = (
       }
 
       // 3. Playlist cover
-      if (
-        playlistToRemove.cover_path &&
-        !usedCoverPaths.has(playlistToRemove.cover_path)
-      ) {
+      if (playlistToRemove.cover_path && !usedCoverPaths.has(playlistToRemove.cover_path)) {
         await remove_file(playlistToRemove.cover_path)
       }
     }
@@ -498,28 +478,18 @@ export const createConfigSlice: StateCreator<AppState, [], [], ConfigSlice> = (
   },
 
   deleteAudio: async (audioId: string, playlistId: string) => {
-    const {
-      config,
-      currentAudio,
-      currentPlaylistId,
-      isPlaying,
-      playAudio,
-      pauseAudio,
-    } = get()
+    const { config, currentAudio, currentPlaylistId, isPlaying, playAudio, pauseAudio } = get()
     if (!config) return
 
     // Check if deleting currently playing audio
-    const isDeletingCurrent =
-      currentPlaylistId === playlistId && currentAudio?.audio.id === audioId
+    const isDeletingCurrent = currentPlaylistId === playlistId && currentAudio?.audio.id === audioId
 
     // Determine next audio if deleting current
     let nextAudioToPlay: LocalAudio | null = null
     if (isDeletingCurrent) {
       const playlist = config.playlists.find((p) => p.id === playlistId)
       if (playlist && playlist.audios.length > 1) {
-        const currentIndex = playlist.audios.findIndex(
-          (a) => a.audio.id === audioId,
-        )
+        const currentIndex = playlist.audios.findIndex((a) => a.audio.id === audioId)
         // Default to next in sequence, or wrap to start
         const nextIndex = (currentIndex + 1) % playlist.audios.length
         // If it's the specific item we are deleting, ensure we get a DIFFERENT one if possible
@@ -528,13 +498,9 @@ export const createConfigSlice: StateCreator<AppState, [], [], ConfigSlice> = (
         if (playlist.audios.length > 1) {
           nextAudioToPlay = playlist.audios[nextIndex]
           // If next is same as current (e.g. 1 item?), handled by length check
-          if (
-            nextAudioToPlay.audio.id === audioId &&
-            playlist.audios.length > 1
-          ) {
+          if (nextAudioToPlay.audio.id === audioId && playlist.audios.length > 1) {
             // scan for another?
-            nextAudioToPlay =
-              playlist.audios.find((a) => a.audio.id !== audioId) || null
+            nextAudioToPlay = playlist.audios.find((a) => a.audio.id !== audioId) || null
           }
         }
       }
@@ -557,10 +523,7 @@ export const createConfigSlice: StateCreator<AppState, [], [], ConfigSlice> = (
         }
       }
       // Also remove from FAVORITE if not deleting from FAVORITE
-      if (
-        playlistId !== FAVORITE_PLAYLIST_ID &&
-        playlist.id === FAVORITE_PLAYLIST_ID
-      ) {
+      if (playlistId !== FAVORITE_PLAYLIST_ID && playlist.id === FAVORITE_PLAYLIST_ID) {
         return {
           ...playlist,
           audios: playlist.audios.filter((a) => a.audio.id !== audioId),
@@ -605,10 +568,7 @@ export const createConfigSlice: StateCreator<AppState, [], [], ConfigSlice> = (
         await remove_file(deletedAudio.path)
       }
 
-      if (
-        deletedAudio.cover_path &&
-        !usedCoverPaths.has(deletedAudio.cover_path)
-      ) {
+      if (deletedAudio.cover_path && !usedCoverPaths.has(deletedAudio.cover_path)) {
         await remove_file(deletedAudio.cover_path)
       }
     }
@@ -654,26 +614,19 @@ export const createConfigSlice: StateCreator<AppState, [], [], ConfigSlice> = (
     log.info(`Toggling favorite for: ${audio.audio.title}`)
 
     // Find favorite playlist
-    const favPlaylist = config.playlists.find(
-      (p) => p.id === FAVORITE_PLAYLIST_ID,
-    )
-    const index =
-      favPlaylist?.audios.findIndex((a) => a.audio.id === audio.audio.id) ?? -1
+    const favPlaylist = config.playlists.find((p) => p.id === FAVORITE_PLAYLIST_ID)
+    const index = favPlaylist?.audios.findIndex((a) => a.audio.id === audio.audio.id) ?? -1
 
     let updatedPlaylists: LocalPlaylist[]
 
     if (index >= 0 && favPlaylist) {
       // Remove from favorites
       log.info("Removing from favorites")
-      const updatedAudios = favPlaylist.audios.filter(
-        (a) => a.audio.id !== audio.audio.id,
-      )
+      const updatedAudios = favPlaylist.audios.filter((a) => a.audio.id !== audio.audio.id)
 
       if (updatedAudios.length === 0) {
         // Remove empty favorite playlist
-        updatedPlaylists = config.playlists.filter(
-          (p) => p.id !== FAVORITE_PLAYLIST_ID,
-        )
+        updatedPlaylists = config.playlists.filter((p) => p.id !== FAVORITE_PLAYLIST_ID)
       } else {
         updatedPlaylists = config.playlists.map((p) =>
           p.id === FAVORITE_PLAYLIST_ID ? { ...p, audios: updatedAudios } : p,
@@ -713,9 +666,7 @@ export const createConfigSlice: StateCreator<AppState, [], [], ConfigSlice> = (
 
   isFavoritedAudio: (id: string) => {
     const { config } = get()
-    const favPlaylist = config.playlists.find(
-      (p) => p.id === FAVORITE_PLAYLIST_ID,
-    )
+    const favPlaylist = config.playlists.find((p) => p.id === FAVORITE_PLAYLIST_ID)
     if (!favPlaylist) return false
     return favPlaylist.audios.some((a) => a.audio.id === id)
   },
@@ -749,11 +700,7 @@ export const createConfigSlice: StateCreator<AppState, [], [], ConfigSlice> = (
       cancelDebouncedSync()
     }
 
-    const syncMode = forcePush
-      ? " (force push)"
-      : forcePull
-        ? " (force pull)"
-        : ""
+    const syncMode = forcePush ? " (force push)" : forcePull ? " (force pull)" : ""
     log.info(`Starting ${manual ? "manual" : "background"} sync${syncMode}...`)
 
     try {
@@ -826,16 +773,12 @@ export const createConfigSlice: StateCreator<AppState, [], [], ConfigSlice> = (
     let updatedPlaylists = [...config.playlists]
 
     for (const playlist of importedConfig.playlists) {
-      const existingIndex = updatedPlaylists.findIndex(
-        (p) => p.id === playlist.id,
-      )
+      const existingIndex = updatedPlaylists.findIndex((p) => p.id === playlist.id)
 
       if (existingIndex >= 0) {
         // Merge with existing playlist
         const existing = updatedPlaylists[existingIndex]
-        const existingAudioMap = new Map(
-          existing.audios.map((a) => [a.audio.id, a]),
-        )
+        const existingAudioMap = new Map(existing.audios.map((a) => [a.audio.id, a]))
 
         const mergedAudios: LocalAudio[] = []
         const processedIds = new Set<string>()

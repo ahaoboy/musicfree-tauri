@@ -8,14 +8,7 @@ interface BackButtonProps {
   /** Custom navigation path (default: go back -1) */
   to?: string | number
   variant?: "text" | "outlined" | "contained"
-  color?:
-    | "inherit"
-    | "primary"
-    | "secondary"
-    | "success"
-    | "error"
-    | "info"
-    | "warning"
+  color?: "inherit" | "primary" | "secondary" | "success" | "error" | "info" | "warning"
   /** Additional className */
   className?: string
   /** Button size */

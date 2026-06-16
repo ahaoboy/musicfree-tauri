@@ -10,9 +10,7 @@ export interface MessageContextType {
   warning: (content: string, duration?: number) => void
 }
 
-export const MessageContext = createContext<MessageContextType | undefined>(
-  undefined,
-)
+export const MessageContext = createContext<MessageContextType | undefined>(undefined)
 
 export const useMessage = () => {
   const context = useContext(MessageContext)

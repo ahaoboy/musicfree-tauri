@@ -1,10 +1,5 @@
 import { create } from "zustand"
-import {
-  LocalAudio,
-  LocalPlaylist,
-  FAVORITE_PLAYLIST_ID,
-  AUDIO_PLAYLIST_ID,
-} from "../api"
+import { LocalAudio, LocalPlaylist, FAVORITE_PLAYLIST_ID, AUDIO_PLAYLIST_ID } from "../api"
 
 // Import slices
 import { createConfigSlice, ConfigSlice, applyTheme } from "./configSlice"
@@ -59,9 +54,7 @@ export const useFavoriteAudios = (): LocalAudio[] => {
 // Get user playlists (excluding special playlists)
 export const useUserPlaylists = (): LocalPlaylist[] => {
   const playlists = useAppStore((state) => state.config.playlists)
-  return playlists.filter(
-    (p) => p.id !== AUDIO_PLAYLIST_ID && p.id !== FAVORITE_PLAYLIST_ID,
-  )
+  return playlists.filter((p) => p.id !== AUDIO_PLAYLIST_ID && p.id !== FAVORITE_PLAYLIST_ID)
 }
 
 // Get playlists for PlaylistsPage (FAVORITE + user playlists)
@@ -69,14 +62,10 @@ export const usePlaylistsPageData = (): LocalPlaylist[] => {
   const playlists = useAppStore((state) => state.config.playlists)
   const filtered = playlists.filter((p) => p.id !== AUDIO_PLAYLIST_ID)
   // Filter out empty FAVORITE playlist
-  const withFavorites = filtered.filter(
-    (p) => p.id !== FAVORITE_PLAYLIST_ID || p.audios.length > 0,
-  )
+  const withFavorites = filtered.filter((p) => p.id !== FAVORITE_PLAYLIST_ID || p.audios.length > 0)
 
   // Always place FAVORITE_PLAYLIST_ID first
-  const favoriteIndex = withFavorites.findIndex(
-    (p) => p.id === FAVORITE_PLAYLIST_ID,
-  )
+  const favoriteIndex = withFavorites.findIndex((p) => p.id === FAVORITE_PLAYLIST_ID)
   if (favoriteIndex > 0) {
     const favorite = withFavorites[favoriteIndex]
     withFavorites.splice(favoriteIndex, 1)

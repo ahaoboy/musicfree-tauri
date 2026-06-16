@@ -8,9 +8,7 @@ export interface NavigationContextType {
   setOnBackFromDetail: (callback: (() => void) | null) => void
 }
 
-export const NavigationContext = createContext<NavigationContextType | null>(
-  null,
-)
+export const NavigationContext = createContext<NavigationContextType | null>(null)
 
 export const useNavigation = () => {
   const context = useContext(NavigationContext)

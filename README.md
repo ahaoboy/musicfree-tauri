@@ -45,11 +45,12 @@ Download the installer for your platform from the [Releases](https://github.com/
 
 If you prefer a pure CLI without GUI, check out: [musicfree](https://github.com/ahaoboy/musicfree)
 
-
 ## Usage Guide
 
 ### Search Support
+
 The search bar is highly flexible and supports several input formats:
+
 - **Full URLs**: Paste direct links to single tracks or entire playlists.
   ```text
   https://www.youtube.com/watch?v=BnnbP7pCIvQ
@@ -72,31 +73,35 @@ The search bar is highly flexible and supports several input formats:
 Keep your data synchronized across devices securely using GitHub:
 
 1.  **Create a Repository**:
-    *   Create a new **Private** repository on GitHub (e.g., `my-music-sync`).
-    *   Initialize it with a README or keep it empty.
+    - Create a new **Private** repository on GitHub (e.g., `my-music-sync`).
+    - Initialize it with a README or keep it empty.
 2.  **Generate a Personal Access Token (PAT)**:
-    *   Go to **GitHub Settings** -> **Developer settings** -> **Personal access tokens** -> **Tokens (classic)**.
-    *   Click "Generate new token (classic)".
-    *   Give it a name (e.g., `MusicFree Sync`) and select the **`repo`** scope.
-    *   *Alternative (Recommended)*: Use **Fine-grained tokens**, granting `Read and Write` access to only your sync repository's **Contents**.
+    - Go to **GitHub Settings** -> **Developer settings** -> **Personal access tokens** -> **Tokens (classic)**.
+    - Click "Generate new token (classic)".
+    - Give it a name (e.g., `MusicFree Sync`) and select the **`repo`** scope.
+    - _Alternative (Recommended)_: Use **Fine-grained tokens**, granting `Read and Write` access to only your sync repository's **Contents**.
 3.  **Configure MusicFree**:
-    *   Open **Settings** in MusicFree.
-    *   Paste your **GitHub Token**.
-    *   Enter your **Repository URL** (e.g., `https://github.com/your-username/my-music-sync`).
-    *   Once configured, the app will automatically sync in the background based on your preferred interval.
+    - Open **Settings** in MusicFree.
+    - Paste your **GitHub Token**.
+    - Enter your **Repository URL** (e.g., `https://github.com/your-username/my-music-sync`).
+    - Once configured, the app will automatically sync in the background based on your preferred interval.
 
 **Why use a Private Repo?**
 Your playlists and configurations are stored in an encrypted Yjs binary format (`musicfree.yjs`) and a human-readable JSON (`musicfree.json`). Using a private repository ensures your listening habits and data remain private to you.
 
 ### Data Management
+
 In the Settings page, you will find two cleaning options:
+
 - **Clear Cache**: Removes internal temporary files (such as cached cover images) generated during searching and downloading. These files help speed up repeated searches but can be safely removed to save space without losing your downloaded music.
 - **Clear Storage**: **A complete reset.** This will delete all downloaded music, saved playlists, and configuration data, including the cache.
 
 ## Troubleshooting
 
 ### YouTube Download Failures
+
 Due to intensified restrictions by YouTube, some videos may be unavailable for download depending on your IP region.
+
 - **Currently, there is no universal workaround for these restrictions.**
 - **Recommendation**: If a YouTube download fails, try searching for the same video or a re-upload on **Bilibili**.
 

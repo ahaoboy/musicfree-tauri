@@ -2,20 +2,14 @@ import React, { useState, useCallback } from "react"
 import { Snackbar, Alert, AlertColor } from "@mui/material"
 import { MessageContext, MessageType } from "../../contexts/MessageContext"
 
-export const MessageProvider: React.FC<{ children: React.ReactNode }> = ({
-  children,
-}) => {
+export const MessageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [open, setOpen] = useState(false)
   const [message, setMessage] = useState("")
   const [severity, setSeverity] = useState<AlertColor>("info")
   const [duration, setDuration] = useState(3000)
 
   const showMessage = useCallback(
-    (
-      content: string,
-      type: MessageType = "info",
-      autoHideDuration: number = 3000,
-    ) => {
+    (content: string, type: MessageType = "info", autoHideDuration: number = 3000) => {
       setMessage(content)
       setSeverity(type as AlertColor)
       setDuration(autoHideDuration)
@@ -49,9 +43,7 @@ export const MessageProvider: React.FC<{ children: React.ReactNode }> = ({
   }
 
   return (
-    <MessageContext.Provider
-      value={{ showMessage, success, error, info, warning }}
-    >
+    <MessageContext.Provider value={{ showMessage, success, error, info, warning }}>
       {children}
       <Snackbar
         open={open}

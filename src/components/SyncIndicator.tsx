@@ -99,18 +99,15 @@ export const SyncIndicator: FC = memo(() => {
             "@keyframes sync-pulse": {
               "0%": {
                 transform: "scale(0.85)",
-                boxShadow: (theme: any) =>
-                  `0 0 0 0 ${theme.palette.success.main}80`,
+                boxShadow: (theme: any) => `0 0 0 0 ${theme.palette.success.main}80`,
               },
               "50%": {
                 transform: "scale(1.1)",
-                boxShadow: (theme: any) =>
-                  `0 0 0 6px ${theme.palette.success.main}00`,
+                boxShadow: (theme: any) => `0 0 0 6px ${theme.palette.success.main}00`,
               },
               "100%": {
                 transform: "scale(0.85)",
-                boxShadow: (theme: any) =>
-                  `0 0 0 0 ${theme.palette.success.main}00`,
+                boxShadow: (theme: any) => `0 0 0 0 ${theme.palette.success.main}00`,
               },
             },
           }}

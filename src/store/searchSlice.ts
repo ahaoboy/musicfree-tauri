@@ -70,10 +70,7 @@ export type SearchSlice = SearchSliceState & SearchSliceActions
 // ============================================
 // Create Search Slice
 // ============================================
-export const createSearchSlice: StateCreator<AppState, [], [], SearchSlice> = (
-  set,
-  get,
-) => ({
+export const createSearchSlice: StateCreator<AppState, [], [], SearchSlice> = (set, get) => ({
   // Initial state
   searchText: "",
   searchPlaylist: null,
@@ -232,12 +229,8 @@ export const createSearchSlice: StateCreator<AppState, [], [], SearchSlice> = (
     set({
       searchDownloadingIds: new Set([...searchDownloadingIds, audio.id]),
       // Remove from failed/skipped if retrying
-      searchFailedIds: new Set(
-        [...searchFailedIds].filter((id) => id !== audio.id),
-      ),
-      searchSkippedIds: new Set(
-        [...searchSkippedIds].filter((id) => id !== audio.id),
-      ),
+      searchFailedIds: new Set([...searchFailedIds].filter((id) => id !== audio.id)),
+      searchSkippedIds: new Set([...searchSkippedIds].filter((id) => id !== audio.id)),
     })
 
     try {
@@ -288,8 +281,7 @@ export const createSearchSlice: StateCreator<AppState, [], [], SearchSlice> = (
 
       return result
     } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : String(error)
+      const errorMessage = error instanceof Error ? error.message : String(error)
       const {
         searchDownloadingIds: currDownloading,
         searchFailedIds: currFailed,

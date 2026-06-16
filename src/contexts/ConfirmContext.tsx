@@ -13,9 +13,7 @@ export interface ConfirmContextType {
   showConfirm: (options: ConfirmOptions) => void
 }
 
-export const ConfirmContext = createContext<ConfirmContextType | undefined>(
-  undefined,
-)
+export const ConfirmContext = createContext<ConfirmContextType | undefined>(undefined)
 
 export const useConfirmContext = () => {
   const context = useContext(ConfirmContext)

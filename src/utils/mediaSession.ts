@@ -19,15 +19,8 @@ export interface MediaSessionOptions {
 export const initMediaSession = (options: MediaSessionOptions) => {
   if (!("mediaSession" in navigator)) return
 
-  const {
-    onPlay,
-    onPause,
-    onPreviousTrack,
-    onNextTrack,
-    onSeekTo,
-    onSeekBackward,
-    onSeekForward,
-  } = options
+  const { onPlay, onPause, onPreviousTrack, onNextTrack, onSeekTo, onSeekBackward, onSeekForward } =
+    options
 
   navigator.mediaSession.setActionHandler("play", onPlay)
   navigator.mediaSession.setActionHandler("pause", onPause)
@@ -79,9 +72,7 @@ export const updateMediaSessionMetadata = (metadata: {
 /**
  * Updates the playback state (playing/paused) in the Media Session.
  */
-export const updateMediaSessionPlaybackState = (
-  state: "playing" | "paused",
-) => {
+export const updateMediaSessionPlaybackState = (state: "playing" | "paused") => {
   if (!("mediaSession" in navigator)) return
   navigator.mediaSession.playbackState = state
 }
@@ -94,19 +85,11 @@ export const updateMediaSessionPositionState = (state: {
   playbackRate: number
   position: number
 }) => {
-  if (
-    !("mediaSession" in navigator) ||
-    !("setPositionState" in navigator.mediaSession)
-  )
-    return
+  if (!("mediaSession" in navigator) || !("setPositionState" in navigator.mediaSession)) return
 
   try {
     // Media Session requires positive finite numbers for duration and position
-    if (
-      Number.isFinite(state.duration) &&
-      state.duration > 0 &&
-      Number.isFinite(state.position)
-    ) {
+    if (Number.isFinite(state.duration) && state.duration > 0 && Number.isFinite(state.position)) {
       navigator.mediaSession.setPositionState({
         duration: state.duration,
         playbackRate: state.playbackRate,

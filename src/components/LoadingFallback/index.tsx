@@ -10,9 +10,7 @@ interface LoadingFallbackProps {
 /**
  * Loading fallback component for Suspense boundaries
  */
-export const LoadingFallback: FC<LoadingFallbackProps> = ({
-  fullscreen = false,
-}) => {
+export const LoadingFallback: FC<LoadingFallbackProps> = ({ fullscreen = false }) => {
   if (fullscreen) {
     return (
       <Box

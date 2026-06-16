@@ -1,11 +1,5 @@
 import { FC, useState, useCallback } from "react"
-import {
-  Menu,
-  MenuItem,
-  ListItemIcon,
-  ListItemText,
-  Button,
-} from "@mui/material"
+import { Menu, MenuItem, ListItemIcon, ListItemText, Button } from "@mui/material"
 import { MoreVert, ContentCopy, Delete, Source } from "@mui/icons-material"
 import SaveIcon from "@mui/icons-material/Save"
 import { openUrl, revealItemInDir } from "@tauri-apps/plugin-opener"
@@ -55,10 +49,7 @@ export const MoreActionsDropdown: FC<MoreActionsDropdownProps> = ({
     setAnchorEl(event.currentTarget)
   }
 
-  const handleClose = (
-    event?: {},
-    _reason?: "backdropClick" | "escapeKeyDown",
-  ) => {
+  const handleClose = (event?: {}, _reason?: "backdropClick" | "escapeKeyDown") => {
     if (event && "stopPropagation" in event) {
       ;(event as React.BaseSyntheticEvent).stopPropagation()
     }
@@ -145,9 +136,7 @@ export const MoreActionsDropdown: FC<MoreActionsDropdownProps> = ({
             console.error("Failed to copy to clipboard", e),
           )
         } else {
-          message.success(
-            `Saved ${savedPaths.length} files to\n${savedPaths[0]}`,
-          )
+          message.success(`Saved ${savedPaths.length} files to\n${savedPaths[0]}`)
           // For multiple files, we can copy all paths separated by newlines
           copyToClipboard(savedPaths.join("\n")).catch((e) =>
             console.error("Failed to copy to clipboard", e),

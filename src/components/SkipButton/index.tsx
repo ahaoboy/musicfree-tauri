@@ -16,14 +16,7 @@ interface SkipButtonProps {
   /** Stop event propagation */
   stopPropagation?: boolean
   variant?: "text" | "outlined" | "contained"
-  color?:
-    | "inherit"
-    | "primary"
-    | "secondary"
-    | "success"
-    | "error"
-    | "info"
-    | "warning"
+  color?: "inherit" | "primary" | "secondary" | "success" | "error" | "info" | "warning"
   /** Custom onClick handler */
   onClick?: (e: MouseEvent, direction: "next" | "prev") => void
   /** Disabled state */
@@ -65,11 +58,7 @@ export const SkipButton: FC<SkipButtonProps> = ({
     [direction, playPrev, playNext, canPlayPrevValue, onClick, stopPropagation],
   )
 
-  const {
-    buttonSize,
-    iconSize: finalIconSize,
-    muiSize,
-  } = useAdaptiveSize(size, iconSize)
+  const { buttonSize, iconSize: finalIconSize, muiSize } = useAdaptiveSize(size, iconSize)
 
   const iconStyle = { fontSize: finalIconSize }
 
@@ -90,11 +79,7 @@ export const SkipButton: FC<SkipButtonProps> = ({
         borderRadius: 2,
       }}
     >
-      {direction === "prev" ? (
-        <SkipPrevious style={iconStyle} />
-      ) : (
-        <SkipNext style={iconStyle} />
-      )}
+      {direction === "prev" ? <SkipPrevious style={iconStyle} /> : <SkipNext style={iconStyle} />}
     </Button>
   )
 }

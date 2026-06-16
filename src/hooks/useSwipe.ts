@@ -26,10 +26,7 @@ const DEFAULT_THRESHOLD = 30
 const DEFAULT_ALLOWED_TIME = 500
 
 // Check if element or its parents match any of the exclude selectors
-function shouldExcludeElement(
-  element: EventTarget | null,
-  excludeSelectors: string[],
-): boolean {
+function shouldExcludeElement(element: EventTarget | null, excludeSelectors: string[]): boolean {
   if (!element || !(element instanceof Element)) return false
 
   for (const selector of excludeSelectors) {

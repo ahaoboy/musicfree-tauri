@@ -1,12 +1,6 @@
 import { FC, useState, useCallback } from "react"
 import { Box, Typography, Button, Collapse } from "@mui/material"
-import {
-  Refresh,
-  Home,
-  ExpandMore,
-  ExpandLess,
-  ContentCopy,
-} from "@mui/icons-material"
+import { Refresh, Home, ExpandMore, ExpandLess, ContentCopy } from "@mui/icons-material"
 import ErrorOutlineOutlinedIcon from "@mui/icons-material/ErrorOutlineOutlined"
 import { useNavigate } from "react-router-dom"
 import { ErrorBoundary } from "../ErrorBoundary"
@@ -47,11 +41,7 @@ const PageErrorFallback: FC<PageErrorFallbackProps> = ({ error, onReset }) => {
       <Typography variant="h5" gutterBottom>
         Page Error
       </Typography>
-      <Typography
-        variant="body1"
-        color="text.secondary"
-        sx={{ mb: 1, maxWidth: 480 }}
-      >
+      <Typography variant="body1" color="text.secondary" sx={{ mb: 1, maxWidth: 480 }}>
         {errorMessage}
       </Typography>
 
@@ -89,26 +79,13 @@ const PageErrorFallback: FC<PageErrorFallbackProps> = ({ error, onReset }) => {
       )}
 
       <Box sx={{ display: "flex", gap: 2 }}>
-        <Button
-          variant="outlined"
-          startIcon={<ContentCopy />}
-          onClick={handleCopyError}
-        >
+        <Button variant="outlined" startIcon={<ContentCopy />} onClick={handleCopyError}>
           Copy
         </Button>
-        <Button
-          variant="contained"
-          color="primary"
-          startIcon={<Refresh />}
-          onClick={onReset}
-        >
+        <Button variant="contained" color="primary" startIcon={<Refresh />} onClick={onReset}>
           Retry
         </Button>
-        <Button
-          variant="outlined"
-          startIcon={<Home />}
-          onClick={() => navigate("/playlists")}
-        >
+        <Button variant="outlined" startIcon={<Home />} onClick={() => navigate("/playlists")}>
           Go Home
         </Button>
       </Box>
@@ -124,10 +101,7 @@ interface PageErrorBoundaryProps {
 /**
  * Page-level Error Boundary with navigation options
  */
-export const PageErrorBoundary: FC<PageErrorBoundaryProps> = ({
-  children,
-  onReset,
-}) => {
+export const PageErrorBoundary: FC<PageErrorBoundaryProps> = ({ children, onReset }) => {
   return (
     <ErrorBoundary
       fallback={({ error, onReset: handleReset }) => (

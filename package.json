@@ -1,7 +1,7 @@
 {
   "name": "musicfree",
-  "private": true,
   "version": "0.0.0",
+  "private": true,
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -11,20 +11,16 @@
     "android": "tauri android",
     "android:dev": "tauri android dev",
     "android:build": "tauri android build --target aarch64",
-    "pre-check": "npm run format && npm run lint:fix",
+    "pre-check": "oxfmt && oxlint --fix",
     "clippy": "cd src-tauri && cargo clippy --fix --allow-dirty --allow-staged --all-targets --all-features",
-    "lint": "biome check --apply-unsafe",
-    "format": "biome format --write",
-    "lint:fix": "biome lint --write --unsafe",
     "icon": "tauri icon ./public/icon-android.png && cp public/icon.ico src-tauri/icons/icon.ico"
   },
   "dependencies": {
-    "@biomejs/biome": "2.4.16",
     "@emotion/react": "11.14.0",
     "@emotion/styled": "11.14.1",
     "@fontsource/roboto": "5.2.10",
-    "@mui/icons-material": "9.0.1",
-    "@mui/material": "9.0.1",
+    "@mui/icons-material": "9.1.1",
+    "@mui/material": "9.1.1",
     "@tauri-apps/api": "2.11.0",
     "@tauri-apps/plugin-clipboard-manager": "2.3.2",
     "@tauri-apps/plugin-fs": "2.5.1",
@@ -34,17 +30,19 @@
     "pretty-bytes": "7.1.0",
     "react": "19.2.7",
     "react-dom": "19.2.7",
-    "react-router": "7.16.0",
-    "react-router-dom": "7.16.0",
+    "react-router": "7.17.0",
+    "react-router-dom": "7.17.0",
     "react-window": "2.2.7",
     "yjs": "13.6.31",
     "zustand": "5.0.14"
   },
   "devDependencies": {
     "@tauri-apps/cli": "2.11.2",
-    "@types/react": "19.2.16",
+    "@types/react": "19.2.17",
     "@types/react-dom": "19.2.3",
     "@vitejs/plugin-react": "6.0.2",
+    "oxfmt": "0.55.0",
+    "oxlint": "1.70.0",
     "typescript": "6.0.3",
     "vite": "8.0.16"
   }

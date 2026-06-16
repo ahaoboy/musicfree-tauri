@@ -53,8 +53,7 @@ export const PlaylistDetail: FC = () => {
 
       // Check if this audio is currently playing in this playlist
       const isCurrentAudio =
-        currentPlaylistId === playlist.id &&
-        currentAudio?.audio.id === audio.audio.id
+        currentPlaylistId === playlist.id && currentAudio?.audio.id === audio.audio.id
 
       if (isCurrentAudio) {
         // Toggle play/pause for current audio
@@ -83,8 +82,7 @@ export const PlaylistDetail: FC = () => {
   const renderAudioItem = useCallback(
     (audio: LocalAudio) => {
       const isActive =
-        currentAudio?.audio.id === audio.audio.id &&
-        currentPlaylistId === playlist?.id
+        currentAudio?.audio.id === audio.audio.id && currentPlaylistId === playlist?.id
 
       return (
         <AudioCard
@@ -103,21 +101,13 @@ export const PlaylistDetail: FC = () => {
               showSave={true}
               playlistId={playlist?.id}
               audioId={audio.audio.id}
-              onDelete={() =>
-                handleDeleteAudio(audio.audio.id, audio.audio.title)
-              }
+              onDelete={() => handleDeleteAudio(audio.audio.id, audio.audio.title)}
             />
           }
         />
       )
     },
-    [
-      currentAudio?.audio.id,
-      currentPlaylistId,
-      playlist?.id,
-      handleAudioClick,
-      handleDeleteAudio,
-    ],
+    [currentAudio?.audio.id, currentPlaylistId, playlist?.id, handleAudioClick, handleDeleteAudio],
   )
 
   // Playlist not found
@@ -154,11 +144,7 @@ export const PlaylistDetail: FC = () => {
 
   return (
     <Stack sx={pageContainerSx}>
-      <AudioList
-        items={playlist.audios}
-        getItemId={getAudioId}
-        renderItem={renderAudioItem}
-      />
+      <AudioList items={playlist.audios} getItemId={getAudioId} renderItem={renderAudioItem} />
     </Stack>
   )
 }

@@ -39,8 +39,7 @@ export const MusicPage: FC = () => {
 
       // Check if this audio is currently playing
       const isCurrentAudio =
-        currentPlaylistId === AUDIO_PLAYLIST_ID &&
-        currentAudio?.audio.id === audio.audio.id
+        currentPlaylistId === AUDIO_PLAYLIST_ID && currentAudio?.audio.id === audio.audio.id
 
       if (isCurrentAudio) {
         // Toggle play/pause for current audio
@@ -50,14 +49,7 @@ export const MusicPage: FC = () => {
         playAudio(audio, AUDIO_PLAYLIST_ID)
       }
     },
-    [
-      playAudio,
-      togglePlay,
-      highlightId,
-      setSearchParams,
-      currentAudio,
-      currentPlaylistId,
-    ],
+    [playAudio, togglePlay, highlightId, setSearchParams, currentAudio, currentPlaylistId],
   )
 
   const handleDelete = useCallback(
@@ -75,8 +67,7 @@ export const MusicPage: FC = () => {
     (audio: LocalAudio) => {
       const isActive = highlightId
         ? highlightId === audio.audio.id
-        : currentPlaylistId === AUDIO_PLAYLIST_ID &&
-          currentAudio?.audio.id === audio.audio.id
+        : currentPlaylistId === AUDIO_PLAYLIST_ID && currentAudio?.audio.id === audio.audio.id
 
       return (
         <AudioCard
@@ -101,13 +92,7 @@ export const MusicPage: FC = () => {
         />
       )
     },
-    [
-      highlightId,
-      currentPlaylistId,
-      currentAudio?.audio.id,
-      handleAudioClick,
-      handleDelete,
-    ],
+    [highlightId, currentPlaylistId, currentAudio?.audio.id, handleAudioClick, handleDelete],
   )
 
   if (isConfigLoading) {

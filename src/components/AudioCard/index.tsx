@@ -1,13 +1,5 @@
 import { FC, memo, useCallback, ReactNode } from "react"
-import {
-  Box,
-  Typography,
-  Avatar,
-  Badge,
-  Card,
-  SxProps,
-  Theme,
-} from "@mui/material"
+import { Box, Typography, Avatar, Badge, Card, SxProps, Theme } from "@mui/material"
 import { Audiotrack, Check, Favorite } from "@mui/icons-material"
 import { DEFAULT_COVER_URL } from "../../api"
 import { useCoverUrl } from "../../hooks"
@@ -247,9 +239,7 @@ export const AudioCard: FC<AudioCardProps> = memo(
                   sx={{
                     fontFamily: "monospace",
                     whiteSpace: "pre",
-                    color: isLongDurationValue
-                      ? "warning.main"
-                      : "text.secondary",
+                    color: isLongDurationValue ? "warning.main" : "text.secondary",
                   }}
                 >
                   {formattedDuration}

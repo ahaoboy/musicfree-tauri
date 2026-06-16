@@ -64,9 +64,7 @@ const REPO_URL = "https://github.com/ahaoboy/musicfree-tauri"
 export const SettingsPage: FC = () => {
   const { mode, setMode } = useTheme()
   // Guard against invalid mode during rapid Activity show/hide on Android
-  const safeMode: string = ["light", "dark", "system"].includes(mode)
-    ? mode
-    : "system"
+  const safeMode: string = ["light", "dark", "system"].includes(mode) ? mode : "system"
   // const setThemeMode = useAppStore((state) => state.setThemeMode)
   const loadConfig = useAppStore((state) => state.loadConfig)
 
@@ -75,8 +73,7 @@ export const SettingsPage: FC = () => {
 
   // Count user playlists (excluding special playlists)
   const userPlaylistsCount = useAppStore(
-    (state) =>
-      state.config.playlists.filter(({ id }) => !is_builtin(id)).length,
+    (state) => state.config.playlists.filter(({ id }) => !is_builtin(id)).length,
   )
 
   const appDir = useAppStore((state) => state.app_dir)
@@ -273,9 +270,7 @@ export const SettingsPage: FC = () => {
       <Stack spacing={2}>
         <Select
           value={safeMode}
-          onChange={(e) =>
-            setMode(e.target.value as "light" | "dark" | "system")
-          }
+          onChange={(e) => setMode(e.target.value as "light" | "dark" | "system")}
           fullWidth
         >
           <MenuItem value="light">
@@ -302,10 +297,7 @@ export const SettingsPage: FC = () => {
       {/* Library Section */}
       <Stack spacing={2}>
         <Paper variant="outlined" sx={{ p: 2 }}>
-          <Stack
-            direction="row"
-            sx={{ justifyContent: "space-between", alignItems: "center" }}
-          >
+          <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "center" }}>
             <Typography>Downloaded</Typography>
             <Typography color="text.secondary">
               ♪ {totalAudios} 🎶{userPlaylistsCount}
@@ -317,20 +309,12 @@ export const SettingsPage: FC = () => {
       {/* About Section */}
       <Stack spacing={2}>
         <Paper variant="outlined" sx={{ p: 2 }}>
-          <Stack
-            direction="row"
-            sx={{ justifyContent: "space-between", alignItems: "center" }}
-          >
+          <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "center" }}>
             <Typography>Version</Typography>
-            <Typography color="text.secondary">
-              {version || "Loading..."}
-            </Typography>
+            <Typography color="text.secondary">{version || "Loading..."}</Typography>
           </Stack>
           <Divider sx={{ my: 1 }} />
-          <Stack
-            direction="row"
-            sx={{ justifyContent: "space-between", alignItems: "center" }}
-          >
+          <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "center" }}>
             <Typography>Repository</Typography>
             <Stack direction="row" spacing={1}>
               <IconButton
@@ -348,10 +332,7 @@ export const SettingsPage: FC = () => {
             </Stack>
           </Stack>
           <Divider sx={{ my: 1 }} />
-          <Stack
-            direction="row"
-            sx={{ justifyContent: "space-between", alignItems: "center" }}
-          >
+          <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "center" }}>
             <Typography>App Directory</Typography>
             <Stack direction="row" spacing={1}>
               {CurrentPlatform !== "android" && (
@@ -378,45 +359,28 @@ export const SettingsPage: FC = () => {
       {/* Data Management Section */}
       <Stack spacing={2}>
         <Paper variant="outlined" sx={{ p: 2 }}>
-          <Stack
-            direction="row"
-            sx={{ justifyContent: "space-between", alignItems: "center" }}
-          >
+          <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "center" }}>
             <Box>
               <Typography>Backup & Restore</Typography>
             </Box>
             <Stack direction="row" spacing={1}>
-              <Button
-                variant="outlined"
-                onClick={handleExport}
-                disabled={exporting}
-              >
+              <Button variant="outlined" onClick={handleExport} disabled={exporting}>
                 Export
               </Button>
-              <Button
-                variant="outlined"
-                onClick={handleImport}
-                disabled={importing}
-              >
+              <Button variant="outlined" onClick={handleImport} disabled={importing}>
                 Import
               </Button>
             </Stack>
           </Stack>
           <Divider sx={{ my: 1 }} />
-          <Stack
-            direction="row"
-            sx={{ justifyContent: "space-between", alignItems: "center" }}
-          >
+          <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "center" }}>
             <Box>
               <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
                 <Typography>Clear Cache</Typography>
                 <Typography color="text.secondary" variant="body2">
                   (
                   {loadingCache ? (
-                    <CircularProgress
-                      size={12}
-                      sx={{ color: "text.secondary" }}
-                    />
+                    <CircularProgress size={12} sx={{ color: "text.secondary" }} />
                   ) : (
                     prettyBytes(cacheSize)
                   )}
@@ -429,20 +393,14 @@ export const SettingsPage: FC = () => {
             </IconButton>
           </Stack>
           <Divider sx={{ my: 1 }} />
-          <Stack
-            direction="row"
-            sx={{ justifyContent: "space-between", alignItems: "center" }}
-          >
+          <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "center" }}>
             <Box>
               <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
                 <Typography>Clear Storage</Typography>
                 <Typography color="text.secondary" variant="body2">
                   (
                   {loadingStorage ? (
-                    <CircularProgress
-                      size={12}
-                      sx={{ color: "text.secondary" }}
-                    />
+                    <CircularProgress size={12} sx={{ color: "text.secondary" }} />
                   ) : (
                     prettyBytes(storageSize)
                   )}
@@ -455,10 +413,7 @@ export const SettingsPage: FC = () => {
             </IconButton>
           </Stack>
           <Divider sx={{ my: 1 }} />
-          <Stack
-            direction="row"
-            sx={{ justifyContent: "space-between", alignItems: "center" }}
-          >
+          <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "center" }}>
             <Box>
               <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
                 <Typography>Log</Typography>
@@ -502,19 +457,12 @@ export const SettingsPage: FC = () => {
             </Stack>
           </Stack>
           <Divider sx={{ my: 1 }} />
-          <Stack
-            direction="row"
-            sx={{ justifyContent: "space-between", alignItems: "center" }}
-          >
+          <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "center" }}>
             <Box>
               <Typography>
                 Sync
                 {gistConfig?.lastSyncTime && (
-                  <Typography
-                    component="span"
-                    color="text.secondary"
-                    variant="body2"
-                  >
+                  <Typography component="span" color="text.secondary" variant="body2">
                     {" "}
                     ({new Date(gistConfig.lastSyncTime).toLocaleString()})
                   </Typography>
@@ -557,11 +505,7 @@ interface SyncDialogProps {
   config: GistConfig | null
   onSave: (config: GistConfig) => void
   isSyncing: boolean
-  syncGithub: (
-    manual?: boolean,
-    forcePush?: boolean,
-    forcePull?: boolean,
-  ) => Promise<void>
+  syncGithub: (manual?: boolean, forcePush?: boolean, forcePull?: boolean) => Promise<void>
 }
 
 const SyncDialog: FC<SyncDialogProps> = ({
@@ -629,9 +573,7 @@ const SyncDialog: FC<SyncDialogProps> = ({
           onOk: () => {},
         })
       } else {
-        message.error(
-          `Sync failed: ${error instanceof Error ? error.message : String(error)}`,
-        )
+        message.error(`Sync failed: ${error instanceof Error ? error.message : String(error)}`)
       }
     }
   }
@@ -696,9 +638,7 @@ const SyncDialog: FC<SyncDialogProps> = ({
             <IconButton
               size="small"
               onClick={() => {
-                const url = repoUrl.startsWith("http")
-                  ? repoUrl
-                  : `https://github.com/${repoUrl}`
+                const url = repoUrl.startsWith("http") ? repoUrl : `https://github.com/${repoUrl}`
                 openUrl(url)
               }}
               aria-label="Open Repository"
@@ -752,11 +692,7 @@ const SyncDialog: FC<SyncDialogProps> = ({
             size="small"
             aria-label="Sync"
           >
-            {isSyncing ? (
-              <CircularProgress size={20} color="inherit" />
-            ) : (
-              <SyncIcon />
-            )}
+            {isSyncing ? <CircularProgress size={20} color="inherit" /> : <SyncIcon />}
           </IconButton>
           <IconButton
             color="warning"
@@ -780,11 +716,7 @@ const SyncDialog: FC<SyncDialogProps> = ({
         <Button onClick={onClose} color="inherit">
           Cancel
         </Button>
-        <Button
-          onClick={handleSave}
-          variant="contained"
-          disabled={!repoUrl || !token || loading}
-        >
+        <Button onClick={handleSave} variant="contained" disabled={!repoUrl || !token || loading}>
           {loading ? <CircularProgress size={24} /> : "Save"}
         </Button>
       </DialogActions>

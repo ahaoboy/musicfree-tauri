@@ -2,12 +2,8 @@
   "$schema": "../gen/schemas/mobile-schema.json",
   "identifier": "mobile",
   "description": "Mobile capabilities for the main window",
-  "platforms": [
-    "android"
-  ],
-  "windows": [
-    "main"
-  ],
+  "platforms": ["android"],
+  "windows": ["main"],
   "permissions": [
     "opener:default",
     "opener:allow-default-urls",

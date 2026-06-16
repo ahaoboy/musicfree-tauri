@@ -1,24 +1,11 @@
 import { FC, useCallback } from "react"
 import { useNavigate } from "react-router-dom"
 import { MusicNote } from "@mui/icons-material"
-import {
-  Slider,
-  Typography,
-  Avatar,
-  Stack,
-  Box,
-  useTheme,
-  alpha,
-} from "@mui/material"
+import { Slider, Typography, Avatar, Stack, Box, useTheme, alpha } from "@mui/material"
 import { useAppStore, useCurrentTime, useDuration } from "../../store"
 import { DEFAULT_COVER_URL, AUDIO_PLAYLIST_ID } from "../../api"
 import { useCoverUrl, useConfirm } from "../../hooks"
-import {
-  MoreActionsDropdown,
-  PlayerControls,
-  BackButton,
-  PlatformIcon,
-} from "../../components"
+import { MoreActionsDropdown, PlayerControls, BackButton, PlatformIcon } from "../../components"
 
 const formatTime = (seconds: number) => {
   if (!seconds || !Number.isFinite(seconds)) return "0:00"
@@ -51,10 +38,7 @@ export const PlayerPage: FC = () => {
 
   // Commit seek operation when user releases slider
   const handleAfterChange = useCallback(
-    (
-      _event: Event | React.SyntheticEvent | undefined,
-      value: number | number[],
-    ) => {
+    (_event: Event | React.SyntheticEvent | undefined, value: number | number[]) => {
       if (!canSeek) return
       const seekTime = value as number
       if (audioElement && Number.isFinite(seekTime)) {
@@ -97,9 +81,7 @@ export const PlayerPage: FC = () => {
           if (currentPlaylistId === AUDIO_PLAYLIST_ID) {
             navigate("/music")
           } else {
-            navigate(
-              `/playlist-detail/${encodeURIComponent(currentPlaylistId)}`,
-            )
+            navigate(`/playlist-detail/${encodeURIComponent(currentPlaylistId)}`)
           }
         }
       },
@@ -203,9 +185,7 @@ export const PlayerPage: FC = () => {
       </Stack>
 
       {/* Cover */}
-      <Stack
-        sx={{ flex: 1, alignItems: "center", justifyContent: "center", p: 3 }}
-      >
+      <Stack sx={{ flex: 1, alignItems: "center", justifyContent: "center", p: 3 }}>
         <Avatar
           src={coverUrl || DEFAULT_COVER_URL}
           variant="rounded"
@@ -251,10 +231,7 @@ export const PlayerPage: FC = () => {
       </Stack>
 
       {/* Controls */}
-      <Stack
-        sx={{ p: 3, pb: "max(env(safe-area-inset-bottom), 24px)" }}
-        spacing={2}
-      >
+      <Stack sx={{ p: 3, pb: "max(env(safe-area-inset-bottom), 24px)" }} spacing={2}>
         {/* Progress */}
         <Stack direction="row" sx={{ alignItems: "center" }} spacing={2}>
           <Typography
@@ -294,11 +271,7 @@ export const PlayerPage: FC = () => {
               },
             }}
           />
-          <Typography
-            variant="caption"
-            color="text.secondary"
-            sx={{ minWidth: 40 }}
-          >
+          <Typography variant="caption" color="text.secondary" sx={{ minWidth: 40 }}>
             {formatTime(duration)}
           </Typography>
         </Stack>

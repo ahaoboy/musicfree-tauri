@@ -9,12 +9,7 @@ export interface PlatformIconProps {
   size?: number
 }
 
-export const PlatformIcon: FC<PlatformIconProps> = ({
-  platform,
-  className,
-  style,
-  size,
-}) => {
+export const PlatformIcon: FC<PlatformIconProps> = ({ platform, className, style, size }) => {
   const theme = useTheme()
 
   const iconStyle = useMemo(

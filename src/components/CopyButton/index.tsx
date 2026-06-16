@@ -18,14 +18,7 @@ interface CopyButtonProps {
   /** Duration to show copied state in ms (default: 2000) */
   copiedDuration?: number
   variant?: "text" | "outlined" | "contained"
-  color?:
-    | "inherit"
-    | "primary"
-    | "secondary"
-    | "success"
-    | "error"
-    | "info"
-    | "warning"
+  color?: "inherit" | "primary" | "secondary" | "success" | "error" | "info" | "warning"
   /** Additional className */
   className?: string
   /** Button size */
@@ -53,9 +46,7 @@ export const CopyButton: FC<CopyButtonProps> = ({
   const [copied, setCopied] = useState(false)
   const [snackbarOpen, setSnackbarOpen] = useState(false)
   const [snackbarMessage, setSnackbarMessage] = useState("")
-  const [snackbarSeverity, setSnackbarSeverity] = useState<"success" | "error">(
-    "success",
-  )
+  const [snackbarSeverity, setSnackbarSeverity] = useState<"success" | "error">("success")
 
   const handleClose = () => {
     setSnackbarOpen(false)
@@ -106,11 +97,7 @@ export const CopyButton: FC<CopyButtonProps> = ({
         onClose={handleClose}
         anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
       >
-        <Alert
-          onClose={handleClose}
-          severity={snackbarSeverity}
-          sx={{ width: "100%" }}
-        >
+        <Alert onClose={handleClose} severity={snackbarSeverity} sx={{ width: "100%" }}>
           {snackbarMessage}
         </Alert>
       </Snackbar>

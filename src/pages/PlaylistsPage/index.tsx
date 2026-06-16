@@ -3,11 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom"
 import { Stack, Avatar } from "@mui/material"
 import { FolderOpen } from "@mui/icons-material"
 import { useAppStore, usePlaylistsPageData } from "../../store"
-import {
-  LocalPlaylist,
-  FAVORITE_PLAYLIST_ID,
-  DEFAULT_COVER_URL,
-} from "../../api"
+import { LocalPlaylist, FAVORITE_PLAYLIST_ID, DEFAULT_COVER_URL } from "../../api"
 import { AudioCard, AudioList, MoreActionsDropdown } from "../../components"
 import { useConfirm } from "../../hooks"
 import {
@@ -29,14 +25,9 @@ export const PlaylistsPage: FC = () => {
   // Get highlight ID from URL params
   const highlightId = searchParams.get("highlight")
 
-  const setViewingPlaylistId = useAppStore(
-    (state) => state.setViewingPlaylistId,
-  )
+  const setViewingPlaylistId = useAppStore((state) => state.setViewingPlaylistId)
 
-  const getPlaylistId = useCallback(
-    (playlist: LocalPlaylist) => playlist.id,
-    [],
-  )
+  const getPlaylistId = useCallback((playlist: LocalPlaylist) => playlist.id, [])
 
   const handlePlaylistClick = useCallback(
     (playlist: LocalPlaylist) => {
@@ -69,9 +60,7 @@ export const PlaylistsPage: FC = () => {
       const canDelete = playlist.id !== FAVORITE_PLAYLIST_ID
 
       // Priority: highlightId > currentPlaylistId
-      const isActive = highlightId
-        ? highlightId === playlist.id
-        : currentPlaylistId === playlist.id
+      const isActive = highlightId ? highlightId === playlist.id : currentPlaylistId === playlist.id
 
       return (
         <AudioCard
@@ -91,9 +80,7 @@ export const PlaylistsPage: FC = () => {
               showSave={true}
               playlistId={playlist.id}
               onDelete={
-                canDelete
-                  ? () => handleDeletePlaylist(playlist.id, playlist.title)
-                  : undefined
+                canDelete ? () => handleDeletePlaylist(playlist.id, playlist.title) : undefined
               }
             />
           }

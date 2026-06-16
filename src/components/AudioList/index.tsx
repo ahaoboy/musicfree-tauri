@@ -41,29 +41,27 @@ interface AudioListProps<T = unknown> {
 }
 
 // Row component for react-window, moved outside to prevent re-creation on every render
-const RowComponent = memo(
-  ({ index, style, items, renderItem, getItemId, ariaAttributes }: any) => {
-    const item = items?.[index]
+const RowComponent = memo(({ index, style, items, renderItem, getItemId, ariaAttributes }: any) => {
+  const item = items?.[index]
 
-    if (!item) return null
+  if (!item) return null
 
-    const itemId = getItemId(item)
+  const itemId = getItemId(item)
 
-    return (
-      <Box
-        style={{
-          ...style,
-          padding: "4px 8px",
-          boxSizing: "border-box",
-        }}
-        data-item-id={itemId}
-        {...ariaAttributes}
-      >
-        {renderItem(item, index)}
-      </Box>
-    )
-  },
-)
+  return (
+    <Box
+      style={{
+        ...style,
+        padding: "4px 8px",
+        boxSizing: "border-box",
+      }}
+      data-item-id={itemId}
+      {...ariaAttributes}
+    >
+      {renderItem(item, index)}
+    </Box>
+  )
+})
 
 RowComponent.displayName = "RowComponent"
 
@@ -93,10 +91,7 @@ export function AudioList<T>({
         // Use requestAnimationFrame to ensure the list component has processed rowCount changes
         // and its internal layout before attempting to scroll.
         const scrollFrame = requestAnimationFrame(() => {
-          if (
-            listRef.current &&
-            typeof listRef.current.scrollToRow === "function"
-          ) {
+          if (listRef.current && typeof listRef.current.scrollToRow === "function") {
             try {
               // Correct API call according to component documentation:
               // scrollToRow(config: { index: number; align?: string; behavior?: string })

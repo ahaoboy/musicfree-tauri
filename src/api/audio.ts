@@ -7,9 +7,7 @@ const AudioTypes =
     ",",
   )
 export const ImageTypes =
-  "apng,avif,bmp,gif,j2k,jp2,jfif,jpeg,jpg,jxl,mj2,png,svg,tga,tif,tiff,webp".split(
-    ",",
-  )
+  "apng,avif,bmp,gif,j2k,jp2,jfif,jpeg,jpg,jxl,mj2,png,svg,tga,tif,tiff,webp".split(",")
 function endsWith(s: string | undefined, exts: string[]) {
   if (!s?.length) {
     return false

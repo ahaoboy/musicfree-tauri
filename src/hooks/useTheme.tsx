@@ -203,9 +203,7 @@ const SPACING = {
 /** Glass/frosted effect for elevated surfaces */
 export const glassEffect = (theme: Theme, blur = 16) => ({
   background:
-    theme.palette.mode === "light"
-      ? "rgba(99, 102, 241, 0.08)"
-      : "rgba(129, 140, 248, 0.12)",
+    theme.palette.mode === "light" ? "rgba(99, 102, 241, 0.08)" : "rgba(129, 140, 248, 0.12)",
   "@media (hover: hover) and (pointer: fine)": {
     backdropFilter: `blur(${blur}px) saturate(180%)`,
     WebkitBackdropFilter: `blur(${blur}px) saturate(180%)`,
@@ -351,9 +349,7 @@ export const useTheme = () => {
 
   const rawMode = colorScheme?.mode
   const mode: "light" | "dark" | "system" =
-    rawMode === "light" || rawMode === "dark" || rawMode === "system"
-      ? rawMode
-      : lastMode.current
+    rawMode === "light" || rawMode === "dark" || rawMode === "system" ? rawMode : lastMode.current
   lastMode.current = mode
 
   const setMode = colorScheme?.setMode ?? (() => {})

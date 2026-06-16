@@ -81,10 +81,8 @@ function reconcileYDocWithConfig(ydoc: Y.Doc, config: Config): void {
     }
 
     // 2. Update Playlist Metadata (only if changed)
-    if (yplaylist.get("title") !== playlist.title)
-      yplaylist.set("title", playlist.title)
-    if (yplaylist.get("cover") !== playlist.cover)
-      yplaylist.set("cover", playlist.cover)
+    if (yplaylist.get("title") !== playlist.title) yplaylist.set("title", playlist.title)
+    if (yplaylist.get("cover") !== playlist.cover) yplaylist.set("cover", playlist.cover)
     if (yplaylist.get("cover_path") !== playlist.cover_path)
       yplaylist.set("cover_path", playlist.cover_path)
     if (yplaylist.get("platform") !== playlist.platform)
@@ -131,8 +129,7 @@ function reconcileYDocWithConfig(ydoc: Y.Doc, config: Config): void {
         yaudio.set("audio", audio.audio)
       }
       if (yaudio.get("path") !== audio.path) yaudio.set("path", audio.path)
-      if (yaudio.get("cover_path") !== audio.cover_path)
-        yaudio.set("cover_path", audio.cover_path)
+      if (yaudio.get("cover_path") !== audio.cover_path) yaudio.set("cover_path", audio.cover_path)
     }
 
     // Trim trailing audios
@@ -217,8 +214,7 @@ async function downloadMissingFiles(
     }
 
     for (const audio of playlist.audios) {
-      const shouldDownload =
-        downloadAll || audioIdsToDownload.has(audio.audio.id)
+      const shouldDownload = downloadAll || audioIdsToDownload.has(audio.audio.id)
       if (!shouldDownload) continue
 
       // Download audio file if missing
@@ -236,9 +232,7 @@ async function downloadMissingFiles(
         const exists = await path_exists(audio.cover_path).catch(() => false)
         if (!exists) {
           log.info(`Downloading cover: ${audio.audio.title}`)
-          download_cover(audio.audio.cover, audio.audio.platform).catch(
-            console.error,
-          )
+          download_cover(audio.audio.cover, audio.audio.platform).catch(console.error)
         }
       }
     }
@@ -318,10 +312,7 @@ function areStatesEqual(state1: Uint8Array, state2: Uint8Array): boolean {
  */
 function isLocalDataEmpty(config: Config): boolean {
   if (config.playlists.length === 0) return true
-  if (
-    config.playlists.length === 1 &&
-    config.playlists[0].audios.length === 0
-  ) {
+  if (config.playlists.length === 1 && config.playlists[0].audios.length === 0) {
     return true
   }
   return false
@@ -354,9 +345,7 @@ function isYDocEmpty(yDoc: Y.Doc): boolean {
 function compactYjsState(state: Uint8Array): Uint8Array {
   if (state.length < COMPACTION_THRESHOLD) return state
 
-  log.info(
-    `[Sync] Compacting Yjs state: ${state.length} bytes → rebuilding from data...`,
-  )
+  log.info(`[Sync] Compacting Yjs state: ${state.length} bytes → rebuilding from data...`)
 
   // Rebuild: apply state to extract data, then re-create from JSON config
   const tempDoc = new Y.Doc()
@@ -369,9 +358,7 @@ function compactYjsState(state: Uint8Array): Uint8Array {
   const compacted = Y.encodeStateAsUpdate(freshDoc)
   freshDoc.destroy()
 
-  log.info(
-    `[Sync] Compaction complete: ${state.length} → ${compacted.length} bytes`,
-  )
+  log.info(`[Sync] Compaction complete: ${state.length} → ${compacted.length} bytes`)
   return compacted
 }
 
@@ -446,9 +433,7 @@ export async function syncWithYjs(
   if (!forcePush && !forcePull && remoteInfo && gistConfig.lastRemoteSha) {
     if (remoteInfo.sha === gistConfig.lastRemoteSha) {
       if (!hasPendingLocalChanges) {
-        log.info(
-          "[Sync] Remote SHA unchanged and no local changes – skipping sync",
-        )
+        log.info("[Sync] Remote SHA unchanged and no local changes – skipping sync")
         return {
           updatedConfig: localConfig,
           newGistConfig: gistConfig,
@@ -488,13 +473,7 @@ export async function syncWithYjs(
   // -------------------------------------------------------
   if (forcePush) {
     log.info("[Sync] Force push mode – uploading local state...")
-    await sync_update(
-      githubToken,
-      repoUrl,
-      localState,
-      undefined,
-      commitMessage,
-    )
+    await sync_update(githubToken, repoUrl, localState, undefined, commitMessage)
     await uploadJsonReference(localConfig, githubToken, repoUrl, commitMessage)
 
     const newSha = await fetchRemoteSha(githubToken, repoUrl)
@@ -544,13 +523,7 @@ export async function syncWithYjs(
   if (!remoteYDoc || !remoteState) {
     log.info("[Sync] No valid remote state. Uploading local.")
 
-    await sync_update(
-      githubToken,
-      repoUrl,
-      localState,
-      undefined,
-      commitMessage,
-    )
+    await sync_update(githubToken, repoUrl, localState, undefined, commitMessage)
     await uploadJsonReference(localConfig, githubToken, repoUrl, commitMessage)
 
     const newSha = await fetchRemoteSha(githubToken, repoUrl)
@@ -575,9 +548,7 @@ export async function syncWithYjs(
   // -------------------------------------------------------
   const shouldForcePull = forcePull || localEmpty
   if (localEmpty && !forcePull) {
-    log.info(
-      "[Sync] Local data is empty – force pulling to preserve remote data",
-    )
+    log.info("[Sync] Local data is empty – force pulling to preserve remote data")
   }
 
   if (shouldForcePull) {
@@ -592,8 +563,7 @@ export async function syncWithYjs(
     log.info("[Sync] Downloading all items from remote...")
     await downloadMissingFiles(remoteConfig, new Set())
 
-    const newSha =
-      remoteInfo?.sha ?? (await fetchRemoteSha(githubToken, repoUrl))
+    const newSha = remoteInfo?.sha ?? (await fetchRemoteSha(githubToken, repoUrl))
 
     localYDoc.destroy()
     remoteYDoc.destroy()
@@ -653,13 +623,7 @@ export async function syncWithYjs(
   if (remoteChanged || localChanged) {
     log.info(`[Sync] Uploading merged state (${mergedState.length} bytes)...`)
 
-    await sync_update(
-      githubToken,
-      repoUrl,
-      mergedState,
-      undefined,
-      commitMessage,
-    )
+    await sync_update(githubToken, repoUrl, mergedState, undefined, commitMessage)
 
     await uploadJsonReference(mergedConfig, githubToken, repoUrl, commitMessage)
 
@@ -676,9 +640,7 @@ export async function syncWithYjs(
     const newAudioIds = detectNewAudios(localConfig, mergedConfig)
 
     if (newAudioIds.size > 0) {
-      log.info(
-        `[Sync] Downloading ${newAudioIds.size} new items from remote...`,
-      )
+      log.info(`[Sync] Downloading ${newAudioIds.size} new items from remote...`)
       await downloadMissingFiles(mergedConfig, newAudioIds)
       log.info("[Sync] Download completed")
     } else {
@@ -733,10 +695,7 @@ async function uploadJsonReference(
 /**
  * Fetch the current SHA of the remote Yjs file for change detection.
  */
-async function fetchRemoteSha(
-  token: string,
-  repo: string,
-): Promise<string | undefined> {
+async function fetchRemoteSha(token: string, repo: string): Promise<string | undefined> {
   try {
     const info = await sync_file_info(token, repo)
     return info?.sha

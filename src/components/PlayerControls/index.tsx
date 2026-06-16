@@ -35,13 +35,7 @@ interface PlayerControlsProps {
   /** Gap between buttons */
   gap?: number | string
   /** Alignment */
-  align?:
-    | "flex-start"
-    | "center"
-    | "flex-end"
-    | "space-between"
-    | "space-around"
-    | "space-evenly"
+  align?: "flex-start" | "center" | "flex-end" | "space-between" | "space-around" | "space-evenly"
 }
 
 /**
@@ -66,12 +60,7 @@ export const PlayerControls: FC<PlayerControlsProps> = ({
   // Mini layout: only play and favorite buttons
   if (layout === "mini") {
     return (
-      <Stack
-        direction="row"
-        sx={{ alignItems: "center" }}
-        spacing={gap}
-        className={className}
-      >
+      <Stack direction="row" sx={{ alignItems: "center" }} spacing={gap} className={className}>
         <PlayButton
           stopPropagation
           className={`${buttonClassName} play`}

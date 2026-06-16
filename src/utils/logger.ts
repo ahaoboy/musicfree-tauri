@@ -34,21 +34,13 @@ class Logger {
     this.saveToFile = options.saveToFile ?? false
   }
 
-  private formatMessage(
-    _level: LogLevel,
-    message: string,
-    ..._args: any[]
-  ): string {
+  private formatMessage(_level: LogLevel, message: string, ..._args: any[]): string {
     const timestamp = new Date().toISOString().split("T")[1].split(".")[0]
     const prefix = this.prefix ? `[${this.prefix}]` : ""
     return `${timestamp} ${prefix} ${message}`
   }
 
-  private async saveLog(
-    level: LogLevel,
-    message: string,
-    ...args: any[]
-  ): Promise<void> {
+  private async saveLog(level: LogLevel, message: string, ...args: any[]): Promise<void> {
     if (!globalSaveToFile && !this.saveToFile) return
 
     try {

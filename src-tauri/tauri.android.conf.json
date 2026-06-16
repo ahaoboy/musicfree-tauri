@@ -1,9 +1,7 @@
 {
   "app": {
     "security": {
-      "capabilities": [
-        "mobile"
-      ]
+      "capabilities": ["mobile"]
     }
   }
 }

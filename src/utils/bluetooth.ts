@@ -37,15 +37,8 @@ export const isBluetoothDevice = (label: string): boolean => {
  * @param options Configuration and store integration callbacks.
  * @returns A cleanup function to remove the listener.
  */
-export const initBluetoothListener = async (
-  options: BluetoothListenerOptions,
-) => {
-  const {
-    onDevicesChange,
-    onBluetoothDisconnect,
-    getIsPlaying,
-    getConnectedDevices,
-  } = options
+export const initBluetoothListener = async (options: BluetoothListenerOptions) => {
+  const { onDevicesChange, onBluetoothDisconnect, getIsPlaying, getConnectedDevices } = options
 
   const handleDeviceChange = async () => {
     // Capture state BEFORE fetching new devices
@@ -75,9 +68,7 @@ export const initBluetoothListener = async (
 
     // If something was disconnected while playing, check for Bluetooth
     if (isPlaying && disconnected.length > 0) {
-      const hasBluetoothDisconnected = disconnected.some((d) =>
-        isBluetoothDevice(d.label),
-      )
+      const hasBluetoothDisconnected = disconnected.some((d) => isBluetoothDevice(d.label))
       if (hasBluetoothDisconnected) {
         onBluetoothDisconnect()
       }
@@ -101,9 +92,7 @@ export const initBluetoothListener = async (
           console.warn("Media permission denied or failed:", err)
         })
     } else {
-      console.log(
-        "No audio input device found, skipping microphone permission request.",
-      )
+      console.log("No audio input device found, skipping microphone permission request.")
     }
 
     // Get initial device list and populate store
@@ -114,10 +103,7 @@ export const initBluetoothListener = async (
     navigator.mediaDevices.addEventListener("devicechange", handleDeviceChange)
 
     return () => {
-      navigator.mediaDevices.removeEventListener(
-        "devicechange",
-        handleDeviceChange,
-      )
+      navigator.mediaDevices.removeEventListener("devicechange", handleDeviceChange)
     }
   } catch (error) {
     console.error("Critical error in initBluetoothListener:", error)
