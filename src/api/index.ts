@@ -1,6 +1,6 @@
 import { invoke, convertFileSrc } from "@tauri-apps/api/core"
 import { join } from "@tauri-apps/api/path"
-import { platform } from "@tauri-apps/plugin-os"
+import { platform, hostname } from "@tauri-apps/plugin-os"
 import { getWavUrl, isAudio, isVideo } from "./audio"
 import { appCache } from "../utils/cache"
 export * from "./sync"
@@ -32,6 +32,13 @@ export type LocalAudio = {
   cover_path: string | null
 }
 
+export type SyncedLocalAudio = LocalAudio & {
+  /** Timestamp of last update (Date.now()) */
+  _updatedAt: number
+  /** Device that made the last change */
+  _deviceId: string
+}
+
 export type Playlist = {
   id?: string
   download_url?: string
@@ -51,6 +58,8 @@ export type LocalPlaylist = {
   platform: Platform
 }
 
+// Top-level sync metadata (LWW JSON scheme)
+
 // Playback Mode
 export type PlayMode = "sequence" | "list-loop" | "single-loop" | "shuffle"
 
@@ -59,6 +68,10 @@ export type ThemeMode = "light" | "dark" | "auto"
 
 export type Config = {
   playlists: LocalPlaylist[]
+  /** Timestamp of the last update to this config (Date.now()) */
+  _updatedAt: number
+  /** Human-readable identifier for the device that wrote this */
+  _deviceId: string
 }
 
 export type GistConfig = {
@@ -66,7 +79,7 @@ export type GistConfig = {
   githubToken: string
   syncInterval: number // in minutes
   lastSyncTime?: number
-  lastRemoteSha?: string // SHA of the remote yjs file at last sync, used for change detection
+  lastRemoteSha?: string // SHA of the remote file at last sync, used for change detection
 }
 
 export type FileInfo = {
@@ -80,9 +93,11 @@ export type ImportResult = {
   paths: string[]
 }
 
-export function get_default_config(): Config {
+export function get_default_config(deviceId?: string): Config {
   return {
     playlists: [],
+    _updatedAt: 0,
+    _deviceId: deviceId || "unknown",
   }
 }
 
@@ -278,16 +293,23 @@ export function sync_file_info(
   return invoke("sync_file_info", { token, repo, path })
 }
 
-export function get_local_yjs(): Promise<Uint8Array> {
-  return invoke<number[]>("get_local_yjs").then((data) => new Uint8Array(data))
+// ============================================
+// LWW JSON Sync (replaces Yjs/CRDT)
+// ============================================
+/** File name for synced config on GitHub */
+export const SYNC_FILE_NAME = "musicfree.json"
+
+/** Get a stable device identifier for LWW sync */
+export async function get_device_id(): Promise<string> {
+  try {
+    const name = await hostname()
+    return name || crypto.randomUUID().slice(0, 8)
+  } catch {
+    return crypto.randomUUID().slice(0, 8)
+  }
 }
 
-export function save_local_yjs(content: Uint8Array): Promise<void> {
-  return invoke("save_local_yjs", { content })
-}
-
-// Export Yjs sync functions
-export { syncWithYjs, persistLocalYjsState, SyncOfflineError } from "./sync"
+export { syncConfig, SyncError } from "./sync"
 
 // ============================================
 // LocalStorage Keys

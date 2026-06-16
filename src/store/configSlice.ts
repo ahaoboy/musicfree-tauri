@@ -19,9 +19,9 @@ import {
   get_web_url,
   remove_file,
   GistConfig,
-  syncWithYjs,
-  persistLocalYjsState,
-  SyncOfflineError,
+  syncConfig,
+  SyncError,
+  get_device_id,
 } from "../api"
 import logger from "../utils/logger"
 
@@ -37,8 +37,12 @@ let backgroundSyncTimer: ReturnType<typeof setTimeout> | null = null
 /** Debounce interval (ms) — coalesces rapid background syncs */
 const BACKGROUND_SYNC_DEBOUNCE_MS = 2000
 
-/** Promise chain to serialize sync execution (mutex) */
+/** Promise chain to serialize sync execution.
+ * Reset after each sync completes to prevent unbounded chain growth. */
 let syncMutex: Promise<void> = Promise.resolve()
+
+/** Flag to prevent overlapping sync executions */
+let syncInProgress = false
 
 /**
  * Schedule a debounced background sync.
@@ -52,12 +56,18 @@ function scheduleDebouncedSync(syncFn: () => Promise<void>): void {
   }
   backgroundSyncTimer = setTimeout(() => {
     backgroundSyncTimer = null
-    // Chain onto the mutex so we don't overlap with an in-flight sync
-    syncMutex = syncMutex
-      .then(() => syncFn())
-      .catch((error) => {
+    // Chain onto the mutex, then reset the chain to prevent unbounded growth
+    syncMutex = syncMutex.then(async () => {
+      if (syncInProgress) return
+      syncInProgress = true
+      try {
+        await syncFn()
+      } catch (error) {
         log.error("Debounced background sync failed:", error)
-      })
+      } finally {
+        syncInProgress = false
+      }
+    })
   }, BACKGROUND_SYNC_DEBOUNCE_MS)
 }
 
@@ -93,7 +103,6 @@ export interface ConfigSliceState {
   isSyncing: boolean
   syncStatus: SyncStatus
   gistConfig: GistConfig | null
-  hasPendingLocalChanges: boolean
 
   // Theme
   theme: ThemeMode
@@ -164,7 +173,6 @@ export const createConfigSlice: StateCreator<AppState, [], [], ConfigSlice> = (s
   isSyncing: false,
   syncStatus: "idle" as SyncStatus,
   gistConfig: storage.getGistConfig(),
-  hasPendingLocalChanges: false,
   theme: storage.getTheme(),
   app_dir: null,
   app_version: null,
@@ -175,7 +183,16 @@ export const createConfigSlice: StateCreator<AppState, [], [], ConfigSlice> = (s
     set({ isConfigLoading: true })
     const { audioElement, setupAudioListeners, listenersInitialized } = get()
     try {
-      const config = await get_config()
+      const rawConfig = await get_config()
+
+      // Migrate: ensure _deviceId is set (for LWW sync)
+      if (!rawConfig._deviceId) {
+        rawConfig._deviceId = await get_device_id()
+      }
+      if (rawConfig._updatedAt === undefined || rawConfig._updatedAt === null) {
+        rawConfig._updatedAt = Date.now()
+      }
+
       applyTheme(storage.getTheme())
 
       const [dir, version] = await Promise.all([app_dir(), app_version()])
@@ -189,7 +206,7 @@ export const createConfigSlice: StateCreator<AppState, [], [], ConfigSlice> = (s
       let initialDuration = 0
 
       if (storedAudio && storedPlaylistId) {
-        const playlist = config.playlists.find((p) => p.id === storedPlaylistId)
+        const playlist = rawConfig.playlists.find((p) => p.id === storedPlaylistId)
         if (playlist) {
           const audio = playlist.audios.find((a) => a.audio.id === storedAudio.audio.id)
           if (audio) {
@@ -206,7 +223,7 @@ export const createConfigSlice: StateCreator<AppState, [], [], ConfigSlice> = (s
       }
 
       set({
-        config,
+        config: rawConfig,
         isConfigLoading: false,
         currentAudio: restoredAudio,
         currentPlaylistId: restoredPlaylistId,
@@ -225,29 +242,26 @@ export const createConfigSlice: StateCreator<AppState, [], [], ConfigSlice> = (s
   saveConfig: async (config: Config) => {
     const { config: oldConfig } = get()
 
-    // Skip if no changes
-    if (JSON.stringify(oldConfig) === JSON.stringify(config)) {
-      log.info("No changes detected, skipping save")
+    // Skip if same reference (no actual change)
+    if (oldConfig === config) {
       return
     }
 
     log.info("Saving config...")
     try {
-      // 1. Save JSON config to disk first (local persistence)
-      await save_config(config)
-      set({ config })
+      // 1. Stamp with current timestamp and device ID for LWW sync
+      const stampedConfig: Config = {
+        ...config,
+        _updatedAt: Date.now(),
+        _deviceId: oldConfig._deviceId || "unknown",
+      }
+
+      // 2. Save JSON config to disk (local persistence)
+      await save_config(stampedConfig)
+      set({ config: stampedConfig })
       log.info("Config saved successfully")
 
-      // 2. Persist Yjs state locally (before any network activity)
-      await persistLocalYjsState(config).catch((e) =>
-        log.error("Failed to persist local Yjs state:", e),
-      )
-
-      // 3. Mark that we have pending local changes
-      set({ hasPendingLocalChanges: true })
-
-      // 4. Trigger debounced background remote sync
-      //    Coalesces rapid changes into a single sync after quiescence
+      // 3. Trigger debounced background remote sync
       scheduleDebouncedSync(() => get().syncGithub(false))
     } catch (error) {
       log.error("Failed to save config:", error)
@@ -688,14 +702,11 @@ export const createConfigSlice: StateCreator<AppState, [], [], ConfigSlice> = (s
       return
     }
 
-    // If this is a background sync and already syncing, skip it
     if (!manual && isSyncing) {
       log.info("Sync already in progress, skipping")
       return
     }
 
-    // Manual syncs cancel any pending debounced background sync
-    // to avoid the debounced sync firing right after the manual one
     if (manual) {
       cancelDebouncedSync()
     }
@@ -706,54 +717,41 @@ export const createConfigSlice: StateCreator<AppState, [], [], ConfigSlice> = (s
     try {
       set({ isSyncing: true, syncStatus: "syncing" })
 
-      const { hasPendingLocalChanges } = get()
-      const { updatedConfig, newGistConfig, changed } = await syncWithYjs(
+      const { updatedConfig, newGistConfig, changed } = await syncConfig(
         config,
         gistConfig,
         forcePush,
         forcePull,
-        hasPendingLocalChanges,
       )
 
       if (changed) {
         log.info("Applying synced config...")
         await save_config(updatedConfig)
-        set({ config: updatedConfig, hasPendingLocalChanges: false })
+        set({ config: updatedConfig })
         log.info("Synced config applied")
-      } else {
-        log.info("No local changes from sync")
-        set({ hasPendingLocalChanges: false })
       }
 
       get().setGistConfig(newGistConfig)
       set({ syncStatus: "success" })
       log.info("Sync completed successfully")
 
-      // Auto-clear success status after a brief moment (Fade handles smooth exit)
       setTimeout(() => {
         if (get().syncStatus === "success") {
           set({ syncStatus: "idle" })
         }
       }, 800)
     } catch (error) {
-      if (error instanceof SyncOfflineError) {
-        // GitHub unreachable — persist locally and show yellow indicator
-        log.warn("GitHub API unreachable – local-only sync")
-        await persistLocalYjsState(config).catch((e) =>
-          log.error("Failed to persist local Yjs state:", e),
-        )
-        set({ syncStatus: "offline", hasPendingLocalChanges: true })
-        // Auto-clear offline status after 5 seconds
+      if (error instanceof SyncError) {
+        log.warn("GitHub API unreachable – local-only")
+        set({ syncStatus: "offline" })
         setTimeout(() => {
           if (get().syncStatus === "offline") {
             set({ syncStatus: "idle" })
           }
         }, 5000)
       } else {
-        // Real sync error (GitHub was reachable but sync failed) — show red
         log.error("Sync failed:", error)
         set({ syncStatus: "error" })
-        // Auto-clear error status after 5 seconds
         setTimeout(() => {
           if (get().syncStatus === "error") {
             set({ syncStatus: "idle" })

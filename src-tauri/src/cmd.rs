@@ -3,10 +3,10 @@ use crate::core::{ASSETS_DIR, CONFIG_FILE, Config, LocalAudio, get_config_path};
 use crate::error::{AppError, AppResult};
 use chrono::Local;
 use musicfree::{Audio, Platform, Playlist};
+use serde::{Deserialize, Serialize};
 use std::fs::File;
 use std::io::{Read, Write};
 use std::path::PathBuf;
-use serde::{Deserialize, Serialize};
 use walkdir::WalkDir;
 use zip::write::FileOptions;
 
@@ -158,9 +158,10 @@ pub async fn get_storage_size(app_handle: tauri::AppHandle) -> AppResult<u64> {
     // Add musicfree.json size
     let config_path = get_config_path(dir);
     if tokio::fs::try_exists(&config_path).await.unwrap_or(false)
-        && let Ok(metadata) = tokio::fs::metadata(&config_path).await {
-            total_size += metadata.len();
-        }
+        && let Ok(metadata) = tokio::fs::metadata(&config_path).await
+    {
+        total_size += metadata.len();
+    }
 
     Ok(total_size)
 }
@@ -295,7 +296,9 @@ pub async fn import_data(app_handle: tauri::AppHandle) -> AppResult<ImportResult
     // 1. Find latest musicfree-*.zip
     let mut latest_zip: Option<(PathBuf, std::time::SystemTime)> = None;
 
-    let mut entries = tokio::fs::read_dir(&download_dir).await.map_err(AppError::Io)?;
+    let mut entries = tokio::fs::read_dir(&download_dir)
+        .await
+        .map_err(AppError::Io)?;
     while let Ok(Some(entry)) = entries.next_entry().await {
         let path = entry.path();
         if let Some(name) = path.file_name().and_then(|n| n.to_str())
@@ -372,7 +375,10 @@ pub async fn import_data(app_handle: tauri::AppHandle) -> AppResult<ImportResult
 
     // 3. Load configs
     let import_config_path = temp_dir.join(CONFIG_FILE);
-    if !tokio::fs::try_exists(&import_config_path).await.unwrap_or(false) {
+    if !tokio::fs::try_exists(&import_config_path)
+        .await
+        .unwrap_or(false)
+    {
         // Cleanup
         tokio::fs::remove_dir_all(&temp_dir).await.ok();
         return Err(AppError::Unknown(
@@ -388,7 +394,10 @@ pub async fn import_data(app_handle: tauri::AppHandle) -> AppResult<ImportResult
     // 4. Move all assets from temp_dir/assets to app_dir/assets
     let temp_assets_dir = temp_dir.join(ASSETS_DIR);
     let mut paths = Vec::new();
-    if tokio::fs::try_exists(&temp_assets_dir).await.unwrap_or(false) {
+    if tokio::fs::try_exists(&temp_assets_dir)
+        .await
+        .unwrap_or(false)
+    {
         for entry in WalkDir::new(&temp_assets_dir) {
             let entry = entry.map_err(|e| AppError::Io(e.into()))?;
             let path = entry.path();
@@ -407,19 +416,25 @@ pub async fn import_data(app_handle: tauri::AppHandle) -> AppResult<ImportResult
                 let dest_path = app_dir.join(relative_path);
 
                 if let Some(parent) = dest_path.parent() {
-                    tokio::fs::create_dir_all(parent).await.map_err(AppError::Io)?;
+                    tokio::fs::create_dir_all(parent)
+                        .await
+                        .map_err(AppError::Io)?;
                 }
 
                 // Copy file if it doesn't exist
                 if !tokio::fs::try_exists(&dest_path).await.unwrap_or(false) {
-                    tokio::fs::copy(path, dest_path).await.map_err(AppError::Io)?;
+                    tokio::fs::copy(path, dest_path)
+                        .await
+                        .map_err(AppError::Io)?;
                 }
             }
         }
     }
 
     // 5. Cleanup
-    tokio::fs::remove_dir_all(&temp_dir).await.map_err(AppError::Io)?;
+    tokio::fs::remove_dir_all(&temp_dir)
+        .await
+        .map_err(AppError::Io)?;
 
     Ok(ImportResult {
         config: import_config,
@@ -428,13 +443,8 @@ pub async fn import_data(app_handle: tauri::AppHandle) -> AppResult<ImportResult
     })
 }
 
-
 #[tauri::command]
-pub async fn sync_download(
-    token: &str,
-    repo: &str,
-    path: Option<String>,
-) -> AppResult<Vec<u8>> {
+pub async fn sync_download(token: &str, repo: &str, path: Option<String>) -> AppResult<Vec<u8>> {
     crate::sync::download(token, repo, path.as_deref())
         .await
         .map_err(AppError::from)
@@ -462,27 +472,6 @@ pub async fn sync_file_info(
     crate::sync::get_file_info(token, repo, path.as_deref())
         .await
         .map_err(AppError::from)
-}
-
-#[tauri::command]
-pub async fn get_local_yjs(app_handle: tauri::AppHandle) -> AppResult<Vec<u8>> {
-    let dir = app_dir(app_handle).await?;
-    let p = crate::core::get_sync_path(dir);
-
-    if !tokio::fs::try_exists(&p).await.unwrap_or(false) {
-        return Ok(Vec::new());
-    }
-
-    let bin = tokio::fs::read(&p).await.map_err(AppError::Io)?;
-    Ok(bin)
-}
-
-#[tauri::command]
-pub async fn save_local_yjs(content: Vec<u8>, app_handle: tauri::AppHandle) -> AppResult<()> {
-    let dir = app_dir(app_handle).await?;
-    let p = crate::core::get_sync_path(dir);
-    tokio::fs::write(p, content).await.map_err(AppError::Io)?;
-    Ok(())
 }
 
 async fn get_dir_size(path: PathBuf) -> AppResult<u64> {
@@ -543,7 +532,9 @@ pub async fn clear_log(app_handle: tauri::AppHandle) -> AppResult<()> {
     let log_path = crate::core::get_log_path(dir);
 
     if tokio::fs::try_exists(&log_path).await.unwrap_or(false) {
-        tokio::fs::remove_file(log_path).await.map_err(AppError::Io)?;
+        tokio::fs::remove_file(log_path)
+            .await
+            .map_err(AppError::Io)?;
     }
 
     Ok(())
@@ -555,9 +546,10 @@ pub async fn get_log_size(app_handle: tauri::AppHandle) -> AppResult<u64> {
     let log_path = crate::core::get_log_path(dir);
 
     if tokio::fs::try_exists(&log_path).await.unwrap_or(false)
-        && let Ok(metadata) = tokio::fs::metadata(&log_path).await {
-            return Ok(metadata.len());
-        }
+        && let Ok(metadata) = tokio::fs::metadata(&log_path).await
+    {
+        return Ok(metadata.len());
+    }
 
     Ok(0)
 }
@@ -605,14 +597,16 @@ pub async fn save_audio(
     };
 
     if audios_to_save.is_empty() {
-        return Err(AppError::Unknown(
-            format!("No audio found to save in playlist: {}", playlist_id),
-        ));
+        return Err(AppError::Unknown(format!(
+            "No audio found to save in playlist: {}",
+            playlist_id
+        )));
     }
 
     let mut saved_paths = Vec::new();
     for audio in audios_to_save {
-        let saved_path = api::save_audio(playlist, audio, app_dir.clone(), download_dir.clone()).await?;
+        let saved_path =
+            api::save_audio(playlist, audio, app_dir.clone(), download_dir.clone()).await?;
         saved_paths.push(saved_path);
     }
 

@@ -3,8 +3,6 @@ use base64::{Engine as _, engine::general_purpose};
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 
-const CONFIG_FILE_NAME: &str = "musicfree.yjs";
-
 /// Response structure for GitHub repository file content
 #[derive(Debug, Deserialize)]
 #[allow(dead_code)]
@@ -82,7 +80,7 @@ pub async fn get_file_info(
 ) -> Result<Option<FileInfo>, SyncError> {
     let (owner, repo) = parse_repo_url(repo_url)?;
     let client = Client::new();
-    let file_name = file_path.unwrap_or(CONFIG_FILE_NAME);
+    let file_name = file_path.unwrap_or(crate::core::CONFIG_FILE);
 
     let url = format!(
         "https://api.github.com/repos/{}/{}/contents/{}",
@@ -127,7 +125,7 @@ pub async fn download(
 ) -> Result<Vec<u8>, SyncError> {
     let (owner, repo) = parse_repo_url(repo_url)?;
     let client = Client::new();
-    let file_name = file_path.unwrap_or(CONFIG_FILE_NAME);
+    let file_name = file_path.unwrap_or(crate::core::CONFIG_FILE);
     let url = format!(
         "https://api.github.com/repos/{}/{}/contents/{}",
         owner, repo, file_name
@@ -176,7 +174,7 @@ pub async fn update(
 ) -> Result<(), SyncError> {
     let (owner, repo) = parse_repo_url(repo_url)?;
     let client = Client::new();
-    let file_name = file_path.unwrap_or(CONFIG_FILE_NAME);
+    let file_name = file_path.unwrap_or(crate::core::CONFIG_FILE);
     let url = format!(
         "https://api.github.com/repos/{}/{}/contents/{}",
         owner, repo, file_name

@@ -12,7 +12,7 @@ import ArrowForwardIcon from "@mui/icons-material/ArrowForward"
 
 import { SearchBottomBar } from "./SearchBottomBar"
 import { useSearchLogic } from "./useSearchLogic"
-import { AUDIO_PLAYLIST_ID, Audio } from "../../api"
+import { AUDIO_PLAYLIST_ID, Audio, LocalAudio } from "../../api"
 
 import { useAppStore } from "../../store"
 import { useShallow } from "zustand/react/shallow"

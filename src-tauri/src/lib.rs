@@ -74,8 +74,6 @@ pub fn run() {
             cmd::clear_log,
             cmd::get_log_size,
             cmd::read_log,
-            cmd::get_local_yjs,
-            cmd::save_local_yjs,
             cmd::save_audio,
             request_storage_permission,
         ])

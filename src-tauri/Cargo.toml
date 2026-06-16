@@ -18,7 +18,7 @@ name = "musicfree_tauri_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]
-tauri-build = { version = "2", features = [] }
+tauri-build = { workspace = true }
 
 [features]
 default = ["qjs"]
@@ -27,82 +27,32 @@ qjs = ["musicfree/qjs"]
 # boa = ["musicfree/boa", "dep:icu_normalizer"]
 
 [dependencies]
-tauri = { version = "2", features = ["protocol-asset"] }
-serde = { version = "1", features = ["derive"] }
-serde_json = "1"
-base64 = "0.22"
-sanitize-filename = "0.6"
-
-# FIXME: ANDROID NOT WORKING WITH REQWEST 0.13
-# reqwest = { version = "0.13", features = [
-#   "json",
-#   "gzip",
-#   "rustls-native-certs",
-#   "cookies",
-# ] }
-reqwest = { version = "0.12", features = [
-  "json",
-  "rustls-tls",
-  "gzip",
-  "cookies",
-], default-features = false }
-tokio = { version = "1", features = ["full"] }
-regex = "1"
-anyhow = "1"
-thiserror = "2"
-musicfree = { git = "https://github.com/ahaoboy/musicfree", version = "0.1", default-features = false, features = [
-  "bilibili",
-  "youtube",
-  # "qjs",
-  # "bindgen",
-] }
-uuid = { version = "1", features = ["v4"] }
-md5 = "0.8"
-tauri-plugin-fs = "2"
-tauri-plugin-clipboard-manager = "2"
-git-version = "0.3"
-const-str = "1"
-tauri-plugin-opener = "2"
-tauri-plugin-os = "2"
-zip = "8"
-walkdir = "2"
-chrono = "0.4"
-# icu_normalizer = { version = "=2.0.1", optional = true }
+tauri = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+base64 = { workspace = true }
+sanitize-filename = { workspace = true }
+reqwest = { workspace = true }
+tokio = { workspace = true }
+regex = { workspace = true }
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+musicfree = { workspace = true }
+uuid = { workspace = true }
+md5 = { workspace = true }
+tauri-plugin-fs = { workspace = true }
+tauri-plugin-clipboard-manager = { workspace = true }
+git-version = { workspace = true }
+const-str = { workspace = true }
+tauri-plugin-opener = { workspace = true }
+tauri-plugin-os = { workspace = true }
+zip = { workspace = true }
+walkdir = { workspace = true }
+chrono = { workspace = true }
 
 [target.'cfg(target_os = "android")'.dependencies]
-jni = "0.22"
-
-# FIXME: https://github.com/aws/aws-lc-rs/issues/1006
-# [patch.crates-io]
-# aws-lc-sys = { git = "https://github.com/zsdsys/aws-lc-rs", branch = "android-getentropy-fix" }
-
-# FIXME: https://github.com/tauri-apps/tauri/issues/14849
-[patch.crates-io]
-rquickjs = { version = "0.12", git = "https://github.com/ahaoboy/rquickjs.git", branch = "android" }
-rquickjs-sys = { version = "0.12", git = "https://github.com/ahaoboy/rquickjs.git", branch = "android" }
-rquickjs-core = { version = "0.12", git = "https://github.com/ahaoboy/rquickjs.git", branch = "android" }
-rquickjs-macro = { version = "0.12", git = "https://github.com/ahaoboy/rquickjs.git", branch = "android" }
-
-[patch."https://github.com/DelSkayn/rquickjs.git"]
-rquickjs = { version = "0.12", git = "https://github.com/ahaoboy/rquickjs.git", branch = "android" }
-rquickjs-sys = { version = "0.12", git = "https://github.com/ahaoboy/rquickjs.git", branch = "android" }
-rquickjs-core = { version = "0.12", git = "https://github.com/ahaoboy/rquickjs.git", branch = "android" }
-rquickjs-macro = { version = "0.12", git = "https://github.com/ahaoboy/rquickjs.git", branch = "android" }
-
-[profile.release]
-debug = false
-lto = true
-strip = true
-opt-level = 3
-codegen-units = 1
-
-[profile.bloaty]
-debug = true
-lto = false
-strip = false
-inherits = 'release'
+jni = { workspace = true }
 
 [target.'cfg(target_os = "windows")'.dependencies]
-# tauri-plugin-media = { version = "0.1" }
-tauri-plugin-updater = { version = "2" }
-tauri-plugin-single-instance = { version = "2" }
+tauri-plugin-updater = { workspace = true }
+tauri-plugin-single-instance = { workspace = true }
