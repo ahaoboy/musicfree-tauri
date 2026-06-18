@@ -49,6 +49,7 @@ tauri-plugin-os = { workspace = true }
 zip = { workspace = true }
 walkdir = { workspace = true }
 chrono = { workspace = true }
+trackex = { workspace = true }
 
 [target.'cfg(target_os = "android")'.dependencies]
 jni = { workspace = true }

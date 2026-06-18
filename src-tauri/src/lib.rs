@@ -6,8 +6,8 @@ pub mod error;
 pub mod sync;
 
 use android::request_storage_permission;
-use std::path::Path;
 use std::io::SeekFrom;
+use std::path::Path;
 use tauri::http::{Response, StatusCode};
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -34,7 +34,8 @@ pub fn run() {
 
             // Spawn async task to handle the request
             tauri::async_runtime::spawn(async move {
-                let response = musicfree_protocol_handler_async(&app_handle, &path, range.as_deref()).await;
+                let response =
+                    musicfree_protocol_handler_async(&app_handle, &path, range.as_deref()).await;
                 responder.respond(response);
             });
         })
@@ -75,6 +76,7 @@ pub fn run() {
             cmd::get_log_size,
             cmd::read_log,
             cmd::save_audio,
+            cmd::transcode_audio,
             request_storage_permission,
         ])
         .run(tauri::generate_context!())
@@ -208,7 +210,10 @@ async fn handle_range_request_async(
 
 /// Parse HTTP Range header
 /// Examples: "bytes=0-1023", "bytes=0-", "bytes=-1000"
-fn parse_range(range_header: &str, file_size: u64) -> Result<(u64, u64), Box<dyn std::error::Error>> {
+fn parse_range(
+    range_header: &str,
+    file_size: u64,
+) -> Result<(u64, u64), Box<dyn std::error::Error>> {
     // Remove "bytes=" prefix
     let range = range_header
         .strip_prefix("bytes=")

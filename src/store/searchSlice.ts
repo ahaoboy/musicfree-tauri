@@ -10,6 +10,8 @@ import {
   download_cover,
   get_web_url,
   download_audio,
+  transcode_audio,
+  transcode_format_to_audio_format,
 } from "../api"
 
 // Module-level abort controllers
@@ -168,8 +170,8 @@ export const createSearchSlice: StateCreator<AppState, [], [], SearchSlice> = (s
         // Use default_audio index if provided, otherwise select first audio
         const targetIndex =
           defaultAudioIndex !== null &&
-          defaultAudioIndex >= 0 &&
-          defaultAudioIndex < playlist.audios.length
+            defaultAudioIndex >= 0 &&
+            defaultAudioIndex < playlist.audios.length
             ? defaultAudioIndex
             : 0
         defaultSelectedIds.add(playlist.audios[targetIndex].id)
@@ -257,7 +259,30 @@ export const createSearchSlice: StateCreator<AppState, [], [], SearchSlice> = (s
         )
       })
 
-      // Success
+      // Success — optionally transcode
+      let finalResult = result
+      const format = get().transcodeFormat
+      if (format && format !== "original") {
+        // Skip if already in target format (e.g. source is Mp3 and target is mp3)
+        if (result.audio.format?.toLowerCase() === format) {
+          console.info(`Audio already in ${format} format, skipping transcode`)
+        } else {
+          try {
+            const newPath = await transcode_audio(result.path, format)
+            finalResult = {
+              ...result,
+              path: newPath,
+              audio: {
+                ...result.audio,
+                format: transcode_format_to_audio_format(format),
+              },
+            }
+          } catch (e) {
+            console.error(`Transcode failed, keeping original: ${e}`)
+          }
+        }
+      }
+
       const {
         searchDownloadedIds,
         searchDownloadedAudios,
@@ -268,7 +293,7 @@ export const createSearchSlice: StateCreator<AppState, [], [], SearchSlice> = (s
       newDownloaded.add(audio.id)
 
       const newMap = new Map(searchDownloadedAudios)
-      newMap.set(audio.id, result)
+      newMap.set(audio.id, finalResult)
 
       const newDownloading = new Set(currDownloading)
       newDownloading.delete(audio.id)
@@ -279,7 +304,7 @@ export const createSearchSlice: StateCreator<AppState, [], [], SearchSlice> = (s
         searchDownloadingIds: newDownloading,
       })
 
-      return result
+      return finalResult
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error)
       const {

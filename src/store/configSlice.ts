@@ -22,6 +22,7 @@ import {
   syncConfig,
   SyncError,
   get_device_id,
+  TranscodeFormat,
 } from "../api"
 import logger from "../utils/logger"
 
@@ -107,6 +108,9 @@ export interface ConfigSliceState {
   // Theme
   theme: ThemeMode
 
+  // Transcoding
+  transcodeFormat: TranscodeFormat
+
   // App info
   app_dir: string | null
   app_version: string | null
@@ -145,6 +149,9 @@ export interface ConfigSliceActions {
   setGistConfig: (config: GistConfig | null) => void
   syncGithub: (manual?: boolean, forcePush?: boolean, forcePull?: boolean) => Promise<void>
   importConfig: (config: Config) => Promise<void>
+
+  // Transcoding
+  setTranscodeFormat: (format: TranscodeFormat) => void
 }
 
 export type ConfigSlice = ConfigSliceState & ConfigSliceActions
@@ -174,6 +181,7 @@ export const createConfigSlice: StateCreator<AppState, [], [], ConfigSlice> = (s
   syncStatus: "idle" as SyncStatus,
   gistConfig: storage.getGistConfig(),
   theme: storage.getTheme(),
+  transcodeFormat: storage.getTranscodeFormat(),
   app_dir: null,
   app_version: null,
   viewingPlaylistId: null,
@@ -833,5 +841,10 @@ export const createConfigSlice: StateCreator<AppState, [], [], ConfigSlice> = (s
     }
 
     await get().saveConfig(updatedConfig)
+  },
+
+  setTranscodeFormat: (format: TranscodeFormat) => {
+    storage.setTranscodeFormat(format)
+    set({ transcodeFormat: format })
   },
 })

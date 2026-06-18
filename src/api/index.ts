@@ -24,6 +24,8 @@ export type Audio = {
   cover?: string
   platform: Platform
   duration?: number
+  /** Original audio format (Mp4, Webm, M4A, etc.) */
+  format?: string
 }
 
 export type LocalAudio = {
@@ -320,6 +322,7 @@ const STORAGE_KEYS = {
   PLAY_MODE: "musicfree_play_mode",
   THEME: "musicfree_theme",
   GIST_CONFIG: "musicfree_repo_sync_config",
+  TRANSCODE_FORMAT: "musicfree_transcode_format",
 } as const
 
 // ============================================
@@ -378,6 +381,12 @@ export const storage = {
       return null
     }
   },
+  setTranscodeFormat: (format: TranscodeFormat) => {
+    localStorage.setItem(STORAGE_KEYS.TRANSCODE_FORMAT, format)
+  },
+  getTranscodeFormat: (): TranscodeFormat => {
+    return (localStorage.getItem(STORAGE_KEYS.TRANSCODE_FORMAT) as TranscodeFormat) || "original"
+  },
 }
 
 // Log API
@@ -403,4 +412,28 @@ export function read_log(): Promise<string> {
 
 export function save_audio(playlistId: string, audioId?: string): Promise<string[]> {
   return invoke("save_audio", { playlistId, audioId })
+}
+
+// ============================================
+// Transcoding
+// ============================================
+
+export type TranscodeFormat = "original" | "mp3" | "ogg" | "wav"
+
+/** Map TranscodeFormat to the format string stored in Audio.format */
+export function transcode_format_to_audio_format(fmt: TranscodeFormat): string {
+  switch (fmt) {
+    case "mp3":
+      return "Mp3"
+    case "ogg":
+      return "Ogg"
+    case "wav":
+      return "Wav"
+    default:
+      return ""
+  }
+}
+
+export function transcode_audio(inputPath: string, format: TranscodeFormat): Promise<string> {
+  return invoke("transcode_audio", { inputPath, format })
 }

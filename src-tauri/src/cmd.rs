@@ -612,3 +612,72 @@ pub async fn save_audio(
 
     Ok(saved_paths)
 }
+
+#[tauri::command]
+pub async fn transcode_audio(
+    input_path: &str,
+    format: &str,
+    app_handle: tauri::AppHandle,
+) -> AppResult<String> {
+    let app_dir = app_dir(app_handle).await?;
+    let input = app_dir.join(input_path);
+
+    // Validate format
+    let output_format = match format {
+        "mp3" => trackex::format::OutputFormat::Mp3,
+        "ogg" => trackex::format::OutputFormat::Ogg,
+        "wav" => trackex::format::OutputFormat::Wav,
+        _ => return Err(AppError::Unknown(format!("Unsupported format: {format}"))),
+    };
+
+    // Generate output path: replace extension
+    let output = {
+        let mut p = input.clone();
+        p.set_extension(format);
+        p
+    };
+
+    // Skip if already exists
+    if tokio::fs::try_exists(&output).await.unwrap_or(false) {
+        return Ok(output
+            .strip_prefix(&app_dir)
+            .map_err(|e| AppError::Unknown(e.to_string()))?
+            .to_string_lossy()
+            .to_string());
+    }
+
+    // Read input file (I/O is caller responsibility in new trackex API)
+    let input_data = tokio::fs::read(&input)
+        .await
+        .map_err(|e| AppError::Unknown(format!("Failed to read input: {e}")))?;
+
+    let config = trackex::config::AudioConfig {
+        input_data,
+        format: output_format,
+        sample_rate: None,
+        channels: None,
+    };
+
+    // Transcode — trackex returns output bytes directly
+    let output_data = trackex::extract_audio(&config).map_err(|e| {
+        eprintln!("Transcode failed: '{}' → {format}: {e}", input.display());
+        AppError::Unknown(e.to_string())
+    })?;
+
+    // Write output file
+    tokio::fs::write(&output, &output_data)
+        .await
+        .map_err(|e| AppError::Unknown(format!("Failed to write output: {e}")))?;
+
+    println!(
+        "Successfully transcoded: '{}' → {format} ({})",
+        input.display(),
+        output.display()
+    );
+
+    Ok(output
+        .strip_prefix(&app_dir)
+        .map_err(|e| AppError::Unknown(e.to_string()))?
+        .to_string_lossy()
+        .to_string())
+}

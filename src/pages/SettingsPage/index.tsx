@@ -49,6 +49,7 @@ import {
   clear_log,
   get_log_path,
   read_log,
+  TranscodeFormat,
 } from "../../api"
 import { useConfirm } from "../../hooks"
 import { useMessage } from "../../contexts/MessageContext"
@@ -96,6 +97,8 @@ export const SettingsPage: FC = () => {
   const setGistConfig = useAppStore((state) => state.setGistConfig)
   const syncGithub = useAppStore((state) => state.syncGithub)
   const isSyncing = useAppStore((state) => state.isSyncing)
+  const transcodeFormat = useAppStore((state) => state.transcodeFormat)
+  const setTranscodeFormat = useAppStore((state) => state.setTranscodeFormat)
 
   // Load storage size
   const loadStorageSize = useCallback(async () => {
@@ -302,6 +305,26 @@ export const SettingsPage: FC = () => {
             <Typography color="text.secondary">
               ♪ {totalAudios} 🎶{userPlaylistsCount}
             </Typography>
+          </Stack>
+        </Paper>
+      </Stack>
+
+      {/* Transcoding Section */}
+      <Stack spacing={2}>
+        <Paper variant="outlined" sx={{ p: 2 }}>
+          <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "center" }}>
+            <Typography>Audio Format</Typography>
+            <Select
+              value={transcodeFormat}
+              onChange={(e) => setTranscodeFormat(e.target.value as TranscodeFormat)}
+              size="small"
+              sx={{ minWidth: 120 }}
+            >
+              <MenuItem value="original">Original</MenuItem>
+              <MenuItem value="mp3">MP3</MenuItem>
+              <MenuItem value="ogg">OGG</MenuItem>
+              <MenuItem value="wav">WAV</MenuItem>
+            </Select>
           </Stack>
         </Paper>
       </Stack>

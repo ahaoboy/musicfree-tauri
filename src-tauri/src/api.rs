@@ -7,8 +7,8 @@ use std::{
     collections::HashSet,
     path::{Path, PathBuf},
 };
-use walkdir::WalkDir;
 use tauri::Manager;
+use walkdir::WalkDir;
 
 pub async fn app_dir(app_handle: &tauri::AppHandle) -> AppResult<PathBuf> {
     let app_data_dir = app_handle
@@ -17,7 +17,9 @@ pub async fn app_dir(app_handle: &tauri::AppHandle) -> AppResult<PathBuf> {
         .map_err(|e| AppError::Unknown(e.to_string()))?;
 
     if !tokio::fs::try_exists(&app_data_dir).await.unwrap_or(false) {
-        tokio::fs::create_dir_all(&app_data_dir).await.map_err(AppError::Io)?;
+        tokio::fs::create_dir_all(&app_data_dir)
+            .await
+            .map_err(AppError::Io)?;
     }
     Ok(app_data_dir)
 }
@@ -33,9 +35,10 @@ pub fn external_dir(app_handle: &tauri::AppHandle) -> AppResult<PathBuf> {
 async fn write<P: AsRef<Path>, C: AsRef<[u8]>>(p: P, c: C) -> std::io::Result<()> {
     let p = p.as_ref();
     if let Some(d) = p.parent()
-        && !tokio::fs::try_exists(d).await.unwrap_or(false) {
-            tokio::fs::create_dir_all(d).await?;
-        }
+        && !tokio::fs::try_exists(d).await.unwrap_or(false)
+    {
+        tokio::fs::create_dir_all(d).await?;
+    }
     tokio::fs::write(p, c).await
 }
 
@@ -70,12 +73,23 @@ pub async fn download_audio(audio: &Audio, app_dir: PathBuf) -> anyhow::Result<L
     if !tokio::fs::try_exists(&file_path).await.unwrap_or(false) {
         println!("Downloading audio: {}", audio.title);
         let download_future = audio.platform.extractor().download(&audio.download_url);
-        let bin = tokio::time::timeout(std::time::Duration::from_secs(60), download_future)
-            .await
-            .map_err(|_| AppError::Unknown("Download timed out".to_string()))?
-            .map_err(|e| AppError::Unknown(e.to_string()))?;
+        let bin =
+            match tokio::time::timeout(std::time::Duration::from_secs(60), download_future).await {
+                Ok(Ok(data)) => data,
+                Ok(Err(e)) => {
+                    eprintln!("Download failed for '{}': {e}", audio.title);
+                    return Err(e.into());
+                }
+                Err(_) => {
+                    eprintln!("Download timed out for '{}'", audio.title);
+                    return Err(anyhow::anyhow!("Download timed out for '{}'", audio.title));
+                }
+            };
 
-        write(&file_path, bin).await.map_err(AppError::Io)?;
+        write(&file_path, bin).await.map_err(|e| {
+            eprintln!("Failed to write audio file for '{}': {e}", audio.title);
+            AppError::Io(e)
+        })?;
         println!("Successfully downloaded audio: {}", audio_path);
     } else {
         println!(
@@ -119,7 +133,10 @@ pub async fn exists_cover(
     let filename = get_cover_filename(cover_url);
     let cover_path = format!("{}/{:?}/{}/{}", ASSETS_DIR, platform, COVERS_DIR, filename);
     let full_cover_path = app_dir.join(&cover_path);
-    if tokio::fs::try_exists(&full_cover_path).await.unwrap_or(false) {
+    if tokio::fs::try_exists(&full_cover_path)
+        .await
+        .unwrap_or(false)
+    {
         return Ok(Some(cover_path));
     }
     Ok(None)
@@ -133,14 +150,23 @@ pub async fn download_cover(
     let filename = get_cover_filename(cover_url);
     let cover_path = format!("{}/{:?}/{}/{}", ASSETS_DIR, platform, COVERS_DIR, filename);
     let full_cover_path = app_dir.join(&cover_path);
-    if tokio::fs::try_exists(&full_cover_path).await.unwrap_or(false) {
+    if tokio::fs::try_exists(&full_cover_path)
+        .await
+        .unwrap_or(false)
+    {
         return Some(cover_path);
     }
     let download_future = platform.extractor().download_cover(cover_url);
-    if let Ok(Ok(cover_data)) = tokio::time::timeout(std::time::Duration::from_secs(30), download_future).await
-        && let Ok(_) = write(&full_cover_path, &cover_data).await
-    {
-        return Some(cover_path);
+    match tokio::time::timeout(std::time::Duration::from_secs(30), download_future).await {
+        Ok(Ok(cover_data)) => {
+            if let Err(e) = write(&full_cover_path, &cover_data).await {
+                eprintln!("Failed to write cover file: {e}");
+            } else {
+                return Some(cover_path);
+            }
+        }
+        Ok(Err(e)) => eprintln!("Cover download failed: {e}"),
+        Err(_) => eprintln!("Cover download timed out"),
     }
     None
 }
@@ -185,12 +211,8 @@ pub async fn save_audio(
     target_dir: PathBuf,
 ) -> AppResult<String> {
     let filename = get_save_filename(&audio.audio);
-    let playlist_title = sanitize_filename::sanitize(
-        playlist
-            .title
-            .as_deref()
-            .unwrap_or("Unknown")
-    );
+    let playlist_title =
+        sanitize_filename::sanitize(playlist.title.as_deref().unwrap_or("Unknown"));
 
     // Build target path: target_dir / Platform / playlist_title / filename
     let dest_path = target_dir
@@ -210,11 +232,12 @@ pub async fn save_audio(
 
     // Create destination directory
     if let Some(parent) = dest_path.parent()
-        && !tokio::fs::try_exists(parent).await.unwrap_or(false) {
-            tokio::fs::create_dir_all(parent)
-                .await
-                .map_err(AppError::Io)?;
-        }
+        && !tokio::fs::try_exists(parent).await.unwrap_or(false)
+    {
+        tokio::fs::create_dir_all(parent)
+            .await
+            .map_err(AppError::Io)?;
+    }
 
     // Copy file
     tokio::fs::copy(&src_path, &dest_path)
@@ -224,7 +247,10 @@ pub async fn save_audio(
     Ok(dest_path.to_string_lossy().to_string())
 }
 
-pub async fn get_cache_files(app_handle: &tauri::AppHandle, config: &Config) -> AppResult<Vec<PathBuf>> {
+pub async fn get_cache_files(
+    app_handle: &tauri::AppHandle,
+    config: &Config,
+) -> AppResult<Vec<PathBuf>> {
     let app_dir = app_dir(app_handle).await?;
     let assets_dir = app_dir.join(ASSETS_DIR);
 
@@ -243,7 +269,10 @@ pub async fn get_cache_files(app_handle: &tauri::AppHandle, config: &Config) -> 
         if path.is_file() {
             // Get relative path from app_dir to match config paths
             if let Ok(relative_path) = path.strip_prefix(&app_dir) {
-                let relative_path_str = relative_path.to_string_lossy().to_string().replace("\\", "/");
+                let relative_path_str = relative_path
+                    .to_string_lossy()
+                    .to_string()
+                    .replace("\\", "/");
                 if !used_paths.contains(&relative_path_str) {
                     cache_files.push(path.to_path_buf());
                 }

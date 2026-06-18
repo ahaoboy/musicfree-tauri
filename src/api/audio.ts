@@ -87,6 +87,13 @@ function audioBufferToWav(buffer: AudioBuffer): Blob {
 }
 
 export async function getWavUrl(videoUrl: string) {
+  // If already an audio format, just return as blob — no conversion needed
+  if (isAudio(videoUrl)) {
+    const response = await fetch(videoUrl)
+    const blob = await response.blob()
+    return URL.createObjectURL(blob)
+  }
+
   const audioContext = new AudioContext()
   try {
     const response = await fetch(videoUrl)

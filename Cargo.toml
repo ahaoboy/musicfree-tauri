@@ -63,6 +63,7 @@ musicfree = { git = "https://github.com/ahaoboy/musicfree", version = "0.1", def
 jni = "0.22"
 tauri-plugin-updater = "2"
 tauri-plugin-single-instance = "2"
+trackex = { version = "0.1", git = "https://github.com/ahaoboy/trackex.git" }
 
 # ── Patches ───────────────────────────────────────────────────────────
 # FIXME: https://github.com/tauri-apps/tauri/issues/14849
