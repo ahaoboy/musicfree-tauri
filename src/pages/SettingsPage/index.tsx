@@ -268,8 +268,8 @@ export const SettingsPage: FC = () => {
     <Stack
       spacing={3}
       sx={{
-        p: muiTheme.custom.spacing.pagePadding,
-        height: "100%",
+        flex: 1,
+        pt: muiTheme.custom.spacing.settingsTopPadding,
         overflowY: "overlay",
       }}
     >
@@ -282,28 +282,28 @@ export const SettingsPage: FC = () => {
               ♪ {totalAudios} 🎶{userPlaylistsCount}
             </Typography>
           </Stack>
-          <Divider sx={{ my: 1.5 }} />
+          <Divider sx={{ my: muiTheme.custom.spacing.dividerSpacing }} />
           <Stack direction="row" sx={rowSx}>
             <Typography>Theme</Typography>
             <Select
               value={safeMode}
               onChange={(e) => setMode(e.target.value as "light" | "dark" | "system")}
               size="small"
-              sx={{ minWidth: 120 }}
+              sx={{ minWidth: muiTheme.custom.spacing.selectMinWidth }}
             >
               <MenuItem value="light">Light</MenuItem>
               <MenuItem value="dark">Dark</MenuItem>
               <MenuItem value="system">System</MenuItem>
             </Select>
           </Stack>
-          <Divider sx={{ my: 1.5 }} />
+          <Divider sx={{ my: muiTheme.custom.spacing.dividerSpacing }} />
           <Stack direction="row" sx={rowSx}>
             <Typography>Audio Format</Typography>
             <Select
               value={transcodeFormat}
               onChange={(e) => setTranscodeFormat(e.target.value as TranscodeFormat)}
               size="small"
-              sx={{ minWidth: 120 }}
+              sx={{ minWidth: muiTheme.custom.spacing.selectMinWidth }}
             >
               <MenuItem value="original">Original</MenuItem>
               <MenuItem value="mp3">MP3</MenuItem>
@@ -388,7 +388,10 @@ export const SettingsPage: FC = () => {
                 <Typography color="text.secondary" variant="body2">
                   (
                   {loadingCache ? (
-                    <CircularProgress size={12} sx={{ color: "text.secondary" }} />
+                    <CircularProgress
+                      size={muiTheme.custom.spacing.smallIndicatorSize}
+                      sx={{ color: "text.secondary" }}
+                    />
                   ) : (
                     prettyBytes(cacheSize)
                   )}
@@ -408,7 +411,10 @@ export const SettingsPage: FC = () => {
                 <Typography color="text.secondary" variant="body2">
                   (
                   {loadingStorage ? (
-                    <CircularProgress size={12} sx={{ color: "text.secondary" }} />
+                    <CircularProgress
+                      size={muiTheme.custom.spacing.smallIndicatorSize}
+                      sx={{ color: "text.secondary" }}
+                    />
                   ) : (
                     prettyBytes(storageSize)
                   )}
