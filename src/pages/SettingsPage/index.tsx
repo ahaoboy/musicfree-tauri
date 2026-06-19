@@ -12,9 +12,6 @@ import {
   IconButton,
   Switch,
 } from "@mui/material"
-import LightMode from "@mui/icons-material/LightMode"
-import DarkMode from "@mui/icons-material/DarkMode"
-import SettingsSystemDaydream from "@mui/icons-material/SettingsSystemDaydream"
 import GitHub from "@mui/icons-material/GitHub"
 import FolderOpen from "@mui/icons-material/FolderOpen"
 import DeleteIcon from "@mui/icons-material/Delete"
@@ -63,7 +60,7 @@ const REPO_URL = "https://github.com/ahaoboy/musicfree-tauri"
 
 // Settings page - app configuration
 export const SettingsPage: FC = () => {
-  const { mode, setMode } = useTheme()
+  const { mode, setMode, theme: muiTheme } = useTheme()
   // Guard against invalid mode during rapid Activity show/hide on Android
   const safeMode: string = ["light", "dark", "system"].includes(mode) ? mode : "system"
   // const setThemeMode = useAppStore((state) => state.setThemeMode)
@@ -260,59 +257,47 @@ export const SettingsPage: FC = () => {
     }
   }, [message])
 
+  // Shared row style using theme token for consistent height
+  const rowSx = {
+    justifyContent: "space-between",
+    alignItems: "center",
+    height: muiTheme.custom.spacing.settingsRowHeight,
+  } as const
+
   return (
     <Stack
       spacing={3}
       sx={{
-        p: 1,
+        p: muiTheme.custom.spacing.pagePadding,
         height: "100%",
         overflowY: "overlay",
       }}
     >
-      {/* Theme Section */}
+      {/* General Section */}
       <Stack spacing={2}>
-        <Select
-          value={safeMode}
-          onChange={(e) => setMode(e.target.value as "light" | "dark" | "system")}
-          fullWidth
-        >
-          <MenuItem value="light">
-            <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
-              <LightMode fontSize="small" />
-              <Typography>Light</Typography>
-            </Stack>
-          </MenuItem>
-          <MenuItem value="dark">
-            <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
-              <DarkMode fontSize="small" />
-              <Typography>Dark</Typography>
-            </Stack>
-          </MenuItem>
-          <MenuItem value="system">
-            <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
-              <SettingsSystemDaydream fontSize="small" />
-              <Typography>System</Typography>
-            </Stack>
-          </MenuItem>
-        </Select>
-      </Stack>
-
-      {/* Library Section */}
-      <Stack spacing={2}>
-        <Paper variant="outlined" sx={{ p: 2 }}>
-          <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "center" }}>
+        <Paper variant="outlined" sx={{ p: muiTheme.custom.spacing.sectionPadding }}>
+          <Stack direction="row" sx={rowSx}>
             <Typography>Downloaded</Typography>
             <Typography color="text.secondary">
               ♪ {totalAudios} 🎶{userPlaylistsCount}
             </Typography>
           </Stack>
-        </Paper>
-      </Stack>
-
-      {/* Transcoding Section */}
-      <Stack spacing={2}>
-        <Paper variant="outlined" sx={{ p: 2 }}>
-          <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "center" }}>
+          <Divider sx={{ my: 1.5 }} />
+          <Stack direction="row" sx={rowSx}>
+            <Typography>Theme</Typography>
+            <Select
+              value={safeMode}
+              onChange={(e) => setMode(e.target.value as "light" | "dark" | "system")}
+              size="small"
+              sx={{ minWidth: 120 }}
+            >
+              <MenuItem value="light">Light</MenuItem>
+              <MenuItem value="dark">Dark</MenuItem>
+              <MenuItem value="system">System</MenuItem>
+            </Select>
+          </Stack>
+          <Divider sx={{ my: 1.5 }} />
+          <Stack direction="row" sx={rowSx}>
             <Typography>Audio Format</Typography>
             <Select
               value={transcodeFormat}
@@ -331,13 +316,13 @@ export const SettingsPage: FC = () => {
 
       {/* About Section */}
       <Stack spacing={2}>
-        <Paper variant="outlined" sx={{ p: 2 }}>
-          <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "center" }}>
+        <Paper variant="outlined" sx={{ p: muiTheme.custom.spacing.sectionPadding }}>
+          <Stack direction="row" sx={rowSx}>
             <Typography>Version</Typography>
             <Typography color="text.secondary">{version || "Loading..."}</Typography>
           </Stack>
           <Divider sx={{ my: 1 }} />
-          <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "center" }}>
+          <Stack direction="row" sx={rowSx}>
             <Typography>Repository</Typography>
             <Stack direction="row" spacing={1}>
               <IconButton
@@ -355,7 +340,7 @@ export const SettingsPage: FC = () => {
             </Stack>
           </Stack>
           <Divider sx={{ my: 1 }} />
-          <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "center" }}>
+          <Stack direction="row" sx={rowSx}>
             <Typography>App Directory</Typography>
             <Stack direction="row" spacing={1}>
               {CurrentPlatform !== "android" && (
@@ -381,8 +366,8 @@ export const SettingsPage: FC = () => {
 
       {/* Data Management Section */}
       <Stack spacing={2}>
-        <Paper variant="outlined" sx={{ p: 2 }}>
-          <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "center" }}>
+        <Paper variant="outlined" sx={{ p: muiTheme.custom.spacing.sectionPadding }}>
+          <Stack direction="row" sx={rowSx}>
             <Box>
               <Typography>Backup & Restore</Typography>
             </Box>
@@ -396,7 +381,7 @@ export const SettingsPage: FC = () => {
             </Stack>
           </Stack>
           <Divider sx={{ my: 1 }} />
-          <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "center" }}>
+          <Stack direction="row" sx={rowSx}>
             <Box>
               <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
                 <Typography>Clear Cache</Typography>
@@ -416,7 +401,7 @@ export const SettingsPage: FC = () => {
             </IconButton>
           </Stack>
           <Divider sx={{ my: 1 }} />
-          <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "center" }}>
+          <Stack direction="row" sx={rowSx}>
             <Box>
               <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
                 <Typography>Clear Storage</Typography>
@@ -436,7 +421,7 @@ export const SettingsPage: FC = () => {
             </IconButton>
           </Stack>
           <Divider sx={{ my: 1 }} />
-          <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "center" }}>
+          <Stack direction="row" sx={rowSx}>
             <Box>
               <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
                 <Typography>Log</Typography>
@@ -480,7 +465,7 @@ export const SettingsPage: FC = () => {
             </Stack>
           </Stack>
           <Divider sx={{ my: 1 }} />
-          <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "center" }}>
+          <Stack direction="row" sx={rowSx}>
             <Box>
               <Typography>
                 Sync
@@ -591,7 +576,7 @@ const SyncDialog: FC<SyncDialogProps> = ({
             "• The file was manually edited\n" +
             "• The file is corrupted\n\n" +
             "Recommended action:\n" +
-            "Delete the 'musicfree.yjs' file from your GitHub repository and try syncing again to upload fresh data.",
+            "Delete the 'musicfree.json' file from your GitHub repository and try syncing again to upload fresh data.",
           okText: "OK",
           onOk: () => {},
         })

@@ -60,6 +60,8 @@ declare module "@mui/material/styles" {
         tabHeight: number
         /** Tab icon size */
         tabIconSize: number
+        /** Settings page row height */
+        settingsRowHeight: number
         /** Empty state placeholder size */
         emptyPlaceholderSize: number
         /** Status dot size */
@@ -125,6 +127,7 @@ declare module "@mui/material/styles" {
         sectionPadding?: number
         tabHeight?: number
         tabIconSize?: number
+        settingsRowHeight?: number
         emptyPlaceholderSize?: number
         statusDotSize?: number
         smallIndicatorSize?: number
@@ -191,6 +194,7 @@ const SPACING = {
   sectionPadding: 2, // 16px – Paper/section inner padding
   tabHeight: 48, // Tab bar minimum height
   tabIconSize: 24, // Tab icon font size
+  settingsRowHeight: 32, // Settings page row minimum height
   emptyPlaceholderSize: 256, // Empty-state avatar placeholder
   statusDotSize: 8, // Status indicator dot
   smallIndicatorSize: 12, // Small CircularProgress / badge

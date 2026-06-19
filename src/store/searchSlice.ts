@@ -170,8 +170,8 @@ export const createSearchSlice: StateCreator<AppState, [], [], SearchSlice> = (s
         // Use default_audio index if provided, otherwise select first audio
         const targetIndex =
           defaultAudioIndex !== null &&
-            defaultAudioIndex >= 0 &&
-            defaultAudioIndex < playlist.audios.length
+          defaultAudioIndex >= 0 &&
+          defaultAudioIndex < playlist.audios.length
             ? defaultAudioIndex
             : 0
         defaultSelectedIds.add(playlist.audios[targetIndex].id)
