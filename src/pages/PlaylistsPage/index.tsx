@@ -19,6 +19,7 @@ export const PlaylistsPage: FC = () => {
   const [searchParams, setSearchParams] = useSearchParams()
   const playlists = usePlaylistsPageData()
   const currentPlaylistId = useAppStore((state) => state.currentPlaylistId)
+  const renamePlaylist = useAppStore((state) => state.renamePlaylist)
   const deletePlaylist = useAppStore((state) => state.deletePlaylist)
   const { showConfirm } = useConfirm()
 
@@ -82,6 +83,8 @@ export const PlaylistsPage: FC = () => {
               onDelete={
                 canDelete ? () => handleDeletePlaylist(playlist.id, playlist.title) : undefined
               }
+              onRename={(newName) => renamePlaylist(playlist.id, newName)}
+              currentTitle={displayName}
             />
           }
         />

@@ -19,6 +19,7 @@ export const MusicPage: FC = () => {
   const audios = useAudios()
   const playAudio = useAppStore((state) => state.playAudio)
   const togglePlay = useAppStore((state) => state.togglePlay)
+  const renameAudio = useAppStore((state) => state.renameAudio)
   const deleteAudio = useAppStore((state) => state.deleteAudio)
   const isConfigLoading = useAppStore((state) => state.isConfigLoading)
   const currentAudio = useAppStore((state) => state.currentAudio)
@@ -87,6 +88,8 @@ export const MusicPage: FC = () => {
               playlistId={AUDIO_PLAYLIST_ID}
               audioId={audio.audio.id}
               onDelete={() => handleDelete(audio.audio.id, audio.audio.title)}
+              onRename={(newName) => renameAudio(audio.audio.id, newName)}
+              currentTitle={audio.audio.title}
             />
           }
         />

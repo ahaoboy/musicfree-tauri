@@ -132,11 +132,13 @@ export interface ConfigSliceActions {
   // Playlist actions
   addPlaylistToConfig: (playlist: LocalPlaylist) => Promise<void>
   deletePlaylist: (id: string) => Promise<void>
+  renamePlaylist: (id: string, newTitle: string) => Promise<void>
   getTotalAudios: () => LocalAudio[]
 
   // Audio actions (operates on AUDIO_PLAYLIST)
   addAudiosToConfig: (audios: LocalAudio[]) => Promise<void>
   deleteAudio: (audioId: string, playlistId: string) => Promise<void>
+  renameAudio: (audioId: string, newTitle: string) => Promise<void>
 
   // Favorite actions
   toggleFavorite: (audio: LocalAudio) => Promise<void>
@@ -626,6 +628,31 @@ export const createConfigSlice: StateCreator<AppState, [], [], ConfigSlice> = (s
         storage.setCurrentPlaylistId(null)
       }
     }
+  },
+
+  renamePlaylist: async (id: string, newTitle: string) => {
+    const { config } = get()
+    if (!config) return
+
+    const updatedPlaylists = config.playlists.map((p) =>
+      p.id === id ? { ...p, title: newTitle } : p,
+    )
+
+    await get().saveConfig({ ...config, playlists: updatedPlaylists })
+  },
+
+  renameAudio: async (audioId: string, newTitle: string) => {
+    const { config } = get()
+    if (!config) return
+
+    const updatedPlaylists = config.playlists.map((p) => ({
+      ...p,
+      audios: p.audios.map((a) =>
+        a.audio.id === audioId ? { ...a, audio: { ...a.audio, title: newTitle } } : a,
+      ),
+    }))
+
+    await get().saveConfig({ ...config, playlists: updatedPlaylists })
   },
 
   // Favorite actions
