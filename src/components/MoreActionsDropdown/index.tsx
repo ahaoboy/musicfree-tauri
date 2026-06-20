@@ -66,8 +66,10 @@ export const MoreActionsDropdown: FC<MoreActionsDropdownProps> = ({
     setAnchorEl(event.currentTarget)
   }
 
-  const handleClose = (event?: React.SyntheticEvent) => {
-    event?.stopPropagation()
+  const handleClose = (event?: React.SyntheticEvent | {}) => {
+    if (event && "stopPropagation" in event) {
+      event.stopPropagation()
+    }
     setAnchorEl(null)
   }
 
