@@ -1,3 +1,6 @@
+bun.lock
+pnpm-workspace.yaml
+
 # Logs
 logs
 *.log
