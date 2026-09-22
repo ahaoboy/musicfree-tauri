@@ -68,13 +68,13 @@ trackex = { version = "0.1", git = "https://github.com/ahaoboy/trackex.git" }
 # ── Patches ───────────────────────────────────────────────────────────
 # FIXME: https://github.com/tauri-apps/tauri/issues/14849
 [patch.crates-io]
-rquickjs = { version = "0.12", git = "https://github.com/ahaoboy/rquickjs.git", branch = "android" }
-rquickjs-sys = { version = "0.12", git = "https://github.com/ahaoboy/rquickjs.git", branch = "android" }
-rquickjs-core = { version = "0.12", git = "https://github.com/ahaoboy/rquickjs.git", branch = "android" }
-rquickjs-macro = { version = "0.12", git = "https://github.com/ahaoboy/rquickjs.git", branch = "android" }
+rquickjs = { version = "0.14", git = "https://github.com/ahaoboy/rquickjs.git", branch = "android" }
+rquickjs-sys = { version = "0.14", git = "https://github.com/ahaoboy/rquickjs.git", branch = "android" }
+rquickjs-core = { version = "0.14", git = "https://github.com/ahaoboy/rquickjs.git", branch = "android" }
+rquickjs-macro = { version = "0.14", git = "https://github.com/ahaoboy/rquickjs.git", branch = "android" }
 
 [patch."https://github.com/DelSkayn/rquickjs.git"]
-rquickjs = { version = "0.12", git = "https://github.com/ahaoboy/rquickjs.git", branch = "android" }
-rquickjs-sys = { version = "0.12", git = "https://github.com/ahaoboy/rquickjs.git", branch = "android" }
-rquickjs-core = { version = "0.12", git = "https://github.com/ahaoboy/rquickjs.git", branch = "android" }
-rquickjs-macro = { version = "0.12", git = "https://github.com/ahaoboy/rquickjs.git", branch = "android" }
+rquickjs = { version = "0.14", git = "https://github.com/ahaoboy/rquickjs.git", branch = "android" }
+rquickjs-sys = { version = "0.14", git = "https://github.com/ahaoboy/rquickjs.git", branch = "android" }
+rquickjs-core = { version = "0.14", git = "https://github.com/ahaoboy/rquickjs.git", branch = "android" }
+rquickjs-macro = { version = "0.14", git = "https://github.com/ahaoboy/rquickjs.git", branch = "android" }
