@@ -35,7 +35,8 @@ jobs:
             # args: "--features boa"
             args: "--target aarch64"
             mobile: android
-            java: "21"
+            distribution: "temurin"
+            java: "25"
             ndk: "30.0.16248370"
             cmdline-tools-version: "15859902"
 
@@ -65,7 +66,7 @@ jobs:
         if: matrix.mobile == 'android'
         uses: actions/setup-java@v6
         with:
-          distribution: "zulu"
+          distribution: ${{ matrix.distribution }}
           java-version: ${{ matrix.java }}
 
       - name: Cache NDK
