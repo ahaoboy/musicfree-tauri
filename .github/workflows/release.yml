@@ -33,7 +33,7 @@ jobs:
           - platform: "ubuntu-latest"
             # args: "-- --runner cross"
             # args: "--features boa"
-            args: "--target aarch64-linux-android"
+            args: "--target aarch64"
             mobile: android
             java: "21"
             ndk: "29.0.14206865"
@@ -131,7 +131,7 @@ jobs:
         run: |
           git diff
       - name: Build
-        uses: tauri-apps/tauri-action@e839bb55b23d177d8cb537c2e10f41decb2d1089
+        uses: tauri-apps/tauri-action@v1
         with:
           tagName: app-v__VERSION__
           releaseName: "musicfree v__VERSION__"
