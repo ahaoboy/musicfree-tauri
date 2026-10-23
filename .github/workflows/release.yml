@@ -102,6 +102,14 @@ jobs:
           echo "$ANDROID_SDK_ROOT/ndk/${{ matrix.ndk }}/toolchains/llvm/prebuilt/linux-x86_64/bin" >> "$GITHUB_PATH"
           "$ANDROID_SDK_ROOT/ndk/${{ matrix.ndk }}/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android24-clang" --version
 
+      - name: Configure Android NDK
+        shell: bash
+        run: |
+          NDK="$ANDROID_NDK_HOME"
+          TOOLCHAIN="$NDK/toolchains/llvm/prebuilt/linux-x86_64/bin"
+
+          echo "ANDROID_NDK_ROOT=$NDK" >> "$GITHUB_ENV"
+          echo "TARGET_CC=$TOOLCHAIN/aarch64-linux-android24-clang" >> "$GITHUB_ENV"
 
       - name: install dependencies (android only)
         if: matrix.mobile == 'android'
