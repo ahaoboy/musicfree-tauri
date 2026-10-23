@@ -36,7 +36,7 @@ jobs:
             args: "--target aarch64"
             mobile: android
             java: "21"
-            ndk: "29.0.14206865"
+            ndk: "30.0.16248370"
             cmdline-tools-version: "12266719"
 
     runs-on: ${{ matrix.platform }}
