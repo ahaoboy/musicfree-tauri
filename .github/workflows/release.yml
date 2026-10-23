@@ -25,17 +25,15 @@ jobs:
       matrix:
         include:
           - platform: "macos-latest"
-            args: "--target aarch64-apple-darwin --features qjs"
+            args: "--target aarch64-apple-darwin"
           # - platform: "macos-latest"
-          #   args: "--target x86_64-apple-darwin --features qjs"
+          #   args: "--target x86_64-apple-darwin"
           - platform: "ubuntu-22.04"
-            args: "--features qjs"
           - platform: "windows-latest"
-            args: "--features qjs"
           - platform: "ubuntu-latest"
             # args: "-- --runner cross"
             # args: "--features boa"
-            args: "--features qjs --target aarch64"
+            args: "--target aarch64"
             mobile: android
             java: "21"
             ndk: "29.0.14206865"
