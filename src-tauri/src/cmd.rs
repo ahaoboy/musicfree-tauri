@@ -630,9 +630,9 @@ pub async fn transcode_audio(
 
     // Validate format
     let output_format = match format {
-        "mp3" => trackex::format::OutputFormat::Mp3,
-        "ogg" => trackex::format::OutputFormat::Ogg,
-        "wav" => trackex::format::OutputFormat::Wav,
+        "mp3" => trackex::Format::Mp3,
+        "ogg" => trackex::Format::Ogg,
+        "wav" => trackex::Format::Wav,
         _ => return Err(AppError::Unknown(format!("Unsupported format: {format}"))),
     };
 
@@ -657,15 +657,10 @@ pub async fn transcode_audio(
         .await
         .map_err(|e| AppError::Unknown(format!("Failed to read input: {e}")))?;
 
-    let config = trackex::config::AudioConfig {
-        input_data,
-        format: output_format,
-        sample_rate: None,
-        channels: None,
-    };
+    let config = trackex::Config::new(output_format);
 
     // Transcode — trackex returns output bytes directly
-    let output_data = trackex::extract_audio(&config).map_err(|e| {
+    let output_data = trackex::transcode(&input_data, &config).map_err(|e| {
         eprintln!("Transcode failed: '{}' → {format}: {e}", input.display());
         AppError::Unknown(e.to_string())
     })?;
