@@ -95,7 +95,13 @@ jobs:
 
       - name: Install NDK
         if: matrix.mobile == 'android'
-        run: sdkmanager "ndk;${{ matrix.ndk }}"
+        run: |
+          sdkmanager "ndk;${{ matrix.ndk }}"
+          echo "ANDROID_NDK_HOME=$ANDROID_SDK_ROOT/ndk/${{ matrix.ndk }}" >> "$GITHUB_ENV"
+          echo "ANDROID_NDK_ROOT=$ANDROID_SDK_ROOT/ndk/${{ matrix.ndk }}" >> "$GITHUB_ENV"
+          echo "$ANDROID_SDK_ROOT/ndk/${{ matrix.ndk }}/toolchains/llvm/prebuilt/linux-x86_64/bin" >> "$GITHUB_PATH"
+          "$ANDROID_SDK_ROOT/ndk/${{ matrix.ndk }}/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android24-clang" --version
+
 
       - name: install dependencies (android only)
         if: matrix.mobile == 'android'
@@ -130,6 +136,16 @@ jobs:
       - name: git after signing
         run: |
           git diff
+
+      - name: Check Android toolchain
+        if: matrix.mobile == 'android'
+        run: |
+          echo "ANDROID_NDK_HOME=$ANDROID_NDK_HOME"
+          echo "ANDROID_NDK_ROOT=$ANDROID_NDK_ROOT"
+          echo "TARGET_CC=$TARGET_CC"
+          grep -n "Unversioned target triples are not supported" \
+            "$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/include/sys/cdefs.h" || true
+
       - name: Build
         uses: tauri-apps/tauri-action@v1
         with:
