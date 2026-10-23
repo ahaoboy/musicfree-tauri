@@ -35,8 +35,10 @@ jobs:
             # args: "--features boa"
             args: "--target aarch64"
             mobile: android
+            # https://github.com/actions/setup-java
             distribution: "temurin"
             java: "25"
+            # https://github.com/android-actions/setup-android
             ndk: "30.0.16248370"
             cmdline-tools-version: "15859902"
 
