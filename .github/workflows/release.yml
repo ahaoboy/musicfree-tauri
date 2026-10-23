@@ -37,7 +37,7 @@ jobs:
             mobile: android
             java: "21"
             ndk: "30.0.16248370"
-            cmdline-tools-version: "12266719"
+            cmdline-tools-version: "22.0"
 
     runs-on: ${{ matrix.platform }}
     steps:
