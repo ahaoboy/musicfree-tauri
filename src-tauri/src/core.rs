@@ -1,7 +1,6 @@
-use std::path::PathBuf;
-
-use musicfree::{Audio, Platform};
+use musicfree::{Site, Track};
 use serde::{Deserialize, Serialize};
+use std::path::PathBuf;
 
 pub const APP_NAME: &str = "musicfree";
 pub const ASSETS_DIR: &str = "assets";
@@ -15,7 +14,7 @@ pub struct LocalAudio {
     pub path: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub cover_path: Option<String>,
-    pub audio: Audio,
+    pub audio: Track,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -32,7 +31,7 @@ pub struct LocalPlaylist {
     pub cover: Option<String>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub audios: Vec<LocalAudio>,
-    pub platform: Platform,
+    pub platform: Site,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]

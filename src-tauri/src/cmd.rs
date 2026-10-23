@@ -2,7 +2,7 @@ use crate::api::{self};
 use crate::core::{ASSETS_DIR, CONFIG_FILE, Config, LocalAudio, get_config_path};
 use crate::error::{AppError, AppResult};
 use chrono::Local;
-use musicfree::{Audio, Platform, Playlist};
+use musicfree::{Playlist, Site, Track};
 use serde::{Deserialize, Serialize};
 use std::fs::File;
 use std::io::{Read, Write};
@@ -26,9 +26,11 @@ pub async fn app_version() -> &'static str {
 
 #[tauri::command]
 pub async fn extract_audios(url: &str) -> AppResult<(Playlist, Option<usize>)> {
-    musicfree::extract(url)
+    let playlist = musicfree::extract(url)
         .await
-        .map_err(|e| AppError::MusicFree(e.to_string()))
+        .map_err(|e| AppError::MusicFree(e.to_string()))?;
+    let default = playlist.default;
+    Ok((playlist, default))
 }
 
 #[tauri::command]
@@ -56,7 +58,7 @@ pub async fn save_config(config: Config, app_handle: tauri::AppHandle) -> AppRes
 }
 
 #[tauri::command]
-pub async fn download_audio(audio: Audio, app_handle: tauri::AppHandle) -> AppResult<LocalAudio> {
+pub async fn download_audio(audio: Track, app_handle: tauri::AppHandle) -> AppResult<LocalAudio> {
     let dir = app_dir(app_handle).await?;
 
     api::download_audio(&audio, dir)
@@ -65,7 +67,7 @@ pub async fn download_audio(audio: Audio, app_handle: tauri::AppHandle) -> AppRe
 }
 
 #[tauri::command]
-pub async fn exists_audio(audio: Audio, app_handle: tauri::AppHandle) -> AppResult<Option<String>> {
+pub async fn exists_audio(audio: Track, app_handle: tauri::AppHandle) -> AppResult<Option<String>> {
     let dir = app_dir(app_handle).await?;
     api::exists_audio(&audio, dir).await
 }
@@ -73,7 +75,7 @@ pub async fn exists_audio(audio: Audio, app_handle: tauri::AppHandle) -> AppResu
 #[tauri::command]
 pub async fn exists_cover(
     url: &str,
-    platform: Platform,
+    platform: Site,
     app_handle: tauri::AppHandle,
 ) -> AppResult<Option<String>> {
     let dir = app_dir(app_handle).await?;
@@ -83,7 +85,7 @@ pub async fn exists_cover(
 #[tauri::command]
 pub async fn download_cover(
     url: &str,
-    platform: Platform,
+    platform: Site,
     app_handle: tauri::AppHandle,
 ) -> AppResult<Option<String>> {
     let dir = app_dir(app_handle).await?;
@@ -356,7 +358,11 @@ pub async fn import_data(app_handle: tauri::AppHandle) -> AppResult<ImportResult
                 None => continue,
             };
 
-            if file.name().ends_with('/') {
+            if file
+                .name()
+                .map_err(|e| AppError::Unknown(e.to_string()))?
+                .ends_with('/')
+            {
                 std::fs::create_dir_all(&outpath).map_err(AppError::Io)?;
             } else {
                 if let Some(p) = outpath.parent()

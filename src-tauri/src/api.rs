@@ -2,7 +2,7 @@ use crate::{
     core::{ASSETS_DIR, AUDIOS_DIR, COVERS_DIR, Config, LocalAudio},
     error::{AppError, AppResult},
 };
-use musicfree::{Audio, Platform};
+use musicfree::{Site, Track};
 use std::{
     collections::HashSet,
     path::{Path, PathBuf},
@@ -42,49 +42,23 @@ async fn write<P: AsRef<Path>, C: AsRef<[u8]>>(p: P, c: C) -> std::io::Result<()
     tokio::fs::write(p, c).await
 }
 
-pub fn get_audio_filename(audio: &Audio) -> String {
-    let id = format!("{:x}", md5::compute(&audio.download_url));
-    format!(
-        "{}_{}{}",
-        audio.id,
-        id,
-        audio
-            .format
-            .clone()
-            .unwrap_or(musicfree::core::AudioFormat::Mp3)
-            .extension()
-    )
-}
-
-pub fn get_cover_filename(cover_url: &str) -> String {
-    let id = format!("{:x}", md5::compute(cover_url));
-    let filename = cover_url.split("/").last().unwrap_or("cover.jpg");
-    format!("{id}_{filename}")
-}
-
-pub async fn download_audio(audio: &Audio, app_dir: PathBuf) -> anyhow::Result<LocalAudio> {
-    let filename = get_audio_filename(audio);
+pub async fn download_audio(audio: &Track, app_dir: PathBuf) -> anyhow::Result<LocalAudio> {
+    let filename = audio.cache_file_name();
     let audio_path = format!(
         "{}/{:?}/{}/{}",
-        ASSETS_DIR, audio.platform, AUDIOS_DIR, filename
+        ASSETS_DIR, audio.site, AUDIOS_DIR, filename
     );
     let file_path = app_dir.join(&audio_path);
 
     if !tokio::fs::try_exists(&file_path).await.unwrap_or(false) {
         println!("Downloading audio: {}", audio.title);
-        let download_future = audio.platform.extractor().download(&audio.download_url);
-        let bin =
-            match tokio::time::timeout(std::time::Duration::from_secs(60), download_future).await {
-                Ok(Ok(data)) => data,
-                Ok(Err(e)) => {
-                    eprintln!("Download failed for '{}': {e}", audio.title);
-                    return Err(e.into());
-                }
-                Err(_) => {
-                    eprintln!("Download timed out for '{}'", audio.title);
-                    return Err(anyhow::anyhow!("Download timed out for '{}'", audio.title));
-                }
-            };
+        let bin = audio
+            .download_with_timeout(std::time::Duration::from_secs(60))
+            .await
+            .map_err(|error| {
+                eprintln!("Download failed for '{}': {error}", audio.title);
+                anyhow::Error::from(error)
+            })?;
 
         write(&file_path, bin).await.map_err(|e| {
             eprintln!("Failed to write audio file for '{}': {e}", audio.title);
@@ -99,7 +73,7 @@ pub async fn download_audio(audio: &Audio, app_dir: PathBuf) -> anyhow::Result<L
     }
 
     let cover_path = if let Some(url) = &audio.cover {
-        download_cover(url, audio.platform, app_dir).await
+        download_cover(url, audio.site, app_dir).await
     } else {
         None
     };
@@ -111,11 +85,11 @@ pub async fn download_audio(audio: &Audio, app_dir: PathBuf) -> anyhow::Result<L
     })
 }
 
-pub async fn exists_audio(audio: &Audio, app_dir: PathBuf) -> AppResult<Option<String>> {
-    let filename = get_audio_filename(audio);
+pub async fn exists_audio(audio: &Track, app_dir: PathBuf) -> AppResult<Option<String>> {
+    let filename = audio.cache_file_name();
     let audio_path = format!(
         "{}/{:?}/{}/{}",
-        ASSETS_DIR, audio.platform, AUDIOS_DIR, filename
+        ASSETS_DIR, audio.site, AUDIOS_DIR, filename
     );
     let file_path = app_dir.join(&audio_path);
 
@@ -127,11 +101,11 @@ pub async fn exists_audio(audio: &Audio, app_dir: PathBuf) -> AppResult<Option<S
 
 pub async fn exists_cover(
     cover_url: &str,
-    platform: Platform,
+    site: Site,
     app_dir: PathBuf,
 ) -> AppResult<Option<String>> {
-    let filename = get_cover_filename(cover_url);
-    let cover_path = format!("{}/{:?}/{}/{}", ASSETS_DIR, platform, COVERS_DIR, filename);
+    let filename = musicfree::cover_file_name(cover_url);
+    let cover_path = format!("{}/{:?}/{}/{}", ASSETS_DIR, site, COVERS_DIR, filename);
     let full_cover_path = app_dir.join(&cover_path);
     if tokio::fs::try_exists(&full_cover_path)
         .await
@@ -142,13 +116,9 @@ pub async fn exists_cover(
     Ok(None)
 }
 
-pub async fn download_cover(
-    cover_url: &str,
-    platform: Platform,
-    app_dir: PathBuf,
-) -> Option<String> {
-    let filename = get_cover_filename(cover_url);
-    let cover_path = format!("{}/{:?}/{}/{}", ASSETS_DIR, platform, COVERS_DIR, filename);
+pub async fn download_cover(cover_url: &str, site: Site, app_dir: PathBuf) -> Option<String> {
+    let filename = musicfree::cover_file_name(cover_url);
+    let cover_path = format!("{}/{:?}/{}/{}", ASSETS_DIR, site, COVERS_DIR, filename);
     let full_cover_path = app_dir.join(&cover_path);
     if tokio::fs::try_exists(&full_cover_path)
         .await
@@ -156,8 +126,12 @@ pub async fn download_cover(
     {
         return Some(cover_path);
     }
-    let download_future = platform.extractor().download_cover(cover_url);
-    match tokio::time::timeout(std::time::Duration::from_secs(30), download_future).await {
+    match tokio::time::timeout(
+        std::time::Duration::from_secs(30),
+        musicfree::download_cover(site, cover_url),
+    )
+    .await
+    {
         Ok(Ok(cover_data)) => {
             if let Err(e) = write(&full_cover_path, &cover_data).await {
                 eprintln!("Failed to write cover file: {e}");
@@ -187,36 +161,18 @@ pub fn get_used_paths(config: &Config) -> HashSet<String> {
     used_paths
 }
 
-pub fn get_save_filename(audio: &musicfree::Audio) -> String {
-    let id = format!("{:x}", md5::compute(&audio.download_url));
-    let id_prefix = &id[..6.min(id.len())];
-    // Sanitize title for filesystem safety
-    let safe_title = sanitize_filename::sanitize(&audio.title);
-    format!(
-        "{}-{}{}",
-        safe_title,
-        id_prefix,
-        audio
-            .format
-            .clone()
-            .unwrap_or(musicfree::core::AudioFormat::Mp3)
-            .extension()
-    )
-}
-
 pub async fn save_audio(
     playlist: &crate::core::LocalPlaylist,
     audio: &crate::core::LocalAudio,
     app_dir: PathBuf,
     target_dir: PathBuf,
 ) -> AppResult<String> {
-    let filename = get_save_filename(&audio.audio);
-    let playlist_title =
-        sanitize_filename::sanitize(playlist.title.as_deref().unwrap_or("Unknown"));
+    let filename = audio.audio.save_file_name();
+    let playlist_title = musicfree::safe_title(playlist.title.as_deref().unwrap_or("Unknown"));
 
-    // Build target path: target_dir / Platform / playlist_title / filename
+    // Build target path: target_dir / Site / playlist_title / filename
     let dest_path = target_dir
-        .join(format!("{:?}", audio.audio.platform))
+        .join(format!("{:?}", audio.audio.site))
         .join(&playlist_title)
         .join(&filename);
 
