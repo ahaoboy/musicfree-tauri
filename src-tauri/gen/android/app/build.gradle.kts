@@ -15,29 +15,32 @@ val tauriProperties = Properties().apply {
     }
 }
 
+val keystorePropertiesFile = rootProject.file("keystore.properties")
+val keystoreProperties = Properties().apply {
+    if (keystorePropertiesFile.exists()) {
+        FileInputStream(keystorePropertiesFile).use { load(it) }
+    }
+}
+
 android {
-    compileSdk = 36
+    compileSdk = 37
     namespace = "com.ahaoboy.musicfree"
     defaultConfig {
         manifestPlaceholders["usesCleartextTraffic"] = "false"
         applicationId = "com.ahaoboy.musicfree"
         minSdk = 24
-        targetSdk = 36
+        targetSdk = 37
         versionCode = tauriProperties.getProperty("tauri.android.versionCode", "1").toInt()
         versionName = tauriProperties.getProperty("tauri.android.versionName", "1.0")
     }
     signingConfigs {
-      create("release") {
-          val keystorePropertiesFile = rootProject.file("keystore.properties")
-          val keystoreProperties = Properties()
-          if (keystorePropertiesFile.exists()) {
-              keystoreProperties.load(FileInputStream(keystorePropertiesFile))
+      if (keystorePropertiesFile.exists()) {
+          create("release") {
+              keyAlias = keystoreProperties["keyAlias"] as String
+              keyPassword = keystoreProperties["password"] as String
+              storeFile = file(keystoreProperties["storeFile"] as String)
+              storePassword = keystoreProperties["password"] as String
           }
-
-          keyAlias = keystoreProperties["keyAlias"] as String
-          keyPassword = keystoreProperties["password"] as String
-          storeFile = file(keystoreProperties["storeFile"] as String)
-          storePassword = keystoreProperties["password"] as String
       }
     }
     buildTypes {
@@ -55,14 +58,16 @@ android {
         }
         getByName("release") {
             optimization {
-                enable = true
+               enable = true
             }
-            signingConfig = signingConfigs.getByName("release")
-
+            if (keystorePropertiesFile.exists()) {
+                signingConfig = signingConfigs.getByName("release")
+            }
             proguardFiles(
-                *fileTree(".") { include("**/*.pro") }
-                    .plus(getDefaultProguardFile("proguard-android-optimize.txt"))
-                    .toList().toTypedArray()
+                *fileTree(".") {
+                  include("**/*.pro")
+                  exclude("build/**")
+                }.files.toTypedArray()
             )
         }
     }
@@ -90,6 +95,7 @@ dependencies {
     implementation("androidx.appcompat:appcompat:1.7.1")
     implementation("androidx.activity:activity-ktx:1.10.1")
     implementation("com.google.android.material:material:1.12.0")
+    implementation("androidx.lifecycle:lifecycle-process:2.10.0")
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.4")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.0")
